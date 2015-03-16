@@ -1,4 +1,4 @@
-﻿namespace Debugger
+﻿namespace ModTools
 {
     public static class Log
     {

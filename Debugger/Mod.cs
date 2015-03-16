@@ -2,7 +2,7 @@
 using ICities;
 using UnityEngine;
 
-namespace Debugger
+namespace ModTools
 {
 
     public class Mod : IUserMod
@@ -25,7 +25,7 @@ namespace Debugger
         public override void OnLevelLoaded(LoadMode mode)
         {
             var controller = GameObject.FindObjectOfType<CameraController>();
-            controller.gameObject.AddComponent<Debugger>();
+            controller.gameObject.AddComponent<ModTools>();
         }
 
     }

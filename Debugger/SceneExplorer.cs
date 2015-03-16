@@ -5,7 +5,7 @@ using System.Reflection;
 
 using UnityEngine;
 
-namespace Debugger
+namespace ModTools
 {
 
     public class SceneExplorer

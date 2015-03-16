@@ -1,13 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-namespace Debugger
+namespace ModTools
 {
 
-    public class Debugger : MonoBehaviour
+    public class ModTools : MonoBehaviour, IModTools
     {
 
         private Rect mainWindowRect = new Rect(128, 128, 356, 300);
+        private Vector2 mainScroll = Vector2.zero;
         private bool showMain = false;
 
         private Rect watchesWindowRect = new Rect(400, 128, 800, 300);
@@ -20,6 +22,22 @@ namespace Debugger
         private float uiScaleActual = 1.0f;
 
         private Texture2D blackTexture = new Texture2D(1, 1);
+
+        private Dictionary<string, KeyValuePair<string, ButtonClicked>> customButtons = new Dictionary<string, KeyValuePair<string, ButtonClicked>>();
+
+        public void AddButton(string name, string text, ButtonClicked onClicked)
+        {
+            customButtons[name] = new KeyValuePair<string, ButtonClicked>(text, onClicked);
+        }
+
+        public void RemoveButton(string name)
+        {
+            if (customButtons.ContainsKey(name))
+            {
+                customButtons.Remove(name);
+            }
+        }
+
         void Awake()
         {
             blackTexture.SetPixel(0, 0, Color.grey);
@@ -108,10 +126,22 @@ namespace Debugger
                 showSceneExplorer = !showSceneExplorer;
             }
 
+            mainScroll = GUILayout.BeginScrollView(mainScroll);
+
             if (GUILayout.Button("Throw exception!"))
             {
                 throw new Exception("Hello world!");
             }
+
+            foreach (var button in customButtons)
+            {
+                if (GUILayout.Button(button.Value.Key))
+                {
+                    button.Value.Value();
+                }
+            }
+
+            GUILayout.EndScrollView();
         }
 
         void DoWatchesWindow(int wnd)

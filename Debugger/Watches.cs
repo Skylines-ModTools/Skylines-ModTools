@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-namespace Debugger
+namespace ModTools
 {
     public static class Watches
     {

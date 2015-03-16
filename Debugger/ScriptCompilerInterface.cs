@@ -4,7 +4,7 @@ using ColossalFramework;
 using ColossalFramework.Plugins;
 using UnityEngine;
 
-namespace Debugger
+namespace ModTools
 {
     public static class ScriptCompilerInterface
     {
