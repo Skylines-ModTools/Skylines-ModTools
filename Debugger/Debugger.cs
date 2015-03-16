@@ -24,6 +24,24 @@ namespace Debugger
         {
             blackTexture.SetPixel(0, 0, Color.grey);
             blackTexture.Apply();
+
+            Application.logMessageReceived += (condition, trace, type) =>
+            {
+                if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert)
+                {
+                    Log.Error(condition);
+                    Log.Error(trace);
+                }
+                else if (type == LogType.Warning)
+                {
+                    Log.Warning(condition);
+                    Log.Warning(trace);
+                }
+                else
+                {
+                    Log.Message(condition);
+                }
+            };
         }
 
         void Update()
@@ -88,6 +106,11 @@ namespace Debugger
             if (GUILayout.Button("Scene explorer"))
             {
                 showSceneExplorer = !showSceneExplorer;
+            }
+
+            if (GUILayout.Button("Throw exception!"))
+            {
+                throw new Exception("Hello world!");
             }
         }
 

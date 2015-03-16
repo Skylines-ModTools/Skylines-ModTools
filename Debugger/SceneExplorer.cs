@@ -61,6 +61,8 @@ namespace Debugger
             GUILayout.BeginHorizontal();
             GUILayout.Space(treeIdentSpacing * ident);
 
+            GUI.contentColor = Color.white;
+
             if (field.IsPublic)
             {
                 GUILayout.Label("public ");
@@ -70,16 +72,18 @@ namespace Debugger
                 GUILayout.Label("private ");
             }
 
+            GUI.contentColor = Color.green;
+
             GUILayout.Label("field ");
             GUILayout.Label(field.FieldType.ToString() + " ");
-            GUILayout.Label(field.Name);
-            var value = field.GetValue(obj);
-            GUILayout.Label(value == null ? "null" : value.ToString());
 
-            if (GUILayout.Button("Watch"))
-            {
-                Watches.AddWatch(caller + "." + field.Name, field, obj);
-            }
+            GUI.contentColor = Color.red;
+
+            GUILayout.Label(field.Name);
+
+            GUI.contentColor = Color.white;
+
+            var value = field.GetValue(obj);
 
             if (field.FieldType.ToString() == "System.Single")
             {
@@ -117,9 +121,24 @@ namespace Debugger
                     field.SetValue(obj, f);
                 }
             }
+            else
+            {
+                GUI.contentColor = Color.white;
+                GUILayout.Label(" = ");
+                GUI.contentColor = Color.white;
+                GUILayout.Label(value == null ? "null" : value.ToString());
+                GUI.contentColor = Color.white;
+            }
 
             GUILayout.FlexibleSpace();
+
+            if (GUILayout.Button("Watch"))
+            {
+                Watches.AddWatch(caller + "." + field.Name, field, obj);
+            }
+
             GUILayout.EndHorizontal();
+            
         }
 
         private static void OnSceneTreeReflectProperty(string caller, System.Object obj, PropertyInfo property, int ident)
@@ -133,17 +152,18 @@ namespace Debugger
             GUILayout.BeginHorizontal();
             GUILayout.Space(treeIdentSpacing * ident);
 
+            GUI.contentColor = Color.green;
+
             GUILayout.Label("property ");
             GUILayout.Label(property.PropertyType.ToString() + " ");
 
-            GUILayout.Label(property.Name);
-            var value = property.GetValue(obj, null);
-            GUILayout.Label(value == null ? "null" : value.ToString());
+            GUI.contentColor = Color.red;
 
-            if (GUILayout.Button("Watch"))
-            {
-                Watches.AddWatch(caller + "." + property.Name, property, obj);
-            }
+            GUILayout.Label(property.Name);
+
+            GUI.contentColor = Color.white;
+
+            var value = property.GetValue(obj, null);
 
             if (property.PropertyType.ToString() == "System.Single")
             {
@@ -181,8 +201,24 @@ namespace Debugger
                     property.SetValue(obj, f, null);
                 }
             }
+            else
+            {
+                GUILayout.Label(" = ");
+
+                GUI.contentColor = Color.white;
+
+                GUILayout.Label(value == null ? "null" : value.ToString());
+
+                GUI.contentColor = Color.white;
+            }
 
             GUILayout.FlexibleSpace();
+
+            if (GUILayout.Button("Watch"))
+            {
+                Watches.AddWatch(caller + "." + property.Name, property, obj);
+            }
+
             GUILayout.EndHorizontal();
         }
 
