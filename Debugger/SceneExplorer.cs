@@ -973,8 +973,6 @@ namespace ModTools
                 expandedComponents.Clear();
             }
 
-            GUI.DragWindow();
-
             GUILayout.EndScrollView();
         }
 

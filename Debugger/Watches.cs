@@ -138,11 +138,6 @@ namespace ModTools
 
         void DoWatchesWindow()
         {
-            GUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
-            visible = GUILayout.Toggle(visible, "");
-            GUILayout.EndHorizontal();
-
             watchesScroll = GUILayout.BeginScrollView(watchesScroll);
 
             foreach (var watch in GetWatches())

@@ -69,11 +69,6 @@ namespace ModTools
         void DoMainWindow()
         {
             GUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
-            visible = GUILayout.Toggle(visible, "");
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
             GUILayout.Label("UI Scale");
             uiScaleUser = GUILayout.HorizontalSlider(uiScaleUser, 0.1f, 1.25f, GUILayout.Width(160));
 
