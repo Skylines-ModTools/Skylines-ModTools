@@ -46,9 +46,23 @@ namespace ModTools
 
         void Update()
         {
-            if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.Backspace))
+            if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.Q))
             {
                 visible = !visible;
+            }
+
+            if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.E))
+            {
+                sceneExplorer.visible = !sceneExplorer.visible;
+                if (sceneExplorer.visible)
+                {
+                    sceneExplorer.Refresh();
+                }
+            }
+
+            if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.W))
+            {
+                watches.visible = !watches.visible;
             }
         }
 
@@ -75,12 +89,12 @@ namespace ModTools
 
             GUILayout.EndHorizontal();
 
-            if (GUILayout.Button("Watches"))
+            if (GUILayout.Button("Watches (Ctrl+W)"))
             {
                 watches.visible = !watches.visible;
             }
 
-            if (GUILayout.Button("Scene explorer"))
+            if (GUILayout.Button("Scene explorer (Ctrl+E)"))
             {
                 sceneExplorer.visible = !sceneExplorer.visible;
                 if (sceneExplorer.visible)

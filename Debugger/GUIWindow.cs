@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using ColossalFramework;
 using UnityEngine;
 
 namespace ModTools
@@ -14,13 +15,21 @@ namespace ModTools
 
         public static GUISkin skin = null;
         public static Texture2D bgTexture = null;
+        public static Texture2D resizeNormalTexture = null;
+        public static Texture2D resizeHoverTexture = null;
+
+        public static GUIWindow resizingWindow = null;
+        public static Vector2 resizeDragHandle = Vector2.zero;
+
         public static float uiScale = 1.0f;
 
-        public bool visible = true;
+        public bool visible = false;
 
         public string title = "Window";
 
         private int id = 0;
+
+        private Vector2 minSize = Vector2.zero;
 
         public GUIWindow(string _title, Rect _rect, GUISkin _skin)
         {
@@ -28,6 +37,7 @@ namespace ModTools
             title = _title;
             rect = _rect;
             skin = _skin;
+            minSize = new Vector2(64.0f, 64.0f);
         }
 
         void OnGUI()
@@ -37,6 +47,14 @@ namespace ModTools
                 bgTexture = new Texture2D(1, 1);
                 bgTexture.SetPixel(0, 0, Color.grey);
                 bgTexture.Apply();
+
+                resizeNormalTexture = new Texture2D(1, 1);
+                resizeNormalTexture.SetPixel(0, 0, Color.white);
+                resizeNormalTexture.Apply();
+
+                resizeHoverTexture = new Texture2D(1, 1);
+                resizeHoverTexture.SetPixel(0, 0, Color.red);
+                resizeHoverTexture.Apply();
 
                 skin = ScriptableObject.CreateInstance<GUISkin>();
                 skin.box = new GUIStyle(GUI.skin.box);
@@ -61,6 +79,14 @@ namespace ModTools
                 skin.window = new GUIStyle(GUI.skin.window);
                 skin.window.normal.background = bgTexture;
                 skin.window.onNormal.background = bgTexture;
+
+                skin.settings.cursorColor = GUI.skin.settings.cursorColor;
+                skin.settings.cursorFlashSpeed = GUI.skin.settings.cursorFlashSpeed;
+                skin.settings.doubleClickSelectsWord = GUI.skin.settings.doubleClickSelectsWord;
+                skin.settings.selectionColor = GUI.skin.settings.selectionColor;
+                skin.settings.tripleClickSelectsLine = GUI.skin.settings.tripleClickSelectsLine;
+
+                skin.font = GUI.skin.font;
             }
 
             if (visible)
@@ -79,7 +105,54 @@ namespace ModTools
                     if (onDraw != null)
                     {
                         GUI.DragWindow(new Rect(0, 0, 100000.0f, 16.0f));
+
                         onDraw();
+
+                        var mouse = Input.mousePosition;
+                        mouse.y = Screen.height - mouse.y;
+
+                        var resizeRect = new Rect(rect.x + rect.width - 16.0f, rect.y + rect.height - 16.0f, 16.0f, 16.0f);
+
+                        var tex = resizeNormalTexture;
+
+                        if (resizingWindow != null)
+                        {
+                            if (resizingWindow == this)
+                            {
+                                if (Input.GetMouseButton(0))
+                                {
+                                    var size = new Vector2(mouse.x, mouse.y) + resizeDragHandle - new Vector2(rect.x, rect.y);
+
+                                    if (size.x < minSize.x)
+                                    {
+                                        size.x = minSize.x;
+                                    }
+
+                                    if (size.y < minSize.y)
+                                    {
+                                        size.y = minSize.y;
+                                    }
+                                    
+                                    rect.width = size.x;
+                                    rect.height = size.y;
+                                }
+                                else
+                                {
+                                    resizingWindow = null;
+                                }
+                            }
+                        }
+                        else if (resizeRect.Contains(mouse))
+                        {
+                            tex = resizeHoverTexture;
+                            if (Input.GetMouseButton(0))
+                            {
+                                resizingWindow = this;
+                                resizeDragHandle = new Vector2(rect.x + rect.width, rect.y + rect.height) - new Vector2(mouse.x, mouse.y);
+                            }
+                        }
+
+                        GUI.DrawTexture(new Rect(rect.width - 16.0f, rect.height - 16.0f, 16.0f, 16.0f), tex, ScaleMode.StretchToFill);
                     }
                 }, title);
 

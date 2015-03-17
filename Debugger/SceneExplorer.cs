@@ -38,7 +38,7 @@ namespace ModTools
         private Watches watches;
 
         public SceneExplorer()
-            : base("Scene Exporer", new Rect(128, 440, 800, 500), ModTools.skin)
+            : base("Scene Explorer", new Rect(128, 440, 800, 500), ModTools.skin)
         {
             onDraw = DrawWindow;
         }
@@ -724,20 +724,7 @@ namespace ModTools
 
         private void OnSceneTreeReflectIEnumerable(string caller, System.Object myProperty, int ident)
         {
-            var ie = myProperty as IEnumerable;
-            string s = string.Empty;
-            if (null != ie)
-            {
-                bool first = true;
-                foreach (var p in ie)
-                {
-                    if (!first)
-                        s += ", ";
-
-                    OnSceneTreeReflect(caller, myProperty, ident + 1);
-                    first = false;
-                }
-            }
+            GUILayout.Label("Not implemented!");
         }
 
         private void OnSceneTreeReflect(string caller, System.Object obj, int ident)
@@ -899,7 +886,7 @@ namespace ModTools
                 return;
             }
 
-            if (GUILayout.Button("Refresh"))
+            if (GUILayout.Button("Refresh", GUILayout.Width(256)))
             {
                 sceneRoots = FindSceneRoots();
             }
