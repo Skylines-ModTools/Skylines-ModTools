@@ -129,8 +129,6 @@ namespace ModTools
                 {
                     if (onDraw != null)
                     {
-                        GUI.DragWindow(new Rect(0, 0, 100000.0f, 30.0f));
-
                         GUILayout.Space(20.0f);
 
                         onDraw();

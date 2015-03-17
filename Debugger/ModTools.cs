@@ -26,6 +26,11 @@ namespace ModTools
         {
             Application.logMessageReceived += (condition, trace, type) =>
             {
+                if (!logExceptionsToConsole)
+                {
+                    return;
+                }
+
                 if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert)
                 {
                     Log.Error(condition);

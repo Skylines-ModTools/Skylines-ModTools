@@ -161,7 +161,6 @@ namespace ModTools
             GUI.contentColor = Color.green;
 
             GUILayout.Label("field ");
-            GUILayout.Label(field.FieldType.ToString() + " ");
 
             if (field.IsInitOnly)
             {
@@ -169,6 +168,8 @@ namespace ModTools
                 GUI.enabled = false;
                 GUILayout.Label("const ");
             }
+
+            GUILayout.Label(field.FieldType.ToString() + " ");
 
             GUI.contentColor = Color.red;
 
@@ -419,14 +420,15 @@ namespace ModTools
             GUI.contentColor = Color.green;
 
             GUILayout.Label("property ");
-            GUILayout.Label(property.PropertyType.ToString() + " ");
-
+            
             if (!property.CanWrite)
             {
                 GUI.contentColor = Color.blue;
                 GUI.enabled = false;
                 GUILayout.Label("const ");
             }
+
+            GUILayout.Label(property.PropertyType.ToString() + " ");
 
             GUI.contentColor = Color.red;
 
