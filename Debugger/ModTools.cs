@@ -5,14 +5,14 @@ using UnityEngine;
 namespace ModTools
 {
 
-    public class ModTools : MonoBehaviour, IModTools
+    public class ModTools : MonoBehaviour
     {
 
-        private Rect mainWindowRect = new Rect(128, 128, 356, 300);
+        private Rect mainWindowRect = new Rect(128, 128, 356, 260);
         private Vector2 mainScroll = Vector2.zero;
         private bool showMain = false;
 
-        private Rect watchesWindowRect = new Rect(400, 128, 800, 300);
+        private Rect watchesWindowRect = new Rect(504, 128, 800, 300);
         private Vector2 watchesScroll = Vector2.zero;
 
         private Rect sceneExplorerRect = new Rect(128, 440, 800, 500);
@@ -21,28 +21,12 @@ namespace ModTools
         private float uiScale = 1.0f;
         private float uiScaleActual = 1.0f;
 
-        private Texture2D blackTexture = new Texture2D(1, 1);
+        private Texture2D bgTexture = new Texture2D(1, 1);
 
-        private Dictionary<string, KeyValuePair<string, ButtonClicked>> customButtons = new Dictionary<string, KeyValuePair<string, ButtonClicked>>();
-
-        public void AddButton(string name, string text, ButtonClicked onClicked)
-        {
-            customButtons[name] = new KeyValuePair<string, ButtonClicked>(text, onClicked);
-        }
-
-        public void RemoveButton(string name)
-        {
-            if (customButtons.ContainsKey(name))
-            {
-                customButtons.Remove(name);
-            }
-        }
+        private GUISkin skin;
 
         void Awake()
         {
-            blackTexture.SetPixel(0, 0, Color.grey);
-            blackTexture.Apply();
-
             Application.logMessageReceived += (condition, trace, type) =>
             {
                 if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert)
@@ -60,6 +44,9 @@ namespace ModTools
                     Log.Message(condition);
                 }
             };
+
+            bgTexture.SetPixel(0, 0, Color.grey);
+            bgTexture.Apply();
         }
 
         void Update()
@@ -72,19 +59,43 @@ namespace ModTools
 
         void OnGUI()
         {
-            var defaultWindowBackgroundTexture = GUI.skin.window.normal.background;
-            GUI.skin.window.normal.background = blackTexture;
-            GUI.skin.window.onNormal.background = blackTexture;
+            if (skin == null)
+            {
+                skin = ScriptableObject.CreateInstance<GUISkin>();
+                skin.box = new GUIStyle(GUI.skin.box);
+                skin.button = new GUIStyle(GUI.skin.button);
+                skin.horizontalScrollbar = new GUIStyle(GUI.skin.horizontalScrollbar);
+                skin.horizontalScrollbarLeftButton = new GUIStyle(GUI.skin.horizontalScrollbarLeftButton);
+                skin.horizontalScrollbarRightButton = new GUIStyle(GUI.skin.horizontalScrollbarRightButton);
+                skin.horizontalScrollbarThumb = new GUIStyle(GUI.skin.horizontalScrollbarThumb);
+                skin.horizontalSlider = new GUIStyle(GUI.skin.horizontalSlider);
+                skin.horizontalSliderThumb = new GUIStyle(GUI.skin.horizontalSliderThumb);
+                skin.label = new GUIStyle(GUI.skin.label);
+                skin.scrollView = new GUIStyle(GUI.skin.scrollView);
+                skin.textArea = new GUIStyle(GUI.skin.textArea);
+                skin.textField = new GUIStyle(GUI.skin.textField);
+                skin.toggle = new GUIStyle(GUI.skin.toggle);
+                skin.verticalScrollbar = new GUIStyle(GUI.skin.verticalScrollbar);
+                skin.verticalScrollbarDownButton = new GUIStyle(GUI.skin.verticalScrollbarDownButton);
+                skin.verticalScrollbarThumb = new GUIStyle(GUI.skin.verticalScrollbarThumb);
+                skin.verticalScrollbarUpButton = new GUIStyle(GUI.skin.verticalScrollbarUpButton);
+                skin.verticalSlider = new GUIStyle(GUI.skin.verticalSlider);
+                skin.verticalSliderThumb = new GUIStyle(GUI.skin.verticalSliderThumb);
+                skin.window = new GUIStyle(GUI.skin.window);
+                skin.window.normal.background = bgTexture;
+                skin.window.onNormal.background = bgTexture;
+            }
+
+            var skinOld = GUI.skin;
+            GUI.skin = skin;
 
             var matrix = GUI.matrix;
             GUI.matrix = Matrix4x4.Scale(new Vector3(uiScaleActual, uiScaleActual, uiScaleActual));
 
-            if (!showMain)
+            if (showMain)
             {
-                return;
+                mainWindowRect = GUILayout.Window(12512, mainWindowRect, DoMainWindow, "Debugger");
             }
-
-            mainWindowRect = GUILayout.Window(12512, mainWindowRect, DoMainWindow, "Debugger");
 
             if (Watches.showWindow)
             {
@@ -96,14 +107,18 @@ namespace ModTools
                 sceneExplorerRect = GUILayout.Window(5121, sceneExplorerRect, DoSceneExplorerWindow, "Scene explorer");
             }
 
-            GUI.skin.window.normal.background = defaultWindowBackgroundTexture;
-            GUI.skin.window.onNormal.background = defaultWindowBackgroundTexture;
             GUI.matrix = matrix;
+            GUI.skin = skinOld;
         }
 
         void DoMainWindow(int wnd)
         {
             GUI.DragWindow(new Rect(0, 0, 100000.0f, 16.0f));
+
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            showMain = GUILayout.Toggle(showMain, "");
+            GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Label("UI Scale");
@@ -116,6 +131,11 @@ namespace ModTools
 
             GUILayout.EndHorizontal();
 
+            if (GUILayout.Button("Hide"))
+            {
+                showMain = false;
+            }
+
             if (GUILayout.Button("Watches"))
             {
                 Watches.showWindow = !Watches.showWindow;
@@ -124,6 +144,10 @@ namespace ModTools
             if (GUILayout.Button("Scene explorer"))
             {
                 showSceneExplorer = !showSceneExplorer;
+                if (showSceneExplorer)
+                {
+                    SceneExplorer.Refresh();
+                }
             }
 
             mainScroll = GUILayout.BeginScrollView(mainScroll);
@@ -133,11 +157,35 @@ namespace ModTools
                 throw new Exception("Hello world!");
             }
 
-            foreach (var button in customButtons)
+            var subscribers = FindObjectsOfType<MonoBehaviour>();
+            Dictionary<string, bool> set = new Dictionary<string, bool>();
+
+            foreach (var subscriber in subscribers)
             {
-                if (GUILayout.Button(button.Value.Key))
+                if (set.ContainsKey(subscriber.name))
                 {
-                    button.Value.Value();
+                    continue;
+                }
+                else
+                {
+                    set.Add(subscriber.name, true);
+                }
+
+                if (subscriber.name.StartsWith("debug:"))
+                {
+                    var tmp = subscriber.name.Split(':');
+                    if (tmp.Length != 3)
+                    {
+                        continue;
+                    }
+
+                    var method = tmp[1];
+                    var label = tmp[2];
+
+                    if (GUILayout.Button(label))
+                    {
+                        subscriber.SendMessage(method);
+                    }
                 }
             }
 
@@ -147,6 +195,12 @@ namespace ModTools
         void DoWatchesWindow(int wnd)
         {
             GUI.DragWindow(new Rect(0, 0, 100000.0f, 16.0f));
+
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            Watches.showWindow = GUILayout.Toggle(Watches.showWindow, "");
+            GUILayout.EndHorizontal();
+
             watchesScroll = GUILayout.BeginScrollView(watchesScroll);
 
             foreach (var watch in Watches.GetWatches())
@@ -155,8 +209,13 @@ namespace ModTools
 
                 var type = Watches.GetWatchType(watch);
 
-                GUILayout.Label(String.Format("{0} - {1} - Value:", watch, type.ToString()));
-
+                GUI.contentColor = Color.red;
+                GUILayout.Label(type.ToString());
+                GUI.contentColor = Color.green;
+                GUILayout.Label(watch);
+                GUI.contentColor = Color.white;
+                GUILayout.Label(" = ");
+                
                 var value = Watches.ReadWatch(watch);
 
                 if (type.ToString() == "System.Single")
@@ -195,6 +254,12 @@ namespace ModTools
                         Watches.WriteWatch(watch, f);
                     }
                 }
+                else
+                {
+                    GUILayout.Label(value.ToString());
+                }
+
+                GUILayout.FlexibleSpace();
 
                 if (GUILayout.Button("x", GUILayout.Width(24)))
                 {
@@ -210,6 +275,12 @@ namespace ModTools
         void DoSceneExplorerWindow(int wnd)
         {
             GUI.DragWindow(new Rect(0, 0, 100000.0f, 16.0f));
+
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            showSceneExplorer = GUILayout.Toggle(showSceneExplorer, "");
+            GUILayout.EndHorizontal();
+
             SceneExplorer.DrawWindow();
         }
 

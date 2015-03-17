@@ -10,12 +10,12 @@ namespace ModTools
 
         public string Name
         {
-            get { return "Debugger"; }
+            get { return "ModTools"; }
         }
 
         public string Description
         {
-            get { return "Helper plugin for mod developers"; }
+            get { return "Debugging toolkit for modders"; }
         }
 
     }

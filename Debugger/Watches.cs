@@ -62,7 +62,7 @@ namespace ModTools
                 {
                     ret = fieldWatches[name].Key.GetValue(fieldWatches[name].Value);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     return null;
                 }
@@ -91,7 +91,7 @@ namespace ModTools
                 {
                     fieldWatches[name].Key.SetValue(fieldWatches[name].Value, value);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     return;
                 }

@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ModTools</RootNamespace>
-    <AssemblyName>ModTools</AssemblyName>
+    <AssemblyName>000_ModTools</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -53,7 +53,6 @@
   <ItemGroup>
     <Compile Include="ModTools.cs" />
     <Compile Include="GUIControls.cs" />
-    <Compile Include="IModTools.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Mod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -66,7 +65,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy ModTools.dll "C:\Users\nlight\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\ModTools\"</PostBuildEvent>
+    <PostBuildEvent>copy 000_ModTools.dll "C:\Users\nlight\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\000_ModTools\"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
