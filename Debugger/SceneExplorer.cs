@@ -187,7 +187,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.Single")
             {
                 var f = (float) value;
-                GUIControls.FloatField("", ref f, 0.0f, true, true);
+                GUIControls.FloatField(caller+field.Name, "", ref f, 0.0f, true, true);
                 if(f != (float)value)
                 {
                     field.SetValue(obj, f);
@@ -196,7 +196,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.Double")
             {
                 var f = (double)value;
-                GUIControls.DoubleField("", ref f, 0.0f, true, true);
+                GUIControls.DoubleField(caller + field.Name, "", ref f, 0.0f, true, true);
                 if (f != (double)value)
                 {
                     field.SetValue(obj, f);
@@ -205,7 +205,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.Byte")
             {
                 var f = (byte)value;
-                GUIControls.ByteField("", ref f, 0.0f, true, true);
+                GUIControls.ByteField(caller + field.Name, "", ref f, 0.0f, true, true);
                 if (f != (byte)value)
                 {
                     field.SetValue(obj, f);
@@ -214,7 +214,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.Int32")
             {
                 var f = (int)value;
-                GUIControls.IntField("", ref f, 0.0f, true, true);
+                GUIControls.IntField(caller + field.Name, "", ref f, 0.0f, true, true);
                 if (f != (int)value)
                 {
                     field.SetValue(obj, f);
@@ -223,7 +223,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.UInt32")
             {
                 var f = (uint)value;
-                GUIControls.UIntField("", ref f, 0.0f, true, true);
+                GUIControls.UIntField(caller + field.Name, "", ref f, 0.0f, true, true);
                 if (f != (uint)value)
                 {
                     field.SetValue(obj, f);
@@ -232,7 +232,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.Int64")
             {
                 var f = (Int64)value;
-                GUIControls.Int64Field("", ref f, 0.0f, true, true);
+                GUIControls.Int64Field(caller + field.Name, "", ref f, 0.0f, true, true);
                 if (f != (Int64)value)
                 {
                     field.SetValue(obj, f);
@@ -241,7 +241,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.UInt64")
             {
                 var f = (UInt64)value;
-                GUIControls.UInt64Field("", ref f, 0.0f, true, true);
+                GUIControls.UInt64Field(caller + field.Name, "", ref f, 0.0f, true, true);
                 if (f != (UInt64)value)
                 {
                     field.SetValue(obj, f);
@@ -250,7 +250,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.Int16")
             {
                 var f = (Int16)value;
-                GUIControls.Int16Field("", ref f, 0.0f, true, true);
+                GUIControls.Int16Field(caller + field.Name, "", ref f, 0.0f, true, true);
                 if (f != (Int16)value)
                 {
                     field.SetValue(obj, f);
@@ -259,7 +259,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.UInt16")
             {
                 var f = (UInt16)value;
-                GUIControls.UInt16Field("", ref f, 0.0f, true, true);
+                GUIControls.UInt16Field(caller + field.Name, "", ref f, 0.0f, true, true);
                 if (f != (UInt16)value)
                 {
                     field.SetValue(obj, f);
@@ -277,7 +277,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.String")
             {
                 var f = (string)value;
-                GUIControls.StringField("", ref f, 0.0f, true, true);
+                GUIControls.StringField(caller + field.Name, "", ref f, 0.0f, true, true);
                 if (f != (string)value)
                 {
                     field.SetValue(obj, f);
@@ -286,7 +286,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.Char")
             {
                 var f = (char)value;
-                GUIControls.CharField("", ref f, 0.0f, true, true);
+                GUIControls.CharField(caller + field.Name, "", ref f, 0.0f, true, true);
                 if (f != (char)value)
                 {
                     field.SetValue(obj, f);
@@ -295,7 +295,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "UnityEngine.Vector2")
             {
                 var f = (Vector2)value;
-                GUIControls.Vector2Field("", ref f, 0.0f, null, true, true);
+                GUIControls.Vector2Field(caller + field.Name, "", ref f, 0.0f, null, true, true);
                 if (f != (Vector2)value)
                 {
                     field.SetValue(obj, f);
@@ -304,7 +304,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "UnityEngine.Vector3")
             {
                 var f = (Vector3)value;
-                GUIControls.Vector3Field("", ref f, 0.0f, null, true, true);
+                GUIControls.Vector3Field(caller + field.Name, "", ref f, 0.0f, null, true, true);
                 if (f != (Vector3)value)
                 {
                     field.SetValue(obj, f);
@@ -313,7 +313,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "UnityEngine.Vector4")
             {
                 var f = (Vector4)value;
-                GUIControls.Vector4Field("", ref f, 0.0f, null, true, true);
+                GUIControls.Vector4Field(caller + field.Name, "", ref f, 0.0f, null, true, true);
                 if (f != (Vector4)value)
                 {
                     field.SetValue(obj, f);
@@ -322,7 +322,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "UnityEngine.Quaternion")
             {
                 var f = (Quaternion)value;
-                GUIControls.QuaternionField("", ref f, 0.0f, null, true, true);
+                GUIControls.QuaternionField(caller + field.Name, "", ref f, 0.0f, null, true, true);
                 if (f != (Quaternion)value)
                 {
                     field.SetValue(obj, f);
@@ -331,7 +331,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "UnityEngine.Color")
             {
                 var f = (Color)value;
-                GUIControls.ColorField("", ref f, 0.0f, null, true, true);
+                GUIControls.ColorField(caller + field.Name, "", ref f, 0.0f, null, true, true);
                 if (f != (Color)value)
                 {
                     field.SetValue(obj, f);
@@ -340,7 +340,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "UnityEngine.Color32")
             {
                 var f = (Color32)value;
-                GUIControls.Color32Field("", ref f, 0.0f, null, true, true);
+                GUIControls.Color32Field(caller + field.Name, "", ref f, 0.0f, null, true, true);
                 var v = (Color32) value;
                 if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
                 {
@@ -445,7 +445,7 @@ namespace ModTools
             else if (property.PropertyType.ToString() == "System.Single")
             {
                 var f = (float)value;
-                GUIControls.FloatField("", ref f, 0.0f, true, true);
+                GUIControls.FloatField(caller + property.Name, "", ref f, 0.0f, true, true);
                 if (f != (float)value)
                 {
                     property.SetValue(obj, f, null);
@@ -454,7 +454,7 @@ namespace ModTools
             else if (property.PropertyType.ToString() == "System.Double")
             {
                 var f = (double)value;
-                GUIControls.DoubleField("", ref f, 0.0f, true, true);
+                GUIControls.DoubleField(caller + property.Name, "", ref f, 0.0f, true, true);
                 if (f != (double)value)
                 {
                     property.SetValue(obj, f, null);
@@ -463,7 +463,7 @@ namespace ModTools
             else if (property.PropertyType.ToString() == "System.Byte")
             {
                 var f = (byte)value;
-                GUIControls.ByteField("", ref f, 0.0f, true, true);
+                GUIControls.ByteField(caller + property.Name, "", ref f, 0.0f, true, true);
                 if (f != (byte)value)
                 {
                     property.SetValue(obj, f, null);
@@ -472,7 +472,7 @@ namespace ModTools
             else if (property.PropertyType.ToString() == "System.Int32")
             {
                 var f = (int)value;
-                GUIControls.IntField("", ref f, 0.0f, true, true);
+                GUIControls.IntField(caller + property.Name, "", ref f, 0.0f, true, true);
                 if (f != (int)value)
                 {
                     property.SetValue(obj, f, null);
@@ -481,7 +481,7 @@ namespace ModTools
             else if (property.PropertyType.ToString() == "System.UInt32")
             {
                 var f = (uint)value;
-                GUIControls.UIntField("", ref f, 0.0f, true, true);
+                GUIControls.UIntField(caller + property.Name, "", ref f, 0.0f, true, true);
                 if (f != (uint)value)
                 {
                     property.SetValue(obj, f, null);
@@ -490,7 +490,7 @@ namespace ModTools
             else if (property.PropertyType.ToString() == "System.Int64")
             {
                 var f = (Int64)value;
-                GUIControls.Int64Field("", ref f, 0.0f, true, true);
+                GUIControls.Int64Field(caller + property.Name, "", ref f, 0.0f, true, true);
                 if (f != (Int64)value)
                 {
                     property.SetValue(obj, f, null);
@@ -499,7 +499,7 @@ namespace ModTools
             else if (property.PropertyType.ToString() == "System.UInt64")
             {
                 var f = (UInt64)value;
-                GUIControls.UInt64Field("", ref f, 0.0f, true, true);
+                GUIControls.UInt64Field(caller + property.Name, "", ref f, 0.0f, true, true);
                 if (f != (UInt64)value)
                 {
                     property.SetValue(obj, f, null);
@@ -508,7 +508,7 @@ namespace ModTools
             else if (property.PropertyType.ToString() == "System.Int16")
             {
                 var f = (Int16)value;
-                GUIControls.Int16Field("", ref f, 0.0f, true, true);
+                GUIControls.Int16Field(caller + property.Name, "", ref f, 0.0f, true, true);
                 if (f != (Int16)value)
                 {
                     property.SetValue(obj, f, null);
@@ -517,7 +517,7 @@ namespace ModTools
             else if (property.PropertyType.ToString() == "System.UInt16")
             {
                 var f = (UInt16)value;
-                GUIControls.UInt16Field("", ref f, 0.0f, true, true);
+                GUIControls.UInt16Field(caller + property.Name, "", ref f, 0.0f, true, true);
                 if (f != (UInt16)value)
                 {
                     property.SetValue(obj, f, null);
@@ -535,7 +535,7 @@ namespace ModTools
             else if (property.PropertyType.ToString() == "System.String")
             {
                 var f = (string)value;
-                GUIControls.StringField("", ref f, 0.0f, true, true);
+                GUIControls.StringField(caller + property.Name, "", ref f, 0.0f, true, true);
                 if (f != (string)value)
                 {
                     property.SetValue(obj, f, null);
@@ -544,7 +544,7 @@ namespace ModTools
             else if (property.PropertyType.ToString() == "System.Char")
             {
                 var f = (char)value;
-                GUIControls.CharField("", ref f, 0.0f, true, true);
+                GUIControls.CharField(caller + property.Name, "", ref f, 0.0f, true, true);
                 if (f != (char)value)
                 {
                     property.SetValue(obj, f, null);
@@ -553,7 +553,7 @@ namespace ModTools
             else if (property.PropertyType.ToString() == "UnityEngine.Vector2")
             {
                 var f = (Vector2)value;
-                GUIControls.Vector2Field("", ref f, 0.0f, null, true, true);
+                GUIControls.Vector2Field(caller + property.Name, "", ref f, 0.0f, null, true, true);
                 if (f != (Vector2)value)
                 {
                     property.SetValue(obj, f, null);
@@ -562,7 +562,7 @@ namespace ModTools
             else if (property.PropertyType.ToString() == "UnityEngine.Vector3")
             {
                 var f = (Vector3)value;
-                GUIControls.Vector3Field("", ref f, 0.0f, null, true, true);
+                GUIControls.Vector3Field(caller + property.Name, "", ref f, 0.0f, null, true, true);
                 if (f != (Vector3)value)
                 {
                     property.SetValue(obj, f, null);
@@ -571,7 +571,7 @@ namespace ModTools
             else if (property.PropertyType.ToString() == "UnityEngine.Vector4")
             {
                 var f = (Vector4)value;
-                GUIControls.Vector4Field("", ref f, 0.0f, null, true, true);
+                GUIControls.Vector4Field(caller + property.Name, "", ref f, 0.0f, null, true, true);
                 if (f != (Vector4)value)
                 {
                     property.SetValue(obj, f, null);
@@ -580,7 +580,7 @@ namespace ModTools
             else if (property.PropertyType.ToString() == "UnityEngine.Quaternion")
             {
                 var f = (Quaternion)value;
-                GUIControls.QuaternionField("", ref f, 0.0f, null, true, true);
+                GUIControls.QuaternionField(caller + property.Name, "", ref f, 0.0f, null, true, true);
                 if (f != (Quaternion)value)
                 {
                     property.SetValue(obj, f, null);
@@ -589,7 +589,7 @@ namespace ModTools
             else if (property.PropertyType.ToString() == "UnityEngine.Color")
             {
                 var f = (Color)value;
-                GUIControls.ColorField("", ref f, 0.0f, null, true, true);
+                GUIControls.ColorField(caller + property.Name, "", ref f, 0.0f, null, true, true);
                 if (f != (Color)value)
                 {
                     property.SetValue(obj, f, null);
@@ -598,7 +598,7 @@ namespace ModTools
             else if (property.PropertyType.ToString() == "UnityEngine.Color32")
             {
                 var f = (Color32)value;
-                GUIControls.Color32Field("", ref f, 0.0f, null, true, true);
+                GUIControls.Color32Field(caller + property.Name, "", ref f, 0.0f, null, true, true);
                 var v = (Color32)value;
                 if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
                 {
@@ -681,7 +681,7 @@ namespace ModTools
             GUILayout.EndHorizontal();
         }
 
-        private void OnSceneTreeReflectUnityEngineVector2(string name, ref UnityEngine.Vector2 vec, int ident)
+        private void OnSceneTreeReflectUnityEngineVector2(string hash, string name, ref UnityEngine.Vector2 vec, int ident)
         {
             if (ident >= 12)
             {
@@ -700,8 +700,8 @@ namespace ModTools
             GUILayout.Label(name);
 
             GUILayout.BeginVertical();
-            GUIControls.FloatField("x", ref vec.x);
-            GUIControls.FloatField("y", ref vec.y);
+            GUIControls.FloatField(hash+".x", "x", ref vec.x);
+            GUIControls.FloatField(hash+".y", "y", ref vec.y);
             GUILayout.EndVertical();
 
             GUILayout.FlexibleSpace();
@@ -719,7 +719,7 @@ namespace ModTools
                 return;
             }
 
-            GUIControls.Vector3Field(name, ref vec, treeIdentSpacing * ident, () =>
+            GUIControls.Vector3Field(caller+name, name, ref vec, treeIdentSpacing * ident, () =>
             {
                 try
                 {
@@ -732,7 +732,7 @@ namespace ModTools
             });
         }
 
-        private void OnSceneTreeReflectUnityEngineVector4(string name, ref UnityEngine.Vector4 vec, int ident)
+        private void OnSceneTreeReflectUnityEngineVector4(string caller, string name, ref UnityEngine.Vector4 vec, int ident)
         {
             if (ident >= 12)
             {
@@ -743,35 +743,7 @@ namespace ModTools
                 return;
             }
 
-            GUIControls.Vector4Field(name, ref vec, treeIdentSpacing * ident);
-        }
-
-        private void OnSceneTreeReflectFloat(string name, ref float value, int ident)
-        {
-            if (ident >= 12)
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * ident);
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
-
-            GUIControls.FloatField(name, ref value, treeIdentSpacing * ident);
-        }
-
-        private void OnSceneTreeReflectInt(string name, ref int value, int ident)
-        {
-            if (ident >= 12)
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * ident);
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
-
-            GUIControls.IntField(name, ref value, treeIdentSpacing * ident);
+            GUIControls.Vector4Field(caller+name, name, ref vec, treeIdentSpacing * ident);
         }
 
         private void OnSceneTreeReflectBool(string name, ref bool value, int ident)
@@ -796,28 +768,17 @@ namespace ModTools
                 return;
             }
 
-            GUI.enabled = false;
-            var childCount = transform.childCount;
-            OnSceneTreeReflectInt("childCount", ref childCount, ident + 1);
-
-            var eulerAngles = transform.eulerAngles;
-            OnSceneTreeReflectUnityEngineVector3(caller, transform, "eulerAngles", ref eulerAngles, ident + 1);
-            GUI.enabled = true;
-
             var localPosition = transform.localPosition;
             OnSceneTreeReflectUnityEngineVector3(caller, transform, "localPosition", ref localPosition, ident + 1);
             transform.localPosition = localPosition;
 
-            var localEulerAngles = transform.localEulerAngles;
-            OnSceneTreeReflectUnityEngineVector3(caller, transform, "localEulerAngles", ref eulerAngles, ident + 1);
-            transform.localEulerAngles = localEulerAngles;
+            var localEulerAngles = transform.eulerAngles;
+            OnSceneTreeReflectUnityEngineVector3(caller, transform, "localEulerAngles", ref localEulerAngles, ident + 1);
+            transform.eulerAngles = localEulerAngles;
 
             var localScale = transform.localScale;
             OnSceneTreeReflectUnityEngineVector3(caller, transform, "localScale", ref localScale, ident + 1);
             transform.localScale = localScale;
-
-            var lossyScale = transform.lossyScale;
-            OnSceneTreeReflectUnityEngineVector3(caller, transform, "lossyScale", ref lossyScale, ident + 1);
 
             var forward = transform.forward;
             OnSceneTreeReflectUnityEngineVector3(caller, transform, "forward", ref forward, ident + 1);
@@ -825,9 +786,11 @@ namespace ModTools
 
             var right = transform.right;
             OnSceneTreeReflectUnityEngineVector3(caller, transform, "right", ref right, ident + 1);
+            transform.right = right;
 
             var up = transform.up;
             OnSceneTreeReflectUnityEngineVector3(caller, transform, "up", ref up, ident + 1);
+            transform.up = up;
         }
 
         private bool IsEnumerable(object myProperty)
@@ -1132,7 +1095,7 @@ namespace ModTools
 
             GUILayout.EndHorizontal();
 
-            GUIControls.StringField("Filter", ref nameFilter, 0.0f, true, true);
+            GUIControls.StringField("ModTools.NameFilter", "Filter", ref nameFilter, 0.0f, true, true);
 
             bool filterGameObject = filterType == FilterType.GameObjects;
             bool filterComponent = filterType == FilterType.Components;

@@ -10,21 +10,50 @@ namespace ModTools
 
         public delegate void WatchButtonCallback();
 
-        public static bool IsHot()
+        public static bool IsHot(string hash)
         {
-            return GUIUtility.hotControl == GUIUtility.GetControlID(FocusType.Keyboard) + 1;
+            return hash == GUI.GetNameOfFocusedControl();
         }
 
-        public static int CurrentControlId()
+        public static string HotControl()
         {
-            return GUIUtility.GetControlID(FocusType.Keyboard) + 1;
+            return GUI.GetNameOfFocusedControl();
         }
 
-        public static int currentHotControl = -1;
-
+        public static string currentHotControl = null;
         public static string hotControlBuffer = "";
 
-        public static void FloatField(string name, ref float value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
+        public static string BufferedTextField(string hash, string value)
+        {
+            GUI.SetNextControlName(hash);
+            bool isHot = IsHot(hash);
+
+            string newBuffer = GUILayout.TextField(isHot ? hotControlBuffer : value.ToString(), GUILayout.Width(fieldSize));
+            string res = null;
+
+            if (isHot)
+            {
+                if (currentHotControl == null)
+                {
+                    currentHotControl = hash;
+                    hotControlBuffer = value;
+                }
+                else
+                {
+                    hotControlBuffer = newBuffer;
+                }
+            }
+            else if (currentHotControl == hash)
+            {
+                res = hotControlBuffer;
+                currentHotControl = null;
+                hotControlBuffer = "";
+            }
+
+            return res;
+        }
+
+        public static void FloatField(string hash, string name, ref float value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -49,39 +78,20 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            bool isHot = IsHot();
-
-            if (isHot)
-            {
-                if (currentHotControl == -1)
-                {
-                    currentHotControl = GUIUtility.hotControl;
-                    hotControlBuffer = value.ToString();
-                }
-            }
-            else if (currentHotControl == CurrentControlId())
+            string result = BufferedTextField(hash, value.ToString());
+            if (result != null)
             {
                 float newValue;
-                if (float.TryParse(hotControlBuffer, out newValue))
+                if (float.TryParse(result, out newValue))
                 {
                     value = newValue;
                 }
-
-                currentHotControl = -1;
-                hotControlBuffer = "";
             }
-            
-            string newBuffer = GUILayout.TextField(isHot ? hotControlBuffer : value.ToString(), GUILayout.Width(fieldSize));
-
-            if (isHot)
-            {
-                hotControlBuffer = newBuffer;
-;           }
 
             GUILayout.EndHorizontal();
         }
 
-        static public void DoubleField(string name, ref double value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
+        static public void DoubleField(string hash, string name, ref double value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -104,21 +114,22 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            double oldValue = value;
-            string oldValueString = value.ToString();
             GUI.contentColor = Color.white;
 
-            string newValue = GUILayout.TextField(oldValueString, GUILayout.Width(fieldSize));
-
-            if (oldValueString != newValue && !double.TryParse(newValue, out value))
+            string result = BufferedTextField(hash, value.ToString());
+            if (result != null)
             {
-                value = oldValue;
+                double newValue;
+                if (double.TryParse(result, out newValue))
+                {
+                    value = newValue;
+                }
             }
 
             GUILayout.EndHorizontal();
         }
 
-        static public void ByteField(string name, ref byte value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
+        static public void ByteField(string hash, string name, ref byte value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -145,17 +156,20 @@ namespace ModTools
             byte oldValue = value;
 
             GUI.contentColor = Color.white;
-            string newValue = GUILayout.TextField(value.ToString(), GUILayout.Width(fieldSize));
-            if (!byte.TryParse(newValue, out value))
+            string result = BufferedTextField(hash, value.ToString());
+            if (result != null)
             {
-                value = oldValue;
+                byte newValue;
+                if (byte.TryParse(result, out newValue))
+                {
+                    value = newValue;
+                }
             }
 
             GUILayout.EndHorizontal();
-            GUI.contentColor = Color.white;
         }
 
-        static public void IntField(string name, ref int value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
+        static public void IntField(string hash, string name, ref int value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -179,20 +193,23 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            int oldValue = value;
-
             GUI.contentColor = Color.white;
-            string newValue = GUILayout.TextField(value.ToString(), GUILayout.Width(fieldSize));
-            if (!int.TryParse(newValue, out value))
+
+            string result = BufferedTextField(hash, value.ToString());
+            if (result != null)
             {
-                value = oldValue;
+                int newValue;
+                if (int.TryParse(result, out newValue))
+                {
+                    value = newValue;
+                }
             }
 
             GUILayout.EndHorizontal();
             GUI.contentColor = Color.white;
         }
 
-        static public void UIntField(string name, ref uint value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
+        static public void UIntField(string hash, string name, ref uint value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -216,20 +233,23 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            uint oldValue = value;
-
             GUI.contentColor = Color.white;
-            string newValue = GUILayout.TextField(value.ToString(), GUILayout.Width(fieldSize));
-            if (!uint.TryParse(newValue, out value))
+
+            string result = BufferedTextField(hash, value.ToString());
+            if (result != null)
             {
-                value = oldValue;
+                uint newValue;
+                if (uint.TryParse(result, out newValue))
+                {
+                    value = newValue;
+                }
             }
 
             GUILayout.EndHorizontal();
             GUI.contentColor = Color.white;
         }
 
-        static public void Int64Field(string name, ref Int64 value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
+        static public void Int64Field(string hash, string name, ref Int64 value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -253,20 +273,22 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            Int64 oldValue = value;
-
             GUI.contentColor = Color.white;
-            string newValue = GUILayout.TextField(value.ToString(), GUILayout.Width(fieldSize));
-            if (!Int64.TryParse(newValue, out value))
+
+            string result = BufferedTextField(hash, value.ToString());
+            if (result != null)
             {
-                value = oldValue;
+                Int64 newValue;
+                if (Int64.TryParse(result, out newValue))
+                {
+                    value = newValue;
+                }
             }
 
             GUILayout.EndHorizontal();
-            GUI.contentColor = Color.white;
         }
 
-        static public void UInt64Field(string name, ref UInt64 value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
+        static public void UInt64Field(string hash, string name, ref UInt64 value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -290,20 +312,22 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            UInt64 oldValue = value;
-
             GUI.contentColor = Color.white;
-            string newValue = GUILayout.TextField(value.ToString(), GUILayout.Width(fieldSize));
-            if (!UInt64.TryParse(newValue, out value))
+
+            string result = BufferedTextField(hash, value.ToString());
+            if (result != null)
             {
-                value = oldValue;
+                UInt64 newValue;
+                if (UInt64.TryParse(result, out newValue))
+                {
+                    value = newValue;
+                }
             }
 
             GUILayout.EndHorizontal();
-            GUI.contentColor = Color.white;
         }
 
-        static public void Int16Field(string name, ref Int16 value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
+        static public void Int16Field(string hash, string name, ref Int16 value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -330,17 +354,22 @@ namespace ModTools
             Int16 oldValue = value;
 
             GUI.contentColor = Color.white;
-            string newValue = GUILayout.TextField(value.ToString(), GUILayout.Width(fieldSize));
-            if (!Int16.TryParse(newValue, out value))
+
+            string result = BufferedTextField(hash, value.ToString());
+            if (result != null)
             {
-                value = oldValue;
+                Int16 newValue;
+                if (Int16.TryParse(result, out newValue))
+                {
+                    value = newValue;
+                }
             }
 
             GUILayout.EndHorizontal();
             GUI.contentColor = Color.white;
         }
 
-        static public void UInt16Field(string name, ref UInt16 value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
+        static public void UInt16Field(string hash, string name, ref UInt16 value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -367,17 +396,21 @@ namespace ModTools
             UInt16 oldValue = value;
 
             GUI.contentColor = Color.white;
-            string newValue = GUILayout.TextField(value.ToString(), GUILayout.Width(fieldSize));
-            if (!UInt16.TryParse(newValue, out value))
+
+            string result = BufferedTextField(hash, value.ToString());
+            if (result != null)
             {
-                value = oldValue;
+                UInt16 newValue;
+                if (UInt16.TryParse(result, out newValue))
+                {
+                    value = newValue;
+                }
             }
 
             GUILayout.EndHorizontal();
-            GUI.contentColor = Color.white;
         }
 
-        static public void StringField(string name, ref string value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
+        static public void StringField(string hash, string name, ref string value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -399,12 +432,18 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
             GUI.contentColor = Color.white;
-            value = GUILayout.TextField(value, GUILayout.Width(fieldSize));
+
+            string result = BufferedTextField(hash, value.ToString());
+            if (result != null)
+            {
+                value = result;
+            }
+
             GUILayout.EndHorizontal();
             GUI.contentColor = Color.white;
         }
 
-        static public void CharField(string name, ref char value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
+        static public void CharField(string hash, string name, ref char value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -426,9 +465,14 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
             GUI.contentColor = Color.white;
-            value = GUILayout.TextField(""+value, GUILayout.Width(fieldSize))[0];
+
+            string result = BufferedTextField(hash, value.ToString());
+            if (result != null)
+            {
+                value = result[0];
+            }
+
             GUILayout.EndHorizontal();
-            GUI.contentColor = Color.white;
         }
 
         static public void BoolField(string name, ref bool value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
@@ -460,7 +504,7 @@ namespace ModTools
             GUI.contentColor = Color.white;
         }
 
-        static public void Vector2Field(string name, ref Vector2 value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
+        static public void Vector2Field(string hash, string name, ref Vector2 value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -484,8 +528,8 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            FloatField("x", ref value.x, 0.0f, true, true);
-            FloatField("y", ref value.y, 0.0f, true, true);
+            FloatField(hash+".x", "x", ref value.x, 0.0f, true, true);
+            FloatField(hash+".y", "y", ref value.y, 0.0f, true, true);
 
             if (watch != null)
             {
@@ -499,7 +543,7 @@ namespace ModTools
             GUI.contentColor = Color.white;
         }
 
-        static public void Vector3Field(string name, ref Vector3 value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
+        static public void Vector3Field(string hash, string name, ref Vector3 value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -523,9 +567,9 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            FloatField("x", ref value.x, 0.0f, true, true);
-            FloatField("y", ref value.y, 0.0f, true, true);
-            FloatField("z", ref value.z, 0.0f, true, true);
+            FloatField(hash+".x", "x", ref value.x, 0.0f, true, true);
+            FloatField(hash+".y", "y", ref value.y, 0.0f, true, true);
+            FloatField(hash+".z", "z", ref value.z, 0.0f, true, true);
 
             if (watch != null)
             {
@@ -539,7 +583,7 @@ namespace ModTools
             GUI.contentColor = Color.white;
         }
 
-        static public void Vector4Field(string name, ref Vector4 value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
+        static public void Vector4Field(string hash, string name, ref Vector4 value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -563,10 +607,10 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            FloatField("x", ref value.x, 0.0f, true, true);
-            FloatField("y", ref value.y, 0.0f, true, true);
-            FloatField("z", ref value.z, 0.0f, true, true);
-            FloatField("w", ref value.w, 0.0f, true, true);
+            FloatField(hash+".x", "x", ref value.x, 0.0f, true, true);
+            FloatField(hash+".y", "y", ref value.y, 0.0f, true, true);
+            FloatField(hash+".z", "z", ref value.z, 0.0f, true, true);
+            FloatField(hash+".w", "w", ref value.w, 0.0f, true, true);
 
             if (watch != null)
             {
@@ -580,7 +624,7 @@ namespace ModTools
             GUI.contentColor = Color.white;
         }
 
-        static public void QuaternionField(string name, ref Quaternion value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
+        static public void QuaternionField(string hash, string name, ref Quaternion value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -606,9 +650,9 @@ namespace ModTools
 
             var euler = value.eulerAngles;
 
-            FloatField("x", ref euler.x, 0.0f, true, true);
-            FloatField("y", ref euler.y, 0.0f, true, true);
-            FloatField("z", ref euler.z, 0.0f, true, true);
+            FloatField(hash+".x", "x", ref euler.x, 0.0f, true, true);
+            FloatField(hash+".y", "y", ref euler.y, 0.0f, true, true);
+            FloatField(hash+".z", "z", ref euler.z, 0.0f, true, true);
 
             if (euler != value.eulerAngles)
             {
@@ -627,7 +671,7 @@ namespace ModTools
             GUI.contentColor = Color.white;
         }
 
-        static public void ColorField(string name, ref Color value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
+        static public void ColorField(string hash, string name, ref Color value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -651,10 +695,10 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            FloatField("r", ref value.r, 0.0f, true, true);
-            FloatField("g", ref value.g, 0.0f, true, true);
-            FloatField("b", ref value.b, 0.0f, true, true);
-            FloatField("a", ref value.a, 0.0f, true, true);
+            FloatField(hash+".r", "r", ref value.r, 0.0f, true, true);
+            FloatField(hash + ".g", "g", ref value.g, 0.0f, true, true);
+            FloatField(hash + ".b", "b", ref value.b, 0.0f, true, true);
+            FloatField(hash + ".a", "a", ref value.a, 0.0f, true, true);
 
             if (watch != null)
             {
@@ -668,7 +712,7 @@ namespace ModTools
             GUI.contentColor = Color.white;
         }
 
-        static public void Color32Field(string name, ref Color32 value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
+        static public void Color32Field(string hash, string name, ref Color32 value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -692,10 +736,10 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            ByteField("r", ref value.r, 0.0f, true, true);
-            ByteField("g", ref value.g, 0.0f, true, true);
-            ByteField("b", ref value.b, 0.0f, true, true);
-            ByteField("a", ref value.a, 0.0f, true, true);
+            ByteField(hash+".r", "r", ref value.r, 0.0f, true, true);
+            ByteField(hash+".g", "g", ref value.g, 0.0f, true, true);
+            ByteField(hash+".b", "b", ref value.b, 0.0f, true, true);
+            ByteField(hash+".a", "a", ref value.a, 0.0f, true, true);
 
             if (watch != null)
             {
