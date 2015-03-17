@@ -51,6 +51,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GUIWindow.cs" />
     <Compile Include="ModTools.cs" />
     <Compile Include="GUIControls.cs" />
     <Compile Include="Log.cs" />

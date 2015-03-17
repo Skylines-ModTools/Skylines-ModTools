@@ -8,7 +8,7 @@ using UnityEngine;
 namespace ModTools
 {
 
-    public class SceneExplorer
+    public class SceneExplorer : GUIWindow
     {
 
         public enum FilterType
@@ -18,29 +18,37 @@ namespace ModTools
             Components
         }
 
-        private static float treeIdentSpacing = 16.0f;
+        private float treeIdentSpacing = 16.0f;
 
-        private static Dictionary<int, bool> expanded = new Dictionary<int, bool>();
-        private static Dictionary<int, bool> expandedComponents = new Dictionary<int, bool>();
-        private static Dictionary<int, bool> expandedObjects = new Dictionary<int, bool>();
+        private Dictionary<int, bool> expanded = new Dictionary<int, bool>();
+        private Dictionary<int, bool> expandedComponents = new Dictionary<int, bool>();
+        private Dictionary<int, bool> expandedObjects = new Dictionary<int, bool>();
 
-        private static Dictionary<GameObject, bool> sceneRoots = new Dictionary<GameObject, bool>();
+        private Dictionary<GameObject, bool> sceneRoots = new Dictionary<GameObject, bool>();
 
-        private static Vector2 scrollPosition = Vector2.zero;
+        private Vector2 scrollPosition = Vector2.zero;
 
-        private static bool showFields = true;
-        private static bool showProperties = true;
-        private static bool showMethods = false;
+        private bool showFields = true;
+        private bool showProperties = true;
+        private bool showMethods = false;
 
-        private static string nameFilter = "";
-        private static FilterType filterType = FilterType.GameObjects;
+        private string nameFilter = "";
+        private FilterType filterType = FilterType.GameObjects;
 
-        public static void Refresh()
+        private Watches watches;
+
+        public SceneExplorer()
+            : base("Scene Exporer", new Rect(128, 440, 800, 500), ModTools.skin)
+        {
+            onDraw = DrawWindow;
+        }
+
+        public void Refresh()
         {
             sceneRoots = FindSceneRoots();
         }
 
-        private static Dictionary<GameObject, bool> FindSceneRoots()
+        private Dictionary<GameObject, bool> FindSceneRoots()
         {
             Dictionary<GameObject, bool> roots = new Dictionary<GameObject, bool>();
 
@@ -56,7 +64,7 @@ namespace ModTools
             return roots;
         }
 
-        private static bool IsBuiltInType(Type t)
+        private bool IsBuiltInType(Type t)
         {
             switch (t.ToString())
             {
@@ -75,6 +83,7 @@ namespace ModTools
                 case "UnityEngine.Vector2":
                 case "UnityEngine.Vector3":
                 case "UnityEngine.Vector4":
+                case "UnityEngine.Quaternion":
                 case "UnityEngine.Color":
                 case "UnityEngine.Color32":
                     return true;
@@ -83,7 +92,7 @@ namespace ModTools
             return false;
         }
 
-        private static bool IsReflectableType(Type t)
+        private bool IsReflectableType(Type t)
         {
             if (IsBuiltInType(t))
             {
@@ -98,7 +107,7 @@ namespace ModTools
             return true;
         }
 
-        private static void OnSceneTreeReflectField(string caller, System.Object obj, FieldInfo field, int ident)
+        private void OnSceneTreeReflectField(string caller, System.Object obj, FieldInfo field, int ident)
         {
             if (obj == null || field == null)
             {
@@ -276,6 +285,24 @@ namespace ModTools
                     field.SetValue(obj, f);
                 }
             }
+            else if (field.FieldType.ToString() == "UnityEngine.Vector4")
+            {
+                var f = (Vector4)value;
+                GUIControls.Vector4Field("", ref f, 0.0f, null, true, true);
+                if (f != (Vector4)value)
+                {
+                    field.SetValue(obj, f);
+                }
+            }
+            else if (field.FieldType.ToString() == "UnityEngine.Quaternion")
+            {
+                var f = (Quaternion)value;
+                GUIControls.QuaternionField("", ref f, 0.0f, null, true, true);
+                if (f != (Quaternion)value)
+                {
+                    field.SetValue(obj, f);
+                }
+            }
             else if (field.FieldType.ToString() == "UnityEngine.Color")
             {
                 var f = (Color)value;
@@ -300,7 +327,7 @@ namespace ModTools
 
             if (GUILayout.Button("Watch"))
             {
-                Watches.AddWatch(caller + "." + field.Name, field, obj);
+                watches.AddWatch(caller + "." + field.Name, field, obj);
             }
 
             GUILayout.EndHorizontal();
@@ -322,7 +349,7 @@ namespace ModTools
             }
         }
 
-        private static void OnSceneTreeReflectProperty(string caller, System.Object obj, PropertyInfo property, int ident)
+        private void OnSceneTreeReflectProperty(string caller, System.Object obj, PropertyInfo property, int ident)
         {
             if (obj == null || property == null)
             {
@@ -489,12 +516,49 @@ namespace ModTools
                     property.SetValue(obj, f, null);
                 }
             }
+            else if (property.PropertyType.ToString() == "UnityEngine.Vector4")
+            {
+                var f = (Vector4)value;
+                GUIControls.Vector4Field("", ref f, 0.0f, null, true, true);
+                if (f != (Vector4)value)
+                {
+                    property.SetValue(obj, f, null);
+                }
+            }
+            else if (property.PropertyType.ToString() == "UnityEngine.Quaternion")
+            {
+                var f = (Quaternion)value;
+                GUIControls.QuaternionField("", ref f, 0.0f, null, true, true);
+                if (f != (Quaternion)value)
+                {
+                    property.SetValue(obj, f, null);
+                }
+            }
+            else if (property.PropertyType.ToString() == "UnityEngine.Color")
+            {
+                var f = (Color)value;
+                GUIControls.ColorField("", ref f, 0.0f, null, true, true);
+                if (f != (Color)value)
+                {
+                    property.SetValue(obj, f, null);
+                }
+            }
+            else if (property.PropertyType.ToString() == "UnityEngine.Color32")
+            {
+                var f = (Color32)value;
+                GUIControls.Color32Field("", ref f, 0.0f, null, true, true);
+                var v = (Color32)value;
+                if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
+                {
+                    property.SetValue(obj, f, null);
+                }
+            }
 
             GUILayout.FlexibleSpace();
 
             if (GUILayout.Button("Watch"))
             {
-                Watches.AddWatch(caller + "." + property.Name, property, obj);
+                watches.AddWatch(caller + "." + property.Name, property, obj);
             }
 
             GUILayout.EndHorizontal();
@@ -516,7 +580,7 @@ namespace ModTools
             }
         }
 
-        private static void OnSceneTreeReflectMethod(System.Object obj, MethodInfo method, int ident)
+        private void OnSceneTreeReflectMethod(System.Object obj, MethodInfo method, int ident)
         {
             if (obj == null || method == null)
             {
@@ -554,7 +618,7 @@ namespace ModTools
             GUILayout.EndHorizontal();
         }
 
-        private static void OnSceneTreeReflectUnityEngineVector2(string name, ref UnityEngine.Vector2 vec, int ident)
+        private void OnSceneTreeReflectUnityEngineVector2(string name, ref UnityEngine.Vector2 vec, int ident)
         {
             GUILayout.BeginHorizontal();
 
@@ -572,13 +636,13 @@ namespace ModTools
             GUILayout.EndHorizontal();
         }
 
-        private static void OnSceneTreeReflectUnityEngineVector3<T>(string caller, T obj, string name, ref UnityEngine.Vector3 vec, int ident)
+        private void OnSceneTreeReflectUnityEngineVector3<T>(string caller, T obj, string name, ref UnityEngine.Vector3 vec, int ident)
         {
             GUIControls.Vector3Field(name, ref vec, treeIdentSpacing * ident, () =>
             {
                 try
                 {
-                    Watches.AddWatch(caller + "." + name, typeof(T).GetProperty(name), obj);
+                    watches.AddWatch(caller + "." + name, typeof(T).GetProperty(name), obj);
                 }
                 catch (Exception ex)
                 {
@@ -587,27 +651,27 @@ namespace ModTools
             });
         }
 
-        private static void OnSceneTreeReflectUnityEngineVector4(string name, ref UnityEngine.Vector4 vec, int ident)
+        private void OnSceneTreeReflectUnityEngineVector4(string name, ref UnityEngine.Vector4 vec, int ident)
         {
             GUIControls.Vector4Field(name, ref vec, treeIdentSpacing * ident);
         }
 
-        private static void OnSceneTreeReflectFloat(string name, ref float value, int ident)
+        private void OnSceneTreeReflectFloat(string name, ref float value, int ident)
         {
             GUIControls.FloatField(name, ref value, treeIdentSpacing * ident);
         }
 
-        private static void OnSceneTreeReflectInt(string name, ref int value, int ident)
+        private void OnSceneTreeReflectInt(string name, ref int value, int ident)
         {
             GUIControls.IntField(name, ref value, treeIdentSpacing * ident);
         }
 
-        private static void OnSceneTreeReflectBool(string name, ref bool value, int ident)
+        private void OnSceneTreeReflectBool(string name, ref bool value, int ident)
         {
             GUIControls.BoolField(name, ref value, treeIdentSpacing * ident);
         }
 
-        private static void OnSceneTreeReflectUnityEngineTransform(string caller, UnityEngine.Transform transform, int ident)
+        private void OnSceneTreeReflectUnityEngineTransform(string caller, UnityEngine.Transform transform, int ident)
         {
             if (transform == null)
             {
@@ -649,7 +713,7 @@ namespace ModTools
             OnSceneTreeReflectUnityEngineVector3(caller, transform, "up", ref up, ident + 1);
         }
 
-        private static bool IsEnumerable(object myProperty)
+        private bool IsEnumerable(object myProperty)
         {
             if (typeof(IEnumerable).IsAssignableFrom(myProperty.GetType())
                 || typeof(IEnumerable<>).IsAssignableFrom(myProperty.GetType()))
@@ -658,7 +722,7 @@ namespace ModTools
             return false;
         }
 
-        private static void OnSceneTreeReflectIEnumerable(string caller, System.Object myProperty, int ident)
+        private void OnSceneTreeReflectIEnumerable(string caller, System.Object myProperty, int ident)
         {
             var ie = myProperty as IEnumerable;
             string s = string.Empty;
@@ -676,7 +740,7 @@ namespace ModTools
             }
         }
 
-        private static void OnSceneTreeReflect(string caller, System.Object obj, int ident)
+        private void OnSceneTreeReflect(string caller, System.Object obj, int ident)
         {
             if (ident >= 8)
             {
@@ -740,7 +804,7 @@ namespace ModTools
             }
         }
 
-        private static void OnSceneTreeComponents(string caller, GameObject obj, int ident)
+        private void OnSceneTreeComponents(string caller, GameObject obj, int ident)
         {
             var components = obj.GetComponents(typeof(Component));
             foreach (var component in components)
@@ -779,7 +843,7 @@ namespace ModTools
             }
         }
 
-        private static void OnSceneTreeRecursive(string caller, GameObject obj, int ident = 0)
+        private void OnSceneTreeRecursive(string caller, GameObject obj, int ident = 0)
         {
             if (filterType == FilterType.GameObjects && !obj.name.Contains(nameFilter))
             {
@@ -827,8 +891,14 @@ namespace ModTools
             }
         }
 
-        public static void DrawWindow()
+        public void DrawWindow()
         {
+            watches = watches ?? FindObjectOfType<Watches>();
+            if (watches == null)
+            {
+                return;
+            }
+
             if (GUILayout.Button("Refresh"))
             {
                 sceneRoots = FindSceneRoots();
@@ -878,7 +948,6 @@ namespace ModTools
             filterComponent = GUILayout.Toggle(filterComponent, "");
             if (filterComponent)
             {
-                filterGameObject = false;
                 filterFields = false;
             }
 
@@ -888,8 +957,6 @@ namespace ModTools
             filterFields = GUILayout.Toggle(filterFields, "");
             if (filterFields)
             {
-                filterGameObject = false;
-                filterComponent = false;
                 filterType = FilterType.FieldsAndProps;
             }
             else if (filterComponent)

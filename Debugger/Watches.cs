@@ -5,24 +5,30 @@ using UnityEngine;
 
 namespace ModTools
 {
-    public static class Watches
+    public class Watches : GUIWindow
     {
 
-        public static bool showWindow = false;
+        private Vector2 watchesScroll = Vector2.zero;
 
-        public static void AddWatch(string name, FieldInfo field, object o)
+        public Watches()
+            : base("Watches", new Rect(504, 128, 800, 300), skin)
+        {
+            onDraw = DoWatchesWindow;
+        }
+
+        public void AddWatch(string name, FieldInfo field, object o)
         {
             fieldWatches.Add(name, new KeyValuePair<FieldInfo, object>(field, o));
-            showWindow = true;
+            visible = true;
         }
 
-        public static void AddWatch(string name, PropertyInfo property, object o)
+        public void AddWatch(string name, PropertyInfo property, object o)
         {
             propertyWatches.Add(name, new KeyValuePair<PropertyInfo, object>(property, o));
-            showWindow = true;
+            visible = true;
         }
 
-        public static void RemoveWatch(string name)
+        public void RemoveWatch(string name)
         {
             if (fieldWatches.ContainsKey(name))
             {
@@ -35,7 +41,7 @@ namespace ModTools
             }
         }
 
-        public static Type GetWatchType(string name)
+        public Type GetWatchType(string name)
         {
             Type ret = null;
 
@@ -52,7 +58,7 @@ namespace ModTools
             return ret;
         }
 
-        public static object ReadWatch(string name)
+        public object ReadWatch(string name)
         {
             object ret = null;
 
@@ -83,7 +89,7 @@ namespace ModTools
             return ret;
         }
 
-        public static void WriteWatch(string name, object value)
+        public void WriteWatch(string name, object value)
         {
             if (fieldWatches.ContainsKey(name))
             {
@@ -110,7 +116,7 @@ namespace ModTools
             }
         }
 
-        public static string[] GetWatches()
+        public string[] GetWatches()
         {
             string[] watches = new string[fieldWatches.Count + propertyWatches.Count];
             int i = 0;
@@ -127,8 +133,86 @@ namespace ModTools
             return watches;
         }
 
-        private static Dictionary<string, KeyValuePair<FieldInfo, object>> fieldWatches = new Dictionary<string, KeyValuePair<FieldInfo, object>>();
-        private static Dictionary<string, KeyValuePair<PropertyInfo, object>> propertyWatches = new Dictionary<string, KeyValuePair<PropertyInfo, object>>();
+        private Dictionary<string, KeyValuePair<FieldInfo, object>> fieldWatches = new Dictionary<string, KeyValuePair<FieldInfo, object>>();
+        private Dictionary<string, KeyValuePair<PropertyInfo, object>> propertyWatches = new Dictionary<string, KeyValuePair<PropertyInfo, object>>();
+
+        void DoWatchesWindow()
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            visible = GUILayout.Toggle(visible, "");
+            GUILayout.EndHorizontal();
+
+            watchesScroll = GUILayout.BeginScrollView(watchesScroll);
+
+            foreach (var watch in GetWatches())
+            {
+                GUILayout.BeginHorizontal();
+
+                var type = GetWatchType(watch);
+
+                GUI.contentColor = Color.red;
+                GUILayout.Label(type.ToString());
+                GUI.contentColor = Color.green;
+                GUILayout.Label(watch);
+                GUI.contentColor = Color.white;
+                GUILayout.Label(" = ");
+
+                var value = ReadWatch(watch);
+
+                if (type.ToString() == "System.Single")
+                {
+                    var f = (float)value;
+                    GUIControls.FloatField("", ref f);
+                    if (f != (float)value)
+                    {
+                        WriteWatch(watch, f);
+                    }
+                }
+                else if (type.ToString() == "System.Int32")
+                {
+                    var f = (int)value;
+                    GUIControls.IntField("", ref f);
+                    if (f != (int)value)
+                    {
+                        WriteWatch(watch, f);
+                    }
+                }
+                else if (type.ToString() == "System.Boolean")
+                {
+                    var f = (bool)value;
+                    GUIControls.BoolField("", ref f);
+                    if (f != (bool)value)
+                    {
+                        WriteWatch(watch, f);
+                    }
+                }
+                else if (type.ToString() == "System.String")
+                {
+                    var f = (string)value;
+                    GUIControls.StringField("", ref f);
+                    if (f != (string)value)
+                    {
+                        WriteWatch(watch, f);
+                    }
+                }
+                else
+                {
+                    GUILayout.Label(value.ToString());
+                }
+
+                GUILayout.FlexibleSpace();
+
+                if (GUILayout.Button("x", GUILayout.Width(24)))
+                {
+                    RemoveWatch(watch);
+                }
+
+                GUILayout.EndHorizontal();
+            }
+
+            GUILayout.EndScrollView();
+        }
 
     }
 
