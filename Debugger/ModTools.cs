@@ -15,6 +15,8 @@ namespace ModTools
         private SceneExplorer sceneExplorer;
         private Watches watches;
 
+        private bool logExceptionsToConsole = true;
+
         public ModTools() : base("Mod Tools", new Rect(128, 128, 356, 260), skin)
         {
             onDraw = DoMainWindow;
@@ -82,6 +84,11 @@ namespace ModTools
                 uiScale = uiScaleUser = 1.0f;
             }
 
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Log exceptions to console");
+            logExceptionsToConsole = GUILayout.Toggle(logExceptionsToConsole, "");
             GUILayout.EndHorizontal();
 
             if (GUILayout.Button("Watches (Ctrl+W)"))
