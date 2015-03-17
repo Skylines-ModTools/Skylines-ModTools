@@ -40,9 +40,6 @@ namespace ModTools
                 }
             };
 
-            bgTexture.SetPixel(0, 0, Color.grey);
-            bgTexture.Apply();
-
             sceneExplorer = gameObject.AddComponent<SceneExplorer>();
             watches = gameObject.AddComponent<Watches>();
         }
@@ -64,11 +61,16 @@ namespace ModTools
 
             GUILayout.BeginHorizontal();
             GUILayout.Label("UI Scale");
-            uiScaleUser = GUILayout.HorizontalSlider(uiScaleUser, 0.1f, 1.25f, GUILayout.Width(220));
+            uiScaleUser = GUILayout.HorizontalSlider(uiScaleUser, 0.1f, 1.25f, GUILayout.Width(160));
 
             if (GUILayout.Button("Apply"))
             {
                 uiScale = uiScaleUser;
+            }
+
+            if (GUILayout.Button("Reset"))
+            {
+                uiScale = uiScaleUser = 1.0f;
             }
 
             GUILayout.EndHorizontal();
