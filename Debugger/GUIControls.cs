@@ -10,7 +10,21 @@ namespace ModTools
 
         public delegate void WatchButtonCallback();
 
-        static public void FloatField(string name, ref float value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
+        public static bool IsHot()
+        {
+            return GUIUtility.hotControl == GUIUtility.GetControlID(FocusType.Keyboard) + 1;
+        }
+
+        public static int CurrentControlId()
+        {
+            return GUIUtility.GetControlID(FocusType.Keyboard) + 1;
+        }
+
+        public static int currentHotControl = -1;
+
+        public static string hotControlBuffer = "";
+
+        public static void FloatField(string name, ref float value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -37,12 +51,41 @@ namespace ModTools
             string oldValueString = value.ToString();
             GUI.contentColor = Color.white;
 
-            string newValue = GUILayout.TextField(oldValueString, GUILayout.Width(fieldSize));
+            bool isHot = IsHot();
 
-            if (oldValueString != newValue && !float.TryParse(newValue, out value))
+            if (isHot)
             {
-                value = oldValue;
+                if (currentHotControl == -1)
+                {
+                    currentHotControl = GUIUtility.hotControl;
+                    hotControlBuffer = oldValueString;
+                }
+                else if (currentHotControl == CurrentControlId())
+                {
+                    oldValueString = hotControlBuffer;
+                }
             }
+            else
+            {
+                if (currentHotControl == CurrentControlId())
+                {
+                    float newValue;
+                    if (oldValueString != hotControlBuffer && !float.TryParse(hotControlBuffer, out newValue))
+                    {
+                        value = newValue;
+                    }
+
+                    currentHotControl = -1;
+                    hotControlBuffer = "";
+                }
+            }
+            
+            string newBuffer = GUILayout.TextField(oldValueString, GUILayout.Width(fieldSize));
+
+            if (isHot)
+            {
+                hotControlBuffer = newBuffer;
+;           }
 
             GUILayout.EndHorizontal();
         }
@@ -422,6 +465,45 @@ namespace ModTools
             }
 
             value = GUILayout.Toggle(value, "");
+            GUILayout.EndHorizontal();
+            GUI.contentColor = Color.white;
+        }
+
+        static public void Vector2Field(string name, ref Vector2 value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
+        {
+            GUILayout.BeginHorizontal();
+
+            if (ident != 0.0f)
+            {
+                GUILayout.Space(ident);
+            }
+
+            if (!noTypeLabel)
+            {
+                GUI.contentColor = Color.green;
+                GUILayout.Label("Vector2");
+            }
+
+            GUI.contentColor = Color.red;
+            GUILayout.Label(name);
+            GUI.contentColor = Color.white;
+
+            if (!noSpace)
+            {
+                GUILayout.FlexibleSpace();
+            }
+
+            FloatField("x", ref value.x, 0.0f, true, true);
+            FloatField("y", ref value.y, 0.0f, true, true);
+
+            if (watch != null)
+            {
+                if (GUILayout.Button("Watch"))
+                {
+                    watch();
+                }
+            }
+
             GUILayout.EndHorizontal();
             GUI.contentColor = Color.white;
         }

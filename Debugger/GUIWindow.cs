@@ -56,7 +56,7 @@ namespace ModTools
                 resizeNormalTexture.Apply();
 
                 resizeHoverTexture = new Texture2D(1, 1);
-                resizeHoverTexture.SetPixel(0, 0, Color.red);
+                resizeHoverTexture.SetPixel(0, 0, Color.blue);
                 resizeHoverTexture.Apply();
 
                 closeNormalTexture = new Texture2D(1, 1);
@@ -124,7 +124,7 @@ namespace ModTools
                         var mouse = Input.mousePosition;
                         mouse.y = Screen.height - mouse.y;
 
-                        var resizeRect = new Rect(rect.x + rect.width - 16.0f, rect.y + rect.height - 16.0f, 16.0f, 16.0f);
+                        var resizeRect = new Rect(rect.x + rect.width - 16.0f, rect.y + rect.height - 8.0f, 16.0f, 8.0f);
                         var resizeTex = resizeNormalTexture;
 
                         if (resizingWindow != null)
@@ -166,7 +166,7 @@ namespace ModTools
                             }
                         }
 
-                        GUI.DrawTexture(new Rect(rect.width - 16.0f, rect.height - 16.0f, 16.0f, 16.0f), resizeTex, ScaleMode.StretchToFill);
+                        GUI.DrawTexture(new Rect(rect.width - 16.0f, rect.height - 8.0f, 16.0f, 8.0f), resizeTex, ScaleMode.StretchToFill);
 
                         var closeRect = new Rect(rect.x + rect.width - 20.0f, rect.y, 16.0f, 8.0f);
                         var closeTex = closeNormalTexture;

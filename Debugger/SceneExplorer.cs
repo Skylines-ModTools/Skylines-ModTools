@@ -109,6 +109,15 @@ namespace ModTools
 
         private void OnSceneTreeReflectField(string caller, System.Object obj, FieldInfo field, int ident)
         {
+            if (ident >= 12)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Label("Hierarchy too deep, sorry :(");
+                GUILayout.EndHorizontal();
+                return;
+            }
+
             if (obj == null || field == null)
             {
                 GUILayout.Label("null");
@@ -153,6 +162,13 @@ namespace ModTools
 
             GUILayout.Label("field ");
             GUILayout.Label(field.FieldType.ToString() + " ");
+
+            if (field.IsInitOnly)
+            {
+                GUI.contentColor = Color.blue;
+                GUI.enabled = false;
+                GUILayout.Label("const ");
+            }
 
             GUI.contentColor = Color.red;
 
@@ -276,6 +292,15 @@ namespace ModTools
                     field.SetValue(obj, f);
                 }
             }
+            else if (field.FieldType.ToString() == "UnityEngine.Vector2")
+            {
+                var f = (Vector2)value;
+                GUIControls.Vector2Field("", ref f, 0.0f, null, true, true);
+                if (f != (Vector2)value)
+                {
+                    field.SetValue(obj, f);
+                }
+            }
             else if (field.FieldType.ToString() == "UnityEngine.Vector3")
             {
                 var f = (Vector3)value;
@@ -323,6 +348,8 @@ namespace ModTools
                 }
             }
 
+            GUI.enabled = true;
+
             GUILayout.FlexibleSpace();
 
             if (GUILayout.Button("Watch"))
@@ -332,7 +359,7 @@ namespace ModTools
 
             GUILayout.EndHorizontal();
 
-            if (value != null && expandedObjects.ContainsKey(value.GetHashCode()))
+            if (value != null && IsReflectableType(field.FieldType) && expandedObjects.ContainsKey(value.GetHashCode()))
             {
                 if (value is GameObject)
                 {
@@ -351,6 +378,15 @@ namespace ModTools
 
         private void OnSceneTreeReflectProperty(string caller, System.Object obj, PropertyInfo property, int ident)
         {
+            if (ident >= 12)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Label("Hierarchy too deep, sorry :(");
+                GUILayout.EndHorizontal();
+                return;
+            }
+
             if (obj == null || property == null)
             {
                 GUILayout.Label("null");
@@ -507,6 +543,15 @@ namespace ModTools
                     property.SetValue(obj, f, null);
                 }
             }
+            else if (property.PropertyType.ToString() == "UnityEngine.Vector2")
+            {
+                var f = (Vector2)value;
+                GUIControls.Vector2Field("", ref f, 0.0f, null, true, true);
+                if (f != (Vector2)value)
+                {
+                    property.SetValue(obj, f, null);
+                }
+            }
             else if (property.PropertyType.ToString() == "UnityEngine.Vector3")
             {
                 var f = (Vector3)value;
@@ -582,6 +627,15 @@ namespace ModTools
 
         private void OnSceneTreeReflectMethod(System.Object obj, MethodInfo method, int ident)
         {
+            if (ident >= 12)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Label("Hierarchy too deep, sorry :(");
+                GUILayout.EndHorizontal();
+                return;
+            }
+
             if (obj == null || method == null)
             {
                 GUILayout.Label("null");
@@ -620,6 +674,15 @@ namespace ModTools
 
         private void OnSceneTreeReflectUnityEngineVector2(string name, ref UnityEngine.Vector2 vec, int ident)
         {
+            if (ident >= 12)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Label("Hierarchy too deep, sorry :(");
+                GUILayout.EndHorizontal();
+                return;
+            }
+
             GUILayout.BeginHorizontal();
 
             GUILayout.Space(treeIdentSpacing * ident);
@@ -638,6 +701,15 @@ namespace ModTools
 
         private void OnSceneTreeReflectUnityEngineVector3<T>(string caller, T obj, string name, ref UnityEngine.Vector3 vec, int ident)
         {
+            if (ident >= 12)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Label("Hierarchy too deep, sorry :(");
+                GUILayout.EndHorizontal();
+                return;
+            }
+
             GUIControls.Vector3Field(name, ref vec, treeIdentSpacing * ident, () =>
             {
                 try
@@ -653,16 +725,43 @@ namespace ModTools
 
         private void OnSceneTreeReflectUnityEngineVector4(string name, ref UnityEngine.Vector4 vec, int ident)
         {
+            if (ident >= 12)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Label("Hierarchy too deep, sorry :(");
+                GUILayout.EndHorizontal();
+                return;
+            }
+
             GUIControls.Vector4Field(name, ref vec, treeIdentSpacing * ident);
         }
 
         private void OnSceneTreeReflectFloat(string name, ref float value, int ident)
         {
+            if (ident >= 12)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Label("Hierarchy too deep, sorry :(");
+                GUILayout.EndHorizontal();
+                return;
+            }
+
             GUIControls.FloatField(name, ref value, treeIdentSpacing * ident);
         }
 
         private void OnSceneTreeReflectInt(string name, ref int value, int ident)
         {
+            if (ident >= 12)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Label("Hierarchy too deep, sorry :(");
+                GUILayout.EndHorizontal();
+                return;
+            }
+
             GUIControls.IntField(name, ref value, treeIdentSpacing * ident);
         }
 
@@ -673,6 +772,15 @@ namespace ModTools
 
         private void OnSceneTreeReflectUnityEngineTransform(string caller, UnityEngine.Transform transform, int ident)
         {
+            if (ident >= 12)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Label("Hierarchy too deep, sorry :(");
+                GUILayout.EndHorizontal();
+                return;
+            }
+
             if (transform == null)
             {
                 GUILayout.Label("null");
@@ -724,14 +832,101 @@ namespace ModTools
 
         private void OnSceneTreeReflectIEnumerable(string caller, System.Object myProperty, int ident)
         {
-            GUILayout.Label("Not implemented!");
+            if (ident >= 12)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Label("Hierarchy too deep, sorry :(");
+                GUILayout.EndHorizontal();
+                return;
+            }
+
+            var enumerable = myProperty as IEnumerable;
+            if (enumerable == null)
+            {
+                return;
+            }
+
+            int count = 0;
+            foreach (var value in enumerable)
+            {
+                var type = value.GetType();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * ident);
+
+                GUI.contentColor = Color.white;
+
+                if (value != null && IsReflectableType(type) && !IsEnumerable(type))
+                {
+                    if (expandedObjects.ContainsKey(value.GetHashCode()))
+                    {
+                        if (GUILayout.Button("-", GUILayout.Width(16)))
+                        {
+                            expandedObjects.Remove(value.GetHashCode());
+                        }
+                    }
+                    else
+                    {
+                        if (GUILayout.Button("+", GUILayout.Width(16)))
+                        {
+                            expandedObjects.Add(value.GetHashCode(), true);
+                        }
+                    }
+                }
+
+                GUI.contentColor = Color.green;
+
+                GUILayout.Label(type.ToString() + " ");
+
+                GUI.contentColor = Color.red;
+
+                GUILayout.Label(caller + ".[" + count.ToString() + "]");
+
+                GUI.contentColor = Color.white;
+
+                GUILayout.Label(" = ");
+                GUILayout.Label(value == null ? "null" : value.ToString());
+
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+
+                if (value != null && IsReflectableType(type) && expandedObjects.ContainsKey(value.GetHashCode()))
+                {
+                    if (value is GameObject)
+                    {
+                        OnSceneTreeComponents(caller + ".[" + count.ToString() + "]", (GameObject)value, ident + 1);
+                    }
+                    else if (value is Transform)
+                    {
+                        OnSceneTreeReflectUnityEngineTransform(caller + ".[" + count.ToString() + "]", (Transform)value, ident + 1);
+                    }
+                    else
+                    {
+                        OnSceneTreeReflect(caller + ".[" + count.ToString() + "]", value, ident + 1);
+                    }
+                }
+
+                count++;
+                if (count >= 128)
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(treeIdentSpacing * ident);
+                    GUILayout.Label("Array too large to display");
+                    GUILayout.EndHorizontal();
+                    break;
+                }
+            }
         }
 
         private void OnSceneTreeReflect(string caller, System.Object obj, int ident)
         {
-            if (ident >= 8)
+            if (ident >= 12)
             {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * ident);
                 GUILayout.Label("Hierarchy too deep, sorry :(");
+                GUILayout.EndHorizontal();
                 return;
             }
 
@@ -793,6 +988,15 @@ namespace ModTools
 
         private void OnSceneTreeComponents(string caller, GameObject obj, int ident)
         {
+            if (ident >= 12)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Label("Hierarchy too deep, sorry :(");
+                GUILayout.EndHorizontal();
+                return;
+            }
+
             var components = obj.GetComponents(typeof(Component));
             foreach (var component in components)
             {
@@ -832,6 +1036,15 @@ namespace ModTools
 
         private void OnSceneTreeRecursive(string caller, GameObject obj, int ident = 0)
         {
+            if (ident >= 12)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Label("Hierarchy too deep, sorry :(");
+                GUILayout.EndHorizontal();
+                return;
+            }
+
             if (filterType == FilterType.GameObjects && !obj.name.Contains(nameFilter))
             {
                 return;
@@ -974,6 +1187,13 @@ namespace ModTools
             }
 
             GUILayout.EndScrollView();
+
+            if (GUILayout.Button("Fold all"))
+            {
+                expanded.Clear();
+                expandedComponents.Clear();
+                expandedObjects.Clear();
+            }
         }
 
     }
