@@ -41,13 +41,6 @@ namespace ModTools
                 else
                 {
                     hotControlBuffer = newBuffer;
-
-                    if (Input.GetKey(KeyCode.Return))
-                    {
-                        res = hotControlBuffer;
-                        currentHotControl = null;
-                        hotControlBuffer = "";
-                    }
                 }
             }
             else if (currentHotControl == hash)

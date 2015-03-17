@@ -15,7 +15,8 @@ namespace ModTools
         private SceneExplorer sceneExplorer;
         private Watches watches;
 
-        private bool logExceptionsToConsole = true;
+        public static bool logExceptionsToConsole = true;
+        public static bool evaluatePropertiesAutomatically = true;
 
         public ModTools() : base("Mod Tools", new Rect(128, 128, 356, 260), skin)
         {
@@ -77,7 +78,7 @@ namespace ModTools
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label("UI Scale");
-            uiScaleUser = GUILayout.HorizontalSlider(uiScaleUser, 0.1f, 1.25f, GUILayout.Width(160));
+            uiScaleUser = GUILayout.HorizontalSlider(uiScaleUser, 0.1f, 1.25f);
 
             if (GUILayout.Button("Apply"))
             {
@@ -94,6 +95,11 @@ namespace ModTools
             GUILayout.BeginHorizontal();
             GUILayout.Label("Log exceptions to console");
             logExceptionsToConsole = GUILayout.Toggle(logExceptionsToConsole, "");
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Evaluate properties automatically");
+            evaluatePropertiesAutomatically = GUILayout.Toggle(evaluatePropertiesAutomatically, "");
             GUILayout.EndHorizontal();
 
             if (GUILayout.Button("Watches (Ctrl+W)"))

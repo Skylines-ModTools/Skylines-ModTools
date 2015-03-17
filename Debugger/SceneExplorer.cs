@@ -24,6 +24,8 @@ namespace ModTools
         private Dictionary<int, bool> expandedComponents = new Dictionary<int, bool>();
         private Dictionary<int, bool> expandedObjects = new Dictionary<int, bool>();
 
+        private Dictionary<int, bool> evaluatedProperties = new Dictionary<int, bool>();
+
         private Dictionary<GameObject, bool> sceneRoots = new Dictionary<GameObject, bool>();
 
         private Vector2 scrollPosition = Vector2.zero;
@@ -398,26 +400,33 @@ namespace ModTools
             GUILayout.BeginHorizontal();
             GUILayout.Space(treeIdentSpacing * ident);
 
-            var value = property.GetValue(obj, null);
+            bool propertyWasEvaluated = false;
+            object value = null;
 
-            if (value != null && IsReflectableType(property.PropertyType) && !IsEnumerable(obj))
+            if (ModTools.evaluatePropertiesAutomatically || evaluatedProperties.ContainsKey(property.GetHashCode()))
             {
-                if (expandedObjects.ContainsKey(value.GetHashCode()))
+                value = property.GetValue(obj, null);
+                propertyWasEvaluated = true;
+
+                if (value != null && IsReflectableType(property.PropertyType) && !IsEnumerable(obj))
                 {
-                    if (GUILayout.Button("-", GUILayout.Width(16)))
+                    if (expandedObjects.ContainsKey(value.GetHashCode()))
                     {
-                        expandedObjects.Remove(value.GetHashCode());
+                        if (GUILayout.Button("-", GUILayout.Width(16)))
+                        {
+                            expandedObjects.Remove(value.GetHashCode());
+                        }
                     }
-                }
-                else
-                {
-                    if (GUILayout.Button("+", GUILayout.Width(16)))
+                    else
                     {
-                        expandedObjects.Add(value.GetHashCode(), true);
+                        if (GUILayout.Button("+", GUILayout.Width(16)))
+                        {
+                            expandedObjects.Add(value.GetHashCode(), true);
+                        }
                     }
                 }
             }
-
+            
             GUI.contentColor = Color.white;
 
             GUILayout.Label("property ");
@@ -438,175 +447,192 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            if (value == null || !IsBuiltInType(property.PropertyType))
+            if (!ModTools.evaluatePropertiesAutomatically && !evaluatedProperties.ContainsKey(property.GetHashCode()))
             {
-                GUI.contentColor = Color.white;
-                GUILayout.Label(" = ");
-                GUI.contentColor = Color.white;
-                GUILayout.Label(value == null ? "null" : value.ToString());
-                GUI.contentColor = Color.white;
-            }
-            else if (property.PropertyType.ToString() == "System.Single")
-            {
-                var f = (float)value;
-                GUIControls.FloatField(caller + property.Name, "", ref f, 0.0f, true, true);
-                if (f != (float)value)
+                GUI.enabled = true;
+
+                if(GUILayout.Button("Evaluate"))
                 {
-                    property.SetValue(obj, f, null);
+                    evaluatedProperties.Add(property.GetHashCode(), true);    
                 }
             }
-            else if (property.PropertyType.ToString() == "System.Double")
+            else
             {
-                var f = (double)value;
-                GUIControls.DoubleField(caller + property.Name, "", ref f, 0.0f, true, true);
-                if (f != (double)value)
+                if (!propertyWasEvaluated)
                 {
-                    property.SetValue(obj, f, null);
+                    value = property.GetValue(obj, null);
                 }
-            }
-            else if (property.PropertyType.ToString() == "System.Byte")
-            {
-                var f = (byte)value;
-                GUIControls.ByteField(caller + property.Name, "", ref f, 0.0f, true, true);
-                if (f != (byte)value)
+
+                if (value == null || !IsBuiltInType(property.PropertyType))
                 {
-                    property.SetValue(obj, f, null);
+                    GUI.contentColor = Color.white;
+                    GUILayout.Label(" = ");
+                    GUI.contentColor = Color.white;
+                    GUILayout.Label(value == null ? "null" : value.ToString());
+                    GUI.contentColor = Color.white;
                 }
-            }
-            else if (property.PropertyType.ToString() == "System.Int32")
-            {
-                var f = (int)value;
-                GUIControls.IntField(caller + property.Name, "", ref f, 0.0f, true, true);
-                if (f != (int)value)
+                else if (property.PropertyType.ToString() == "System.Single")
                 {
-                    property.SetValue(obj, f, null);
+                    var f = (float)value;
+                    GUIControls.FloatField(caller + property.Name, "", ref f, 0.0f, true, true);
+                    if (f != (float)value)
+                    {
+                        property.SetValue(obj, f, null);
+                    }
                 }
-            }
-            else if (property.PropertyType.ToString() == "System.UInt32")
-            {
-                var f = (uint)value;
-                GUIControls.UIntField(caller + property.Name, "", ref f, 0.0f, true, true);
-                if (f != (uint)value)
+                else if (property.PropertyType.ToString() == "System.Double")
                 {
-                    property.SetValue(obj, f, null);
+                    var f = (double)value;
+                    GUIControls.DoubleField(caller + property.Name, "", ref f, 0.0f, true, true);
+                    if (f != (double)value)
+                    {
+                        property.SetValue(obj, f, null);
+                    }
                 }
-            }
-            else if (property.PropertyType.ToString() == "System.Int64")
-            {
-                var f = (Int64)value;
-                GUIControls.Int64Field(caller + property.Name, "", ref f, 0.0f, true, true);
-                if (f != (Int64)value)
+                else if (property.PropertyType.ToString() == "System.Byte")
                 {
-                    property.SetValue(obj, f, null);
+                    var f = (byte)value;
+                    GUIControls.ByteField(caller + property.Name, "", ref f, 0.0f, true, true);
+                    if (f != (byte)value)
+                    {
+                        property.SetValue(obj, f, null);
+                    }
                 }
-            }
-            else if (property.PropertyType.ToString() == "System.UInt64")
-            {
-                var f = (UInt64)value;
-                GUIControls.UInt64Field(caller + property.Name, "", ref f, 0.0f, true, true);
-                if (f != (UInt64)value)
+                else if (property.PropertyType.ToString() == "System.Int32")
                 {
-                    property.SetValue(obj, f, null);
+                    var f = (int)value;
+                    GUIControls.IntField(caller + property.Name, "", ref f, 0.0f, true, true);
+                    if (f != (int)value)
+                    {
+                        property.SetValue(obj, f, null);
+                    }
                 }
-            }
-            else if (property.PropertyType.ToString() == "System.Int16")
-            {
-                var f = (Int16)value;
-                GUIControls.Int16Field(caller + property.Name, "", ref f, 0.0f, true, true);
-                if (f != (Int16)value)
+                else if (property.PropertyType.ToString() == "System.UInt32")
                 {
-                    property.SetValue(obj, f, null);
+                    var f = (uint)value;
+                    GUIControls.UIntField(caller + property.Name, "", ref f, 0.0f, true, true);
+                    if (f != (uint)value)
+                    {
+                        property.SetValue(obj, f, null);
+                    }
                 }
-            }
-            else if (property.PropertyType.ToString() == "System.UInt16")
-            {
-                var f = (UInt16)value;
-                GUIControls.UInt16Field(caller + property.Name, "", ref f, 0.0f, true, true);
-                if (f != (UInt16)value)
+                else if (property.PropertyType.ToString() == "System.Int64")
                 {
-                    property.SetValue(obj, f, null);
+                    var f = (Int64)value;
+                    GUIControls.Int64Field(caller + property.Name, "", ref f, 0.0f, true, true);
+                    if (f != (Int64)value)
+                    {
+                        property.SetValue(obj, f, null);
+                    }
                 }
-            }
-            else if (property.PropertyType.ToString() == "System.Boolean")
-            {
-                var f = (bool)value;
-                GUIControls.BoolField("", ref f, 0.0f, true, true);
-                if (f != (bool)value)
+                else if (property.PropertyType.ToString() == "System.UInt64")
                 {
-                    property.SetValue(obj, f, null);
+                    var f = (UInt64)value;
+                    GUIControls.UInt64Field(caller + property.Name, "", ref f, 0.0f, true, true);
+                    if (f != (UInt64)value)
+                    {
+                        property.SetValue(obj, f, null);
+                    }
                 }
-            }
-            else if (property.PropertyType.ToString() == "System.String")
-            {
-                var f = (string)value;
-                GUIControls.StringField(caller + property.Name, "", ref f, 0.0f, true, true);
-                if (f != (string)value)
+                else if (property.PropertyType.ToString() == "System.Int16")
                 {
-                    property.SetValue(obj, f, null);
+                    var f = (Int16)value;
+                    GUIControls.Int16Field(caller + property.Name, "", ref f, 0.0f, true, true);
+                    if (f != (Int16)value)
+                    {
+                        property.SetValue(obj, f, null);
+                    }
                 }
-            }
-            else if (property.PropertyType.ToString() == "System.Char")
-            {
-                var f = (char)value;
-                GUIControls.CharField(caller + property.Name, "", ref f, 0.0f, true, true);
-                if (f != (char)value)
+                else if (property.PropertyType.ToString() == "System.UInt16")
                 {
-                    property.SetValue(obj, f, null);
+                    var f = (UInt16)value;
+                    GUIControls.UInt16Field(caller + property.Name, "", ref f, 0.0f, true, true);
+                    if (f != (UInt16)value)
+                    {
+                        property.SetValue(obj, f, null);
+                    }
                 }
-            }
-            else if (property.PropertyType.ToString() == "UnityEngine.Vector2")
-            {
-                var f = (Vector2)value;
-                GUIControls.Vector2Field(caller + property.Name, "", ref f, 0.0f, null, true, true);
-                if (f != (Vector2)value)
+                else if (property.PropertyType.ToString() == "System.Boolean")
                 {
-                    property.SetValue(obj, f, null);
+                    var f = (bool)value;
+                    GUIControls.BoolField("", ref f, 0.0f, true, true);
+                    if (f != (bool)value)
+                    {
+                        property.SetValue(obj, f, null);
+                    }
                 }
-            }
-            else if (property.PropertyType.ToString() == "UnityEngine.Vector3")
-            {
-                var f = (Vector3)value;
-                GUIControls.Vector3Field(caller + property.Name, "", ref f, 0.0f, null, true, true);
-                if (f != (Vector3)value)
+                else if (property.PropertyType.ToString() == "System.String")
                 {
-                    property.SetValue(obj, f, null);
+                    var f = (string)value;
+                    GUIControls.StringField(caller + property.Name, "", ref f, 0.0f, true, true);
+                    if (f != (string)value)
+                    {
+                        property.SetValue(obj, f, null);
+                    }
                 }
-            }
-            else if (property.PropertyType.ToString() == "UnityEngine.Vector4")
-            {
-                var f = (Vector4)value;
-                GUIControls.Vector4Field(caller + property.Name, "", ref f, 0.0f, null, true, true);
-                if (f != (Vector4)value)
+                else if (property.PropertyType.ToString() == "System.Char")
                 {
-                    property.SetValue(obj, f, null);
+                    var f = (char)value;
+                    GUIControls.CharField(caller + property.Name, "", ref f, 0.0f, true, true);
+                    if (f != (char)value)
+                    {
+                        property.SetValue(obj, f, null);
+                    }
                 }
-            }
-            else if (property.PropertyType.ToString() == "UnityEngine.Quaternion")
-            {
-                var f = (Quaternion)value;
-                GUIControls.QuaternionField(caller + property.Name, "", ref f, 0.0f, null, true, true);
-                if (f != (Quaternion)value)
+                else if (property.PropertyType.ToString() == "UnityEngine.Vector2")
                 {
-                    property.SetValue(obj, f, null);
+                    var f = (Vector2)value;
+                    GUIControls.Vector2Field(caller + property.Name, "", ref f, 0.0f, null, true, true);
+                    if (f != (Vector2)value)
+                    {
+                        property.SetValue(obj, f, null);
+                    }
                 }
-            }
-            else if (property.PropertyType.ToString() == "UnityEngine.Color")
-            {
-                var f = (Color)value;
-                GUIControls.ColorField(caller + property.Name, "", ref f, 0.0f, null, true, true);
-                if (f != (Color)value)
+                else if (property.PropertyType.ToString() == "UnityEngine.Vector3")
                 {
-                    property.SetValue(obj, f, null);
+                    var f = (Vector3)value;
+                    GUIControls.Vector3Field(caller + property.Name, "", ref f, 0.0f, null, true, true);
+                    if (f != (Vector3)value)
+                    {
+                        property.SetValue(obj, f, null);
+                    }
                 }
-            }
-            else if (property.PropertyType.ToString() == "UnityEngine.Color32")
-            {
-                var f = (Color32)value;
-                GUIControls.Color32Field(caller + property.Name, "", ref f, 0.0f, null, true, true);
-                var v = (Color32)value;
-                if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
+                else if (property.PropertyType.ToString() == "UnityEngine.Vector4")
                 {
-                    property.SetValue(obj, f, null);
+                    var f = (Vector4)value;
+                    GUIControls.Vector4Field(caller + property.Name, "", ref f, 0.0f, null, true, true);
+                    if (f != (Vector4)value)
+                    {
+                        property.SetValue(obj, f, null);
+                    }
+                }
+                else if (property.PropertyType.ToString() == "UnityEngine.Quaternion")
+                {
+                    var f = (Quaternion)value;
+                    GUIControls.QuaternionField(caller + property.Name, "", ref f, 0.0f, null, true, true);
+                    if (f != (Quaternion)value)
+                    {
+                        property.SetValue(obj, f, null);
+                    }
+                }
+                else if (property.PropertyType.ToString() == "UnityEngine.Color")
+                {
+                    var f = (Color)value;
+                    GUIControls.ColorField(caller + property.Name, "", ref f, 0.0f, null, true, true);
+                    if (f != (Color)value)
+                    {
+                        property.SetValue(obj, f, null);
+                    }
+                }
+                else if (property.PropertyType.ToString() == "UnityEngine.Color32")
+                {
+                    var f = (Color32)value;
+                    GUIControls.Color32Field(caller + property.Name, "", ref f, 0.0f, null, true, true);
+                    var v = (Color32)value;
+                    if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
+                    {
+                        property.SetValue(obj, f, null);
+                    }
                 }
             }
 
@@ -835,18 +861,18 @@ namespace ModTools
 
                 if (value != null && IsReflectableType(type) && !IsEnumerable(type))
                 {
-                    if (expandedObjects.ContainsKey(value.GetHashCode()))
+                    if (expandedObjects.ContainsKey(value.GetHashCode() + count << 8))
                     {
                         if (GUILayout.Button("-", GUILayout.Width(16)))
                         {
-                            expandedObjects.Remove(value.GetHashCode());
+                            expandedObjects.Remove(value.GetHashCode() + count << 8);
                         }
                     }
                     else
                     {
                         if (GUILayout.Button("+", GUILayout.Width(16)))
                         {
-                            expandedObjects.Add(value.GetHashCode(), true);
+                            expandedObjects.Add(value.GetHashCode() + count << 8, true);
                         }
                     }
                 }
@@ -867,7 +893,7 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
 
-                if (value != null && IsReflectableType(type) && expandedObjects.ContainsKey(value.GetHashCode()))
+                if (value != null && IsReflectableType(type) && expandedObjects.ContainsKey(value.GetHashCode() + count << 8))
                 {
                     if (value is GameObject)
                     {
@@ -1101,7 +1127,7 @@ namespace ModTools
 
             GUILayout.BeginHorizontal();
             GUIControls.StringField("ModTools.NameFilter", "Filter", ref nameFilter, 0.0f, true, true);
-            nameFilter = nameFilter.ToLower();
+            nameFilter = nameFilter.Trim().ToLower();
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
 
@@ -1173,6 +1199,7 @@ namespace ModTools
                 expanded.Clear();
                 expandedComponents.Clear();
                 expandedObjects.Clear();
+                evaluatedProperties.Clear();
             }
         }
 
