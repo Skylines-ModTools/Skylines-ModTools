@@ -421,6 +421,13 @@ namespace ModTools
             GUILayout.Label("property ");
             GUILayout.Label(property.PropertyType.ToString() + " ");
 
+            if (!property.CanWrite)
+            {
+                GUI.contentColor = Color.blue;
+                GUI.enabled = false;
+                GUILayout.Label("const ");
+            }
+
             GUI.contentColor = Color.red;
 
             GUILayout.Label(property.Name);
@@ -598,6 +605,8 @@ namespace ModTools
                     property.SetValue(obj, f, null);
                 }
             }
+
+            GUI.enabled = true;
 
             GUILayout.FlexibleSpace();
 

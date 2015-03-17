@@ -89,6 +89,21 @@ namespace ModTools
             return ret;
         }
 
+        public bool IsConstWatch(string name)
+        {
+            if (fieldWatches.ContainsKey(name))
+            {
+                return fieldWatches[name].Key.IsInitOnly;
+            }
+
+            if (propertyWatches.ContainsKey(name))
+            {
+                return !propertyWatches[name].Key.CanWrite;
+            }
+
+            return true;
+        }
+
         public void WriteWatch(string name, object value)
         {
             if (fieldWatches.ContainsKey(name))
@@ -152,6 +167,11 @@ namespace ModTools
                 GUILayout.Label(watch);
                 GUI.contentColor = Color.white;
                 GUILayout.Label(" = ");
+
+                if (IsConstWatch(watch))
+                {
+                    GUI.enabled = false;
+                }
 
                 var value = ReadWatch(watch);
 
@@ -313,6 +333,8 @@ namespace ModTools
                 {
                     GUILayout.Label(value.ToString());
                 }
+
+                GUI.enabled = true;
 
                 GUILayout.FlexibleSpace();
 

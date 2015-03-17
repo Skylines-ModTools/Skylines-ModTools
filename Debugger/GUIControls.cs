@@ -47,8 +47,6 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            float oldValue = value;
-            string oldValueString = value.ToString();
             GUI.contentColor = Color.white;
 
             bool isHot = IsHot();
@@ -58,29 +56,22 @@ namespace ModTools
                 if (currentHotControl == -1)
                 {
                     currentHotControl = GUIUtility.hotControl;
-                    hotControlBuffer = oldValueString;
-                }
-                else if (currentHotControl == CurrentControlId())
-                {
-                    oldValueString = hotControlBuffer;
+                    hotControlBuffer = value.ToString();
                 }
             }
-            else
+            else if (currentHotControl == CurrentControlId())
             {
-                if (currentHotControl == CurrentControlId())
+                float newValue;
+                if (float.TryParse(hotControlBuffer, out newValue))
                 {
-                    float newValue;
-                    if (oldValueString != hotControlBuffer && !float.TryParse(hotControlBuffer, out newValue))
-                    {
-                        value = newValue;
-                    }
-
-                    currentHotControl = -1;
-                    hotControlBuffer = "";
+                    value = newValue;
                 }
+
+                currentHotControl = -1;
+                hotControlBuffer = "";
             }
             
-            string newBuffer = GUILayout.TextField(oldValueString, GUILayout.Width(fieldSize));
+            string newBuffer = GUILayout.TextField(isHot ? hotControlBuffer : value.ToString(), GUILayout.Width(fieldSize));
 
             if (isHot)
             {
