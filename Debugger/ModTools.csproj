@@ -65,7 +65,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy 000_ModTools.dll "C:\Users\nlight\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\000_ModTools\"</PostBuildEvent>
+    <PostBuildEvent>copy 000_ModTools.dll "C:\Program Files (x86)\Steam\steamapps\workshop\content\255710\409520576\"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

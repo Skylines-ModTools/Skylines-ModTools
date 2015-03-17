@@ -158,7 +158,7 @@ namespace ModTools
                 GUILayout.Label("private ");
             }
 
-            GUI.contentColor = Color.green;
+            GUI.contentColor = Color.white;
 
             GUILayout.Label("field ");
 
@@ -169,6 +169,7 @@ namespace ModTools
                 GUILayout.Label("const ");
             }
 
+            GUI.contentColor = Color.green;
             GUILayout.Label(field.FieldType.ToString() + " ");
 
             GUI.contentColor = Color.red;
@@ -417,7 +418,7 @@ namespace ModTools
                 }
             }
 
-            GUI.contentColor = Color.green;
+            GUI.contentColor = Color.white;
 
             GUILayout.Label("property ");
             
@@ -427,6 +428,7 @@ namespace ModTools
                 GUI.enabled = false;
                 GUILayout.Label("const ");
             }
+            GUI.contentColor = Color.green;
 
             GUILayout.Label(property.PropertyType.ToString() + " ");
 
@@ -928,7 +930,7 @@ namespace ModTools
 
             foreach (MemberInfo member in fields)
             {
-                if (filterType == FilterType.FieldsAndProps && !member.Name.Contains(nameFilter))
+                if (filterType == FilterType.FieldsAndProps && !member.Name.ToLower().Contains(nameFilter))
                 {
                     continue;
                 }
@@ -974,7 +976,7 @@ namespace ModTools
             var components = obj.GetComponents(typeof(Component));
             foreach (var component in components)
             {
-                if (filterType == FilterType.Components && !component.name.Contains(nameFilter))
+                if (filterType == FilterType.Components && !component.name.ToLower().Contains(nameFilter))
                 {
                     continue;
                 }
@@ -1019,7 +1021,7 @@ namespace ModTools
                 return;
             }
 
-            if (filterType == FilterType.GameObjects && !obj.name.Contains(nameFilter))
+            if (filterType == FilterType.GameObjects && !obj.name.ToLower().Contains(nameFilter))
             {
                 return;
             }
@@ -1097,7 +1099,11 @@ namespace ModTools
 
             GUILayout.EndHorizontal();
 
+            GUILayout.BeginHorizontal();
             GUIControls.StringField("ModTools.NameFilter", "Filter", ref nameFilter, 0.0f, true, true);
+            nameFilter = nameFilter.ToLower();
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
 
             bool filterGameObject = filterType == FilterType.GameObjects;
             bool filterComponent = filterType == FilterType.Components;

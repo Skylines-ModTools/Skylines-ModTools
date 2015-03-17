@@ -6,7 +6,7 @@ namespace ModTools
     class GUIControls
     {
 
-        static float fieldSize = 128;
+        static float fieldSize = 200;
 
         public delegate void WatchButtonCallback();
 
@@ -41,6 +41,13 @@ namespace ModTools
                 else
                 {
                     hotControlBuffer = newBuffer;
+
+                    if (Input.GetKey(KeyCode.Return))
+                    {
+                        res = hotControlBuffer;
+                        currentHotControl = null;
+                        hotControlBuffer = "";
+                    }
                 }
             }
             else if (currentHotControl == hash)
