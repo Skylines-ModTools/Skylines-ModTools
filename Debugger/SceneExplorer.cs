@@ -45,7 +45,17 @@ namespace ModTools
         private Watches watches;
         private RTLiveView rtLiveView;
 
-        public bool debugMode = false;
+        public static bool debugMode = false;
+        public static string debugOutput = "";
+        public static string lastCrashReport = "";
+
+        private void AddDebugLine(string line, params System.Object[] arg)
+        {
+            if (debugMode)
+            {
+                debugOutput += String.Format(line, arg) + '\n';
+            }
+        }
 
         public SceneExplorer()
             : base("Scene Explorer", new Rect(128, 440, 800, 500), skin)
@@ -57,6 +67,13 @@ namespace ModTools
         void ExceptionHandler(Exception ex)
         {
             Log.Error("Exception in Scene Explorer - " + ex.Message);
+
+            if (debugMode)
+            {
+                var filename = "ModTools_Crash_Report.log";
+                File.WriteAllText(filename, lastCrashReport);
+                Log.Warning(String.Format("ModTools - crash log dumped to \"{0}\"", filename));
+            }
 
             expanded.Clear();
             expandedComponents.Clear();
@@ -142,6 +159,9 @@ namespace ModTools
 
         private void OnSceneTreeReflectField(string caller, System.Object obj, FieldInfo field, int ident)
         {
+            AddDebugLine("OnSceneTreeReflectField(caller = {0}, obj = {1}, field = {2}, ident = {3})",
+                caller, obj, field, ident);
+
             if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
@@ -227,9 +247,9 @@ namespace ModTools
             }
             else if (field.FieldType.ToString() == "System.Single")
             {
-                var f = (float) value;
-                GUIControls.FloatField(caller+field.Name, "", ref f, 0.0f, true, true);
-                if(f != (float)value)
+                var f = (float)value;
+                GUIControls.FloatField(caller + field.Name, "", ref f, 0.0f, true, true);
+                if (f != (float)value)
                 {
                     field.SetValue(obj, f);
                 }
@@ -382,7 +402,7 @@ namespace ModTools
             {
                 var f = (Color32)value;
                 GUIControls.Color32Field(caller + field.Name, "", ref f, 0.0f, null, true, true);
-                var v = (Color32) value;
+                var v = (Color32)value;
                 if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
                 {
                     field.SetValue(obj, f);
@@ -398,7 +418,7 @@ namespace ModTools
                 watches.AddWatch(caller + "." + field.Name, field, obj);
             }
 
-            if (IsTextureType(field.FieldType))
+            if (IsTextureType(field.FieldType) && value != null)
             {
                 if (GUILayout.Button("LiveView"))
                 {
@@ -412,9 +432,9 @@ namespace ModTools
                     RTLiveView.DumpTextureToPNG((Texture)value);
                 }
             }
-            else if (field.FieldType.ToString() == "UnityEngine.Mesh")
+            else if (field.FieldType.ToString() == "UnityEngine.Mesh" && value != null)
             {
-                if (((Mesh) value).isReadable)
+                if (((Mesh)value).isReadable)
                 {
                     if (GUILayout.Button("Dump .obj"))
                     {
@@ -428,7 +448,7 @@ namespace ModTools
 
                         using (var stream = new FileStream(outputPath, FileMode.Create))
                         {
-                            Mesh outMesh = (Mesh) value;
+                            Mesh outMesh = (Mesh)value;
                             OBJLoader.ExportOBJ(outMesh.EncodeOBJ(), stream);
                             stream.Close();
                             Log.Warning(String.Format("Dumped mesh \"{0}\" to \"{1}\"", ((Mesh)value).name, outputPath));
@@ -438,12 +458,11 @@ namespace ModTools
             }
 
             GUILayout.EndHorizontal();
-
             if (value != null && IsReflectableType(field.FieldType) && expandedObjects.ContainsKey(value.GetHashCode()))
             {
                 if (value is GameObject)
                 {
-                    OnSceneTreeComponents(caller + "." + field.Name, (GameObject)value, ident + 1);   
+                    OnSceneTreeComponents(caller + "." + field.Name, (GameObject)value, ident + 1);
                 }
                 else if (value is Transform)
                 {
@@ -454,10 +473,14 @@ namespace ModTools
                     OnSceneTreeReflect(caller + "." + field.Name, value, ident + 1);
                 }
             }
+            
         }
 
         private void OnSceneTreeReflectProperty(string caller, System.Object obj, PropertyInfo property, int ident)
         {
+            AddDebugLine("OnSceneTreeReflectProperty(caller = {0}, obj = {1}, property = {2}, ident = {3})",
+                caller, obj, property, ident);
+
             if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
@@ -730,7 +753,7 @@ namespace ModTools
                 watches.AddWatch(caller + "." + property.Name, property, obj);
             }
 
-            if (IsTextureType(property.PropertyType))
+            if (IsTextureType(property.PropertyType) && value != null)
             {
                 if (GUILayout.Button("LiveView"))
                 {
@@ -744,7 +767,7 @@ namespace ModTools
                     RTLiveView.DumpTextureToPNG((Texture)value);
                 }
             }
-            else if (property.PropertyType.ToString() == "UnityEngine.Mesh")
+            else if (property.PropertyType.ToString() == "UnityEngine.Mesh" && value != null)
             {
                 if (((Mesh) value).isReadable)
                 {
@@ -790,6 +813,8 @@ namespace ModTools
 
         private void OnSceneTreeReflectMethod(System.Object obj, MethodInfo method, int ident)
         {
+            AddDebugLine("OnSceneTreeReflectMethod(obj = {0}, method = {1}, ident = {2})", obj, method, ident);
+
             if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
@@ -864,6 +889,9 @@ namespace ModTools
 
         private void OnSceneTreeReflectUnityEngineVector3<T>(string caller, T obj, string name, ref UnityEngine.Vector3 vec, int ident)
         {
+            AddDebugLine("OnSceneTreeReflectUnityEngineVector3(caller = {0}, obj = {1}, name = {2}, vec = {3}, ident = {4})",
+                caller, obj, name, vec, ident);
+            
             if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
@@ -907,6 +935,8 @@ namespace ModTools
 
         private void OnSceneTreeReflectUnityEngineTransform(string caller, UnityEngine.Transform transform, int ident)
         {
+            AddDebugLine("OnSceneTreeReflectUnityEngineTransform(caller = {0}, transform = {1}, ident = {2})", caller, transform, ident);
+
             if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
@@ -925,7 +955,7 @@ namespace ModTools
             var localPosition = transform.localPosition;
             OnSceneTreeReflectUnityEngineVector3(caller, transform, "localPosition", ref localPosition, ident + 1);
             transform.localPosition = localPosition;
-
+         
             var localEulerAngles = transform.eulerAngles;
             OnSceneTreeReflectUnityEngineVector3(caller, transform, "localEulerAngles", ref localEulerAngles, ident + 1);
             transform.eulerAngles = localEulerAngles;
@@ -958,6 +988,8 @@ namespace ModTools
 
         private void OnSceneTreeReflectIEnumerable(string caller, System.Object myProperty, int ident)
         {
+            AddDebugLine("OnSceneTreeReflectIEnumerable(caller = {0}, obj = {1}, ident = {2})", caller, myProperty, ident);
+
             if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
@@ -1047,6 +1079,8 @@ namespace ModTools
 
         private void OnSceneTreeReflect(string caller, System.Object obj, int ident)
         {
+            AddDebugLine("OnSceneTreeReflect(caller = {0}, obj = {1}, ident = {2})", caller, obj, ident);
+
             if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
@@ -1158,6 +1192,8 @@ namespace ModTools
 
         private void OnSceneTreeComponents(string caller, GameObject obj, int ident)
         {
+            AddDebugLine("OnSceneTreeComponents(caller = {0}, obj = {1}, ident = {2})", caller, obj, ident);
+
             if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
@@ -1206,6 +1242,8 @@ namespace ModTools
 
         private void OnSceneTreeRecursive(string caller, GameObject obj, int ident = 0)
         {
+            AddDebugLine("OnSceneTreeRecursive(caller = {0}, obj = {1}, ident = {2})", caller, obj, ident);
+
             if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
@@ -1215,14 +1253,14 @@ namespace ModTools
                 return;
             }
 
-            if (filterType == FilterType.GameObjects && !obj.name.ToLower().Contains(nameFilter))
-            {
-                return;
-            }
-
             if (obj == null)
             {
                 GUILayout.Label("null");
+                return;
+            }
+
+            if (filterType == FilterType.GameObjects && !obj.name.ToLower().Contains(nameFilter))
+            {
                 return;
             }
 
@@ -1263,6 +1301,12 @@ namespace ModTools
 
         public void DrawWindow()
         {
+            if (debugMode)
+            {
+                lastCrashReport = debugOutput;
+                debugOutput = "";
+            }
+
             preventCircularReferences.Clear();
 
             watches = watches ?? FindObjectOfType<Watches>();
@@ -1356,18 +1400,9 @@ namespace ModTools
 
             scrollPosition = GUILayout.BeginScrollView(scrollPosition);
 
-            try
+            foreach (var obj in sceneRoots)
             {
-                foreach (var obj in sceneRoots)
-                {
-                    OnSceneTreeRecursive("", obj.Key);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error("Debugger: Exception - " + ex.Message);
-                expanded.Clear();
-                expandedComponents.Clear();
+                OnSceneTreeRecursive("", obj.Key);
             }
 
             GUILayout.EndScrollView();

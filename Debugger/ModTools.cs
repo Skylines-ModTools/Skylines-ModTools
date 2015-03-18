@@ -94,6 +94,11 @@ namespace ModTools
             evaluatePropertiesAutomatically = GUILayout.Toggle(evaluatePropertiesAutomatically, "");
             GUILayout.EndHorizontal();
 
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("SceneExplorer debug mode");
+            SceneExplorer.debugMode = GUILayout.Toggle(SceneExplorer.debugMode, "");
+            GUILayout.EndHorizontal();
+
             if (GUILayout.Button("Watches (Ctrl+W)"))
             {
                 watches.visible = !watches.visible;

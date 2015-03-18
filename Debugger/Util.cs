@@ -9,6 +9,11 @@ namespace ModTools
     public static class Util
     {
 
+        public static bool IsLayout()
+        {
+            return Event.current.type == EventType.Layout;
+        }
+
         public static void DumpRenderTexture(RenderTexture rt, string pngOutPath)
         {
             var oldRT = RenderTexture.active;
