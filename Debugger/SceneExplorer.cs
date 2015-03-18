@@ -110,6 +110,18 @@ namespace ModTools
             return true;
         }
 
+        private bool IsTextureType(Type t)
+        {
+            if (t == typeof (UnityEngine.Texture) || t == typeof (UnityEngine.Texture2D) ||
+                t == typeof (UnityEngine.RenderTexture))
+
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         private void OnSceneTreeReflectField(string caller, System.Object obj, FieldInfo field, int ident)
         {
             if (ident >= 12)
@@ -368,7 +380,7 @@ namespace ModTools
                 watches.AddWatch(caller + "." + field.Name, field, obj);
             }
 
-            if (field.FieldType.ToString() == "UnityEngine.RenderTexture" || field.FieldType.ToString() == "UnityEngine.Texture2D")
+            if (IsTextureType(field.FieldType))
             {
                 if (GUILayout.Button("LiveView"))
                 {
@@ -671,7 +683,7 @@ namespace ModTools
                 watches.AddWatch(caller + "." + property.Name, property, obj);
             }
 
-            if (property.PropertyType.ToString() == "UnityEngine.RenderTexture" || property.PropertyType.ToString() == "UnityEngine.Texture2D")
+            if (IsTextureType(property.PropertyType))
             {
                 if (GUILayout.Button("LiveView"))
                 {
