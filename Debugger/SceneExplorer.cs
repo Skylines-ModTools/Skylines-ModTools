@@ -159,6 +159,15 @@ namespace ModTools
 
         private void OnSceneTreeReflectField(string caller, System.Object obj, FieldInfo field, int ident)
         {
+            try
+            {
+
+            }
+            catch (Exception)
+            {
+                
+                throw;
+            }
             AddDebugLine("OnSceneTreeReflectField(caller = {0}, obj = {1}, field = {2}, ident = {3})",
                 caller, obj, field, ident);
 
@@ -182,7 +191,15 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            var value = field.GetValue(obj);
+            object value = null;
+
+            try
+            {
+                value = field.GetValue(obj);
+            }
+            catch (Exception)
+            {
+            }
 
             if (value != null && IsReflectableType(field.FieldType) && !IsEnumerable(obj))
             {
@@ -473,7 +490,6 @@ namespace ModTools
                     OnSceneTreeReflect(caller + "." + field.Name, value, ident + 1);
                 }
             }
-            
         }
 
         private void OnSceneTreeReflectProperty(string caller, System.Object obj, PropertyInfo property, int ident)
@@ -504,8 +520,14 @@ namespace ModTools
 
             if (property.CanRead && ModTools.evaluatePropertiesAutomatically || evaluatedProperties.ContainsKey(property.GetHashCode()))
             {
-                value = property.GetValue(obj, null);
-                propertyWasEvaluated = true;
+                try
+                {
+                    value = property.GetValue(obj, null);
+                    propertyWasEvaluated = true;
+                }
+                catch (Exception)
+                {
+                }
 
                 if (value != null && IsReflectableType(property.PropertyType) && !IsEnumerable(obj))
                 {
@@ -559,7 +581,14 @@ namespace ModTools
             {
                 if (!propertyWasEvaluated && property.CanRead)
                 {
-                    value = property.GetValue(obj, null);
+                    try
+                    {
+                        value = property.GetValue(obj, null);
+                        propertyWasEvaluated = true;
+                    }
+                    catch (Exception ex)
+                    {
+                    }
                 }
 
                 if (value == null || !IsBuiltInType(property.PropertyType))
@@ -791,7 +820,7 @@ namespace ModTools
                     }
                 }
             }
-
+            
             GUILayout.EndHorizontal();
 
             if (value != null && expandedObjects.ContainsKey(value.GetHashCode()))
