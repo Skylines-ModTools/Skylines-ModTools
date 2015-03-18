@@ -368,11 +368,11 @@ namespace ModTools
                 watches.AddWatch(caller + "." + field.Name, field, obj);
             }
 
-            if (field.FieldType.ToString() == "UnityEngine.RenderTexture")
+            if (field.FieldType.ToString() == "UnityEngine.RenderTexture" || field.FieldType.ToString() == "UnityEngine.Texture2D")
             {
                 if (GUILayout.Button("LiveView"))
                 {
-                    rtLiveView.previewTexture = (RenderTexture)value;
+                    rtLiveView.previewTexture = (Texture2D)value;
                     rtLiveView.caller = caller + "." + field.Name;
                     rtLiveView.visible = true;
                 }
