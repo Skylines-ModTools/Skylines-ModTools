@@ -161,9 +161,9 @@ namespace ModTools
 
                 var type = GetWatchType(watch);
 
-                GUI.contentColor = Color.red;
-                GUILayout.Label(type.ToString());
                 GUI.contentColor = Color.green;
+                GUILayout.Label(type.ToString());
+                GUI.contentColor = Color.red;
                 GUILayout.Label(watch);
                 GUI.contentColor = Color.white;
                 GUILayout.Label(" = ");

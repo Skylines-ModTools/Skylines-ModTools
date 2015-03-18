@@ -21,6 +21,7 @@ namespace ModTools
         }
 
         private float treeIdentSpacing = 16.0f;
+        private int maxHierarchyDepth = 16;
 
         private Dictionary<int, bool> expanded = new Dictionary<int, bool>();
         private Dictionary<int, bool> expandedComponents = new Dictionary<int, bool>();
@@ -126,7 +127,7 @@ namespace ModTools
 
         private void OnSceneTreeReflectField(string caller, System.Object obj, FieldInfo field, int ident)
         {
-            if (ident >= 12)
+            if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(treeIdentSpacing * ident);
@@ -442,7 +443,7 @@ namespace ModTools
 
         private void OnSceneTreeReflectProperty(string caller, System.Object obj, PropertyInfo property, int ident)
         {
-            if (ident >= 12)
+            if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(treeIdentSpacing * ident);
@@ -774,7 +775,7 @@ namespace ModTools
 
         private void OnSceneTreeReflectMethod(System.Object obj, MethodInfo method, int ident)
         {
-            if (ident >= 12)
+            if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(treeIdentSpacing * ident);
@@ -821,7 +822,7 @@ namespace ModTools
 
         private void OnSceneTreeReflectUnityEngineVector2(string hash, string name, ref UnityEngine.Vector2 vec, int ident)
         {
-            if (ident >= 12)
+            if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(treeIdentSpacing * ident);
@@ -848,7 +849,7 @@ namespace ModTools
 
         private void OnSceneTreeReflectUnityEngineVector3<T>(string caller, T obj, string name, ref UnityEngine.Vector3 vec, int ident)
         {
-            if (ident >= 12)
+            if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(treeIdentSpacing * ident);
@@ -872,7 +873,7 @@ namespace ModTools
 
         private void OnSceneTreeReflectUnityEngineVector4(string caller, string name, ref UnityEngine.Vector4 vec, int ident)
         {
-            if (ident >= 12)
+            if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(treeIdentSpacing * ident);
@@ -891,7 +892,7 @@ namespace ModTools
 
         private void OnSceneTreeReflectUnityEngineTransform(string caller, UnityEngine.Transform transform, int ident)
         {
-            if (ident >= 12)
+            if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(treeIdentSpacing * ident);
@@ -942,7 +943,7 @@ namespace ModTools
 
         private void OnSceneTreeReflectIEnumerable(string caller, System.Object myProperty, int ident)
         {
-            if (ident >= 12)
+            if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(treeIdentSpacing * ident);
@@ -1031,7 +1032,7 @@ namespace ModTools
 
         private void OnSceneTreeReflect(string caller, System.Object obj, int ident)
         {
-            if (ident >= 12)
+            if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(treeIdentSpacing * ident);
@@ -1131,7 +1132,7 @@ namespace ModTools
 
         private void OnSceneTreeComponents(string caller, GameObject obj, int ident)
         {
-            if (ident >= 12)
+            if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(treeIdentSpacing * ident);
@@ -1179,7 +1180,7 @@ namespace ModTools
 
         private void OnSceneTreeRecursive(string caller, GameObject obj, int ident = 0)
         {
-            if (ident >= 12)
+            if (ident >= maxHierarchyDepth)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(treeIdentSpacing * ident);
