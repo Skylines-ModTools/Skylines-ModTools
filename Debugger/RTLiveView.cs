@@ -29,7 +29,7 @@ namespace ModTools
                 }
 
                 GUILayout.EndHorizontal();
-                GUI.DrawTexture(new Rect(0.0f, 60.0f, rect.width, rect.height), previewTexture, ScaleMode.ScaleToFit, false);
+                GUI.DrawTexture(new Rect(0.0f, 120.0f, rect.width, rect.height), previewTexture, ScaleMode.ScaleToFit, false);
             }
             else
             {
@@ -70,7 +70,7 @@ namespace ModTools
                 {
                     bytes = texture.EncodeToPNG();
                 }
-                catch (UnityException ex)
+                catch (UnityException)
                 {
                     Log.Warning(String.Format("Texture \"{0}\" is marked as read-only, running workaround..", texture.name));
                 }

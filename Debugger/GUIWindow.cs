@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ModTools
@@ -8,7 +9,10 @@ namespace ModTools
 
         public delegate void OnDraw();
 
+        public delegate void OnException(Exception ex);
+
         public OnDraw onDraw = null;
+        public OnException onException = null;
 
         public Rect rect = new Rect(0, 0, 64, 64);
 
@@ -157,7 +161,21 @@ namespace ModTools
                     {
                         GUILayout.Space(20.0f);
 
-                        onDraw();
+                        try
+                        {
+                            onDraw();
+                        }
+                        catch (Exception ex)
+                        {
+                            if (onException != null)
+                            {
+                                onException(ex);
+                            }
+                            else
+                            {
+                                throw;
+                            }
+                        }
 
                         GUILayout.Space(16.0f);
 

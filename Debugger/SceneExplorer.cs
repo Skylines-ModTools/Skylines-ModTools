@@ -21,13 +21,15 @@ namespace ModTools
         }
 
         private float treeIdentSpacing = 16.0f;
-        private int maxHierarchyDepth = 16;
+        private int maxHierarchyDepth = 20;
 
         private Dictionary<int, bool> expanded = new Dictionary<int, bool>();
         private Dictionary<int, bool> expandedComponents = new Dictionary<int, bool>();
         private Dictionary<int, bool> expandedObjects = new Dictionary<int, bool>();
 
         private Dictionary<int, bool> evaluatedProperties = new Dictionary<int, bool>();
+
+        private Dictionary<int, bool> preventCircularReferences = new Dictionary<int, bool>(); 
 
         private Dictionary<GameObject, bool> sceneRoots = new Dictionary<GameObject, bool>();
 
@@ -43,10 +45,23 @@ namespace ModTools
         private Watches watches;
         private RTLiveView rtLiveView;
 
+        public bool debugMode = false;
+
         public SceneExplorer()
-            : base("Scene Explorer", new Rect(128, 440, 800, 500), ModTools.skin)
+            : base("Scene Explorer", new Rect(128, 440, 800, 500), skin)
         {
             onDraw = DrawWindow;
+            onException = ExceptionHandler;
+        }
+
+        void ExceptionHandler(Exception ex)
+        {
+            Log.Error("Exception in Scene Explorer - " + ex.Message);
+
+            expanded.Clear();
+            expandedComponents.Clear();
+            expandedObjects.Clear();
+            evaluatedProperties.Clear();
         }
 
         public void Refresh()
@@ -1047,6 +1062,17 @@ namespace ModTools
                 return;
             }
 
+            if (preventCircularReferences.ContainsKey(obj.GetHashCode()))
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Label("Circular reference detected");
+                GUILayout.EndHorizontal();
+                return;
+            }
+
+            preventCircularReferences.Add(obj.GetHashCode(), true);
+
             Type type = obj.GetType();
 
             if (type == typeof(UnityEngine.Transform))
@@ -1237,6 +1263,8 @@ namespace ModTools
 
         public void DrawWindow()
         {
+            preventCircularReferences.Clear();
+
             watches = watches ?? FindObjectOfType<Watches>();
             if (watches == null)
             {
