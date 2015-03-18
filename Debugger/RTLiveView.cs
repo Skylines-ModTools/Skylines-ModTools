@@ -25,7 +25,7 @@ namespace ModTools
 
                 if (GUILayout.Button("Dump .png"))
                 {
-                    DumpTextureToPNG();
+                    DumpTextureToPNG(previewTexture);
                 }
 
                 GUILayout.EndHorizontal();
@@ -37,7 +37,7 @@ namespace ModTools
             }
         }
 
-        void DumpTextureToPNG()
+        public static void DumpTextureToPNG(Texture previewTexture)
         {
             string filename = "";
             var filenamePrefix = String.Format("rt_dump_{0}", previewTexture.name);
@@ -63,7 +63,37 @@ namespace ModTools
             }
             else if (previewTexture is Texture2D)
             {
-                File.WriteAllBytes(filename, ((Texture2D)previewTexture).EncodeToPNG());
+                var texture = previewTexture as Texture2D;
+                byte[] bytes = null;
+
+                try
+                {
+                    bytes = texture.EncodeToPNG();
+                }
+                catch (UnityException ex)
+                {
+                    Log.Warning(String.Format("Texture \"{0}\" is marked as read-only, running workaround..", texture.name));
+                }
+
+                if (bytes == null)
+                {
+                    try
+                    {
+                        var rt = RenderTexture.GetTemporary(texture.width, texture.height, 0);
+                        Graphics.Blit(texture, rt);
+                        Util.DumpRenderTexture(rt, filename);
+                        RenderTexture.ReleaseTemporary(rt);
+                        Log.Warning(String.Format("Texture dumped to \"{0}\"", filename));
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error("There was an error while dumping the texture - " + ex.Message);
+                    }
+
+                    return;
+                }
+
+                File.WriteAllBytes(filename, bytes);
                 Log.Warning(String.Format("Texture dumped to \"{0}\"", filename));
             }
             else

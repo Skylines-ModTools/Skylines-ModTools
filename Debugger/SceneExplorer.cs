@@ -390,6 +390,11 @@ namespace ModTools
                     rtLiveView.caller = caller + "." + field.Name;
                     rtLiveView.visible = true;
                 }
+
+                if (GUILayout.Button("Dump .png"))
+                {
+                    RTLiveView.DumpTextureToPNG((Texture)value);
+                }
             }
             else if (field.FieldType.ToString() == "UnityEngine.Mesh")
             {
@@ -716,6 +721,11 @@ namespace ModTools
                     rtLiveView.previewTexture = (Texture)value;
                     rtLiveView.caller = caller + "." + property.Name;
                     rtLiveView.visible = true;
+                }
+
+                if (GUILayout.Button("Dump .png"))
+                {
+                    RTLiveView.DumpTextureToPNG((Texture)value);
                 }
             }
             else if (property.PropertyType.ToString() == "UnityEngine.Mesh")
@@ -1066,17 +1076,50 @@ namespace ModTools
                 if (member.MemberType == MemberTypes.Field && showFields)
                 {
                     field = (FieldInfo)member;
-                    OnSceneTreeReflectField(caller, obj, field, ident);
+
+                    try
+                    {
+                        OnSceneTreeReflectField(caller, obj, field, ident);
+                    }
+                    catch (Exception ex)
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(treeIdentSpacing * ident);
+                        GUILayout.Label(String.Format("Exception when fetching field \"{0}\" - {1}", field.Name, ex.Message));
+                        GUILayout.EndHorizontal();
+                    }
                 }
                 else if (member.MemberType == MemberTypes.Property && showProperties)
                 {
                     property = (PropertyInfo)member;
-                    OnSceneTreeReflectProperty(caller, obj, property, ident);
+
+                    try
+                    {
+                        OnSceneTreeReflectProperty(caller, obj, property, ident);
+                    }
+                    catch (Exception ex)
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(treeIdentSpacing * ident);
+                        GUILayout.Label(String.Format("Exception when fetching property \"{0}\" - {1}", property.Name, ex.Message));
+                        GUILayout.EndHorizontal();
+                    }
                 }
                 else if (member.MemberType == MemberTypes.Method && showMethods)
                 {
                     method = (MethodInfo)member;
-                    OnSceneTreeReflectMethod(obj, method, ident);
+
+                    try
+                    {
+                        OnSceneTreeReflectMethod(obj, method, ident);
+                    }
+                    catch (Exception ex)
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(treeIdentSpacing * ident);
+                        GUILayout.Label(String.Format("Exception when fetching method \"{0}\" - {1}", method.Name, ex.Message));
+                        GUILayout.EndHorizontal();
+                    }
                 }
 
                 if (field == null)
