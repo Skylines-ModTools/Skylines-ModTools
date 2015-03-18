@@ -374,6 +374,7 @@ namespace ModTools
                 {
                     rtLiveView.previewTexture = (RenderTexture)value;
                     rtLiveView.caller = caller + "." + field.Name;
+                    rtLiveView.visible = true;
                 }
             }
 
