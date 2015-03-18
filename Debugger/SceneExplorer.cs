@@ -164,6 +164,13 @@ namespace ModTools
 
             GUILayout.Label("field ");
 
+            if (field.IsStatic)
+            {
+                GUI.contentColor = Color.blue;
+                GUI.enabled = false;
+                GUILayout.Label("static ");
+            }
+
             if (field.IsInitOnly)
             {
                 GUI.contentColor = Color.blue;
