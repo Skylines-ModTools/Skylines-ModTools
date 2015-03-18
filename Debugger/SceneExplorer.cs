@@ -393,22 +393,27 @@ namespace ModTools
             }
             else if (field.FieldType.ToString() == "UnityEngine.Mesh")
             {
-                if (((Mesh)value).isReadable)
-                    if (GUILayout.Button("Dump"))
+                if (((Mesh) value).isReadable)
+                {
+                    if (GUILayout.Button("Dump .obj"))
                     {
                         string outputPath = caller + "." + field.Name + ".obj";
+                        outputPath = outputPath.Replace(' ', '_');
+
                         if (File.Exists(outputPath))
                         {
                             File.Delete(outputPath);
                         }
-                        using (var lStream = new FileStream(outputPath, FileMode.Create))
-                        {
-                            Mesh outMesh = (Mesh)value;
-                            OBJLoader.ExportOBJ(outMesh.EncodeOBJ(), lStream);
-                            lStream.Close();
-                        }
 
+                        using (var stream = new FileStream(outputPath, FileMode.Create))
+                        {
+                            Mesh outMesh = (Mesh) value;
+                            OBJLoader.ExportOBJ(outMesh.EncodeOBJ(), stream);
+                            stream.Close();
+                            Log.Warning(String.Format("Dumped mesh \"{0}\" to \"{1}\"", ((Mesh)value).name, outputPath));
+                        }
                     }
+                }
             }
 
             GUILayout.EndHorizontal();
@@ -711,6 +716,30 @@ namespace ModTools
                     rtLiveView.previewTexture = (Texture)value;
                     rtLiveView.caller = caller + "." + property.Name;
                     rtLiveView.visible = true;
+                }
+            }
+            else if (property.PropertyType.ToString() == "UnityEngine.Mesh")
+            {
+                if (((Mesh) value).isReadable)
+                {
+                    if (GUILayout.Button("Dump .obj"))
+                    {
+                        string outputPath = caller + "." + property.Name + ".obj";
+                        outputPath = outputPath.Replace(' ', '_');
+
+                        if (File.Exists(outputPath))
+                        {
+                            File.Delete(outputPath);
+                        }
+
+                        using (var stream = new FileStream(outputPath, FileMode.Create))
+                        {
+                            Mesh outMesh = (Mesh) value;
+                            OBJLoader.ExportOBJ(outMesh.EncodeOBJ(), stream);
+                            stream.Close();
+                            Log.Warning(String.Format("Dumped mesh \"{0}\" to \"{1}\"", ((Mesh)value).name, outputPath));
+                        }
+                    }
                 }
             }
 
