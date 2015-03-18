@@ -420,7 +420,7 @@ namespace ModTools
             bool propertyWasEvaluated = false;
             object value = null;
 
-            if (ModTools.evaluatePropertiesAutomatically || evaluatedProperties.ContainsKey(property.GetHashCode()))
+            if (property.CanRead && ModTools.evaluatePropertiesAutomatically || evaluatedProperties.ContainsKey(property.GetHashCode()))
             {
                 value = property.GetValue(obj, null);
                 propertyWasEvaluated = true;
@@ -475,7 +475,7 @@ namespace ModTools
             }
             else
             {
-                if (!propertyWasEvaluated)
+                if (!propertyWasEvaluated && property.CanRead)
                 {
                     value = property.GetValue(obj, null);
                 }
@@ -485,7 +485,16 @@ namespace ModTools
                     GUI.contentColor = Color.white;
                     GUILayout.Label(" = ");
                     GUI.contentColor = Color.white;
-                    GUILayout.Label(value == null ? "null" : value.ToString());
+
+                    if (property.CanRead)
+                    {
+                        GUILayout.Label(value == null ? "null" : value.ToString());
+                    }
+                    else
+                    {
+                        GUILayout.Label("(no get method)");
+                    }
+
                     GUI.contentColor = Color.white;
                 }
                 else if (property.PropertyType.ToString() == "System.Single")
