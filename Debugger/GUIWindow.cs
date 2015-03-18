@@ -50,7 +50,7 @@ namespace ModTools
 
             foreach (var window in windows)
             {
-                if (window.rect.Contains(mouse))
+                if (window.visible && window.rect.Contains(mouse))
                 {
                     mouseInsideGuiWindow = true;
                     break;
