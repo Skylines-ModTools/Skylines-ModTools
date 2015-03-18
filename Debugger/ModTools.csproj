@@ -57,6 +57,7 @@
     <Compile Include="Log.cs" />
     <Compile Include="Mod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RTLiveView.cs" />
     <Compile Include="SceneExplorer.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="Watches.cs" />

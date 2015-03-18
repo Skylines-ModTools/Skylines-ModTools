@@ -38,6 +38,7 @@ namespace ModTools
         private FilterType filterType = FilterType.GameObjects;
 
         private Watches watches;
+        private RTLiveView rtLiveView;
 
         public SceneExplorer()
             : base("Scene Explorer", new Rect(128, 440, 800, 500), ModTools.skin)
@@ -365,6 +366,15 @@ namespace ModTools
             if (GUILayout.Button("Watch"))
             {
                 watches.AddWatch(caller + "." + field.Name, field, obj);
+            }
+
+            if (field.FieldType.ToString() == "UnityEngine.RenderTexture")
+            {
+                if (GUILayout.Button("LiveView"))
+                {
+                    rtLiveView.previewTexture = (RenderTexture)value;
+                    rtLiveView.caller = caller + "." + field.Name;
+                }
             }
 
             GUILayout.EndHorizontal();
@@ -1104,6 +1114,14 @@ namespace ModTools
             watches = watches ?? FindObjectOfType<Watches>();
             if (watches == null)
             {
+                GUILayout.Label("Required component \"Watches\" is missing.");
+                return;
+            }
+
+            rtLiveView = rtLiveView ?? FindObjectOfType<RTLiveView>();
+            if (rtLiveView == null)
+            {
+                GUILayout.Label("Required component \"RTLiveView\" is missing.");
                 return;
             }
 

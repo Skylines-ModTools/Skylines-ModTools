@@ -10,10 +10,9 @@ namespace ModTools
 
         private Vector2 mainScroll = Vector2.zero;
 
-        private float uiScaleUser = 1.0f;
-
         private SceneExplorer sceneExplorer;
         private Watches watches;
+        private RTLiveView rtLiveView;
 
         public static bool logExceptionsToConsole = true;
         public static bool evaluatePropertiesAutomatically = true;
@@ -50,6 +49,7 @@ namespace ModTools
 
             sceneExplorer = gameObject.AddComponent<SceneExplorer>();
             watches = gameObject.AddComponent<Watches>();
+            rtLiveView = gameObject.AddComponent<RTLiveView>();
         }
 
         void Update()
@@ -74,26 +74,15 @@ namespace ModTools
             {
                 watches.visible = !watches.visible;
             }
+
+            if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.R))
+            {
+                rtLiveView.visible = !rtLiveView.visible;
+            }
         }
 
         void DoMainWindow()
         {
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("UI Scale");
-            uiScaleUser = GUILayout.HorizontalSlider(uiScaleUser, 0.1f, 1.25f);
-
-            if (GUILayout.Button("Apply"))
-            {
-                uiScale = uiScaleUser;
-            }
-
-            if (GUILayout.Button("Reset"))
-            {
-                uiScale = uiScaleUser = 1.0f;
-            }
-
-            GUILayout.EndHorizontal();
-
             GUILayout.BeginHorizontal();
             GUILayout.Label("Log exceptions to console");
             logExceptionsToConsole = GUILayout.Toggle(logExceptionsToConsole, "");
@@ -116,6 +105,11 @@ namespace ModTools
                 {
                     sceneExplorer.Refresh();
                 }
+            }
+
+            if (GUILayout.Button("RenderTexture LiveView (Ctrl+R)"))
+            {
+                rtLiveView.visible = !rtLiveView.visible;
             }
 
             mainScroll = GUILayout.BeginScrollView(mainScroll);
