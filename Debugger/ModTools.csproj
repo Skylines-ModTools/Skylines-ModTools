@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ModTools</RootNamespace>
     <AssemblyName>000_ModTools</AssemblyName>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -51,8 +51,19 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExtensionMethods\MeshExtension.cs" />
+    <Compile Include="ExtensionMethods\StringExtensions.cs" />
+    <Compile Include="ExtensionMethods\UnityExtension.cs" />
+    <Compile Include="ExtensionMethods\VectorExtension.cs" />
     <Compile Include="GraphViewer.cs" />
     <Compile Include="GUIWindow.cs" />
+    <Compile Include="MeshOBJTools\Int32Converter.cs" />
+    <Compile Include="MeshOBJTools\OBJData.cs" />
+    <Compile Include="MeshOBJTools\OBJFace.cs" />
+    <Compile Include="MeshOBJTools\OBJFaceVertex.cs" />
+    <Compile Include="MeshOBJTools\OBJGroup.cs" />
+    <Compile Include="MeshOBJTools\OBJLoader.cs" />
+    <Compile Include="MeshOBJTools\OBJMaterial.cs" />
     <Compile Include="ModTools.cs" />
     <Compile Include="GUIControls.cs" />
     <Compile Include="Log.cs" />
