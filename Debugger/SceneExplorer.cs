@@ -372,7 +372,7 @@ namespace ModTools
             {
                 if (GUILayout.Button("LiveView"))
                 {
-                    rtLiveView.previewTexture = (Texture2D)value;
+                    rtLiveView.previewTexture = (Texture)value;
                     rtLiveView.caller = caller + "." + field.Name;
                     rtLiveView.visible = true;
                 }
@@ -669,6 +669,16 @@ namespace ModTools
             if (GUILayout.Button("Watch"))
             {
                 watches.AddWatch(caller + "." + property.Name, property, obj);
+            }
+
+            if (property.PropertyType.ToString() == "UnityEngine.RenderTexture" || property.PropertyType.ToString() == "UnityEngine.Texture2D")
+            {
+                if (GUILayout.Button("LiveView"))
+                {
+                    rtLiveView.previewTexture = (Texture)value;
+                    rtLiveView.caller = caller + "." + property.Name;
+                    rtLiveView.visible = true;
+                }
             }
 
             GUILayout.EndHorizontal();
