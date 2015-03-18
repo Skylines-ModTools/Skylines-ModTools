@@ -2,8 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.IO;
 
 using UnityEngine;
+using UnityExtension;
 
 namespace ModTools
 {
@@ -388,6 +390,25 @@ namespace ModTools
                     rtLiveView.caller = caller + "." + field.Name;
                     rtLiveView.visible = true;
                 }
+            }
+            else if (field.FieldType.ToString() == "UnityEngine.Mesh")
+            {
+                if (((Mesh)value).isReadable)
+                    if (GUILayout.Button("Dump"))
+                    {
+                        string outputPath = caller + "." + field.Name + ".obj";
+                        if (File.Exists(outputPath))
+                        {
+                            File.Delete(outputPath);
+                        }
+                        using (var lStream = new FileStream(outputPath, FileMode.Create))
+                        {
+                            Mesh outMesh = (Mesh)value;
+                            OBJLoader.ExportOBJ(outMesh.EncodeOBJ(), lStream);
+                            lStream.Close();
+                        }
+
+                    }
             }
 
             GUILayout.EndHorizontal();
