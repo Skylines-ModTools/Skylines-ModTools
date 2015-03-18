@@ -58,6 +58,7 @@
     <Compile Include="Mod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SceneExplorer.cs" />
+    <Compile Include="Util.cs" />
     <Compile Include="Watches.cs" />
   </ItemGroup>
   <ItemGroup>

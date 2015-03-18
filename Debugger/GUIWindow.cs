@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using ColossalFramework;
 using UnityEngine;
 
@@ -40,6 +41,27 @@ namespace ModTools
 
         private Vector2 minSize = Vector2.zero;
 
+        private static List<GUIWindow> windows = new List<GUIWindow>();
+
+        public void UpdateMouseScrolling()
+        {
+            var mouse = Input.mousePosition;
+            mouse.y = Screen.height - mouse.y;
+
+            var mouseInsideGuiWindow = false;
+
+            foreach (var window in windows)
+            {
+                if (window.rect.Contains(mouse))
+                {
+                    mouseInsideGuiWindow = true;
+                    break;
+                }
+            }
+
+            Util.SetMouseScrolling(!mouseInsideGuiWindow);
+        }
+
         public GUIWindow(string _title, Rect _rect, GUISkin _skin)
         {
             id = UnityEngine.Random.Range(1024, int.MaxValue);
@@ -47,6 +69,12 @@ namespace ModTools
             rect = _rect;
             skin = _skin;
             minSize = new Vector2(64.0f, 64.0f);
+            windows.Add(this);
+        }
+
+        void OnDestroy()
+        {
+            windows.Remove(this);
         }
 
         void OnGUI()

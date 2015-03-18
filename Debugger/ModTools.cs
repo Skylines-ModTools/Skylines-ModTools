@@ -54,6 +54,8 @@ namespace ModTools
 
         void Update()
         {
+            UpdateMouseScrolling();
+
             if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.Q))
             {
                 visible = !visible;
