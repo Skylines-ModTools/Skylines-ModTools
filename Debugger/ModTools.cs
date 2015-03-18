@@ -120,13 +120,6 @@ namespace ModTools
                 throw new Exception("Hello world!");
             }
 
-            if (GUILayout.Button("ManyTrees"))
-            {
-                var treeManager = Singleton<TreeManager>.instance;
-                Util.WritePrivate<TreeManager, Array32<TreeInstance>>(treeManager, "m_trees", new Array32<TreeInstance>(262144 * 2));
-                Util.WritePrivate<TreeManager, int>(treeManager, "MAX_TREE_COUNT", 262144 * 2);
-            }
-
             var subscribers = FindObjectsOfType<MonoBehaviour>();
             Dictionary<string, bool> set = new Dictionary<string, bool>();
 
