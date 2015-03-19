@@ -8,7 +8,7 @@ namespace ModTools
     {
 
         public Texture previewTexture = null;
-        public string caller = "";
+        public ReferenceChain caller = null;
 
         public RTLiveView() : base("RenderTexture LiveView", new Rect(512, 128, 512, 512), skin)
         {

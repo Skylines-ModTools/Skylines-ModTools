@@ -16,57 +16,57 @@ namespace ModTools
             onDraw = DoWatchesWindow;
         }
 
-        public void AddWatch(string name, FieldInfo field, object o)
+        public void AddWatch(ReferenceChain refChain, FieldInfo field, object o)
         {
-            fieldWatches.Add(name, new KeyValuePair<FieldInfo, object>(field, o));
+            fieldWatches.Add(refChain, new KeyValuePair<FieldInfo, object>(field, o));
             visible = true;
         }
 
-        public void AddWatch(string name, PropertyInfo property, object o)
+        public void AddWatch(ReferenceChain refChain, PropertyInfo property, object o)
         {
-            propertyWatches.Add(name, new KeyValuePair<PropertyInfo, object>(property, o));
+            propertyWatches.Add(refChain, new KeyValuePair<PropertyInfo, object>(property, o));
             visible = true;
         }
 
-        public void RemoveWatch(string name)
+        public void RemoveWatch(ReferenceChain refChain)
         {
-            if (fieldWatches.ContainsKey(name))
+            if (fieldWatches.ContainsKey(refChain))
             {
-                fieldWatches.Remove(name);
+                fieldWatches.Remove(refChain);
             }
 
-            if (propertyWatches.ContainsKey(name))
+            if (propertyWatches.ContainsKey(refChain))
             {
-                propertyWatches.Remove(name);
+                propertyWatches.Remove(refChain);
             }
         }
 
-        public Type GetWatchType(string name)
+        public Type GetWatchType(ReferenceChain refChain)
         {
             Type ret = null;
 
-            if (fieldWatches.ContainsKey(name))
+            if (fieldWatches.ContainsKey(refChain))
             {
-                ret = fieldWatches[name].Key.FieldType;
+                ret = fieldWatches[refChain].Key.FieldType;
             }
 
-            if (propertyWatches.ContainsKey(name))
+            if (propertyWatches.ContainsKey(refChain))
             {
-                ret = propertyWatches[name].Key.PropertyType;
+                ret = propertyWatches[refChain].Key.PropertyType;
             }
 
             return ret;
         }
 
-        public object ReadWatch(string name)
+        public object ReadWatch(ReferenceChain refChain)
         {
             object ret = null;
 
-            if (fieldWatches.ContainsKey(name))
+            if (fieldWatches.ContainsKey(refChain))
             {
                 try
                 {
-                    ret = fieldWatches[name].Key.GetValue(fieldWatches[name].Value);
+                    ret = fieldWatches[refChain].Key.GetValue(fieldWatches[refChain].Value);
                 }
                 catch (Exception)
                 {
@@ -74,11 +74,11 @@ namespace ModTools
                 }
             }
 
-            if (propertyWatches.ContainsKey(name))
+            if (propertyWatches.ContainsKey(refChain))
             {
                 try
                 {
-                    ret = propertyWatches[name].Key.GetValue(propertyWatches[name].Value, null);
+                    ret = propertyWatches[refChain].Key.GetValue(propertyWatches[refChain].Value, null);
                 }
                 catch (Exception)
                 {
@@ -89,28 +89,28 @@ namespace ModTools
             return ret;
         }
 
-        public bool IsConstWatch(string name)
+        public bool IsConstWatch(ReferenceChain refChain)
         {
-            if (fieldWatches.ContainsKey(name))
+            if (fieldWatches.ContainsKey(refChain))
             {
-                return fieldWatches[name].Key.IsInitOnly;
+                return fieldWatches[refChain].Key.IsInitOnly;
             }
 
-            if (propertyWatches.ContainsKey(name))
+            if (propertyWatches.ContainsKey(refChain))
             {
-                return !propertyWatches[name].Key.CanWrite;
+                return !propertyWatches[refChain].Key.CanWrite;
             }
 
             return true;
         }
 
-        public void WriteWatch(string name, object value)
+        public void WriteWatch(ReferenceChain refChain, object value)
         {
-            if (fieldWatches.ContainsKey(name))
+            if (fieldWatches.ContainsKey(refChain))
             {
                 try
                 {
-                    fieldWatches[name].Key.SetValue(fieldWatches[name].Value, value);
+                    fieldWatches[refChain].Key.SetValue(fieldWatches[refChain].Value, value);
                 }
                 catch (Exception)
                 {
@@ -118,11 +118,11 @@ namespace ModTools
                 }
             }
 
-            if (propertyWatches.ContainsKey(name))
+            if (propertyWatches.ContainsKey(refChain))
             {
                 try
                 {
-                    propertyWatches[name].Key.SetValue(propertyWatches[name].Value, value, null);
+                    propertyWatches[refChain].Key.SetValue(propertyWatches[refChain].Value, value, null);
                 }
                 catch (Exception)
                 {
@@ -131,9 +131,9 @@ namespace ModTools
             }
         }
 
-        public string[] GetWatches()
+        public ReferenceChain[] GetWatches()
         {
-            string[] watches = new string[fieldWatches.Count + propertyWatches.Count];
+            ReferenceChain[] watches = new ReferenceChain[fieldWatches.Count + propertyWatches.Count];
             int i = 0;
             foreach (var item in fieldWatches)
             {
@@ -148,8 +148,8 @@ namespace ModTools
             return watches;
         }
 
-        private Dictionary<string, KeyValuePair<FieldInfo, object>> fieldWatches = new Dictionary<string, KeyValuePair<FieldInfo, object>>();
-        private Dictionary<string, KeyValuePair<PropertyInfo, object>> propertyWatches = new Dictionary<string, KeyValuePair<PropertyInfo, object>>();
+        private Dictionary<ReferenceChain, KeyValuePair<FieldInfo, object>> fieldWatches = new Dictionary<ReferenceChain, KeyValuePair<FieldInfo, object>>();
+        private Dictionary<ReferenceChain, KeyValuePair<PropertyInfo, object>> propertyWatches = new Dictionary<ReferenceChain, KeyValuePair<PropertyInfo, object>>();
 
         void DoWatchesWindow()
         {
@@ -164,7 +164,7 @@ namespace ModTools
                 GUI.contentColor = Color.green;
                 GUILayout.Label(type.ToString());
                 GUI.contentColor = Color.red;
-                GUILayout.Label(watch);
+                GUILayout.Label(watch.ToString());
                 GUI.contentColor = Color.white;
                 GUILayout.Label(" = ");
 
