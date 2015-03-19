@@ -159,7 +159,7 @@ namespace ModTools
                 {
                     if (onDraw != null)
                     {
-                        GUILayout.Space(20.0f);
+                        GUILayout.Space(8.0f);
 
                         try
                         {
@@ -200,6 +200,7 @@ namespace ModTools
                                 else
                                 {
                                     movingWindow = null;
+                                    ModTools.Instance.SaveConfig();
                                 }
                             }
                         }
@@ -247,6 +248,7 @@ namespace ModTools
                                 else
                                 {
                                     resizingWindow = null;
+                                    ModTools.Instance.SaveConfig();
                                 }
                             }
                         }
@@ -274,6 +276,7 @@ namespace ModTools
                                 resizingWindow = null;
                                 movingWindow = null;
                                 visible = false;
+                                ModTools.Instance.SaveConfig();
                             }
                         }
 

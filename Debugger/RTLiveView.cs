@@ -19,22 +19,20 @@ namespace ModTools
         {
             if (previewTexture != null)
             {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label(String.Format("Previewing {0} \"{1}\"", caller, previewTexture.name));
-                GUILayout.FlexibleSpace();
+                title = String.Format("Previewing {0} \"{1}\"", caller, previewTexture.name);
 
-                if (GUILayout.Button("Dump .png"))
+                if (GUILayout.Button("Dump .png", GUILayout.Width(128)))
                 {
                     DumpTextureToPNG(previewTexture);
                 }
 
-                GUILayout.EndHorizontal();
-                float aspect = (float) previewTexture.width/(float) previewTexture.height;
-                rect.height = rect.width/aspect;
-                GUI.DrawTexture(new Rect(0.0f, 120.0f, rect.width, rect.height), previewTexture, ScaleMode.ScaleToFit, false);
+                float aspect = (float)previewTexture.width / ((float)previewTexture.height + 38.0f);
+                rect.width = rect.height * aspect;
+                GUI.DrawTexture(new Rect(0.0f, 38.0f, rect.width, rect.height), previewTexture, ScaleMode.ScaleToFit, false);
             }
             else
             {
+                title = "RenderTexture LiveView";
                 GUILayout.Label("Use the Scene Explorer to select a RenderTexture for live view");
             }
         }
