@@ -1129,18 +1129,6 @@ namespace ModTools
             var localScale = transform.localScale;
             OnSceneTreeReflectUnityEngineVector3(refChain.Add("localScale"), transform, "localScale", ref localScale);
             transform.localScale = localScale;
-
-            var forward = transform.forward;
-            OnSceneTreeReflectUnityEngineVector3(refChain.Add("forward"), transform, "forward", ref forward);
-            transform.forward = forward;
-
-            var right = transform.right;
-            OnSceneTreeReflectUnityEngineVector3(refChain.Add("right"), transform, "right", ref right);
-            transform.right = right;
-
-            var up = transform.up;
-            OnSceneTreeReflectUnityEngineVector3(refChain.Add("up"), transform, "up", ref up);
-            transform.up = up;
         }
 
         private bool IsEnumerable(object myProperty)
