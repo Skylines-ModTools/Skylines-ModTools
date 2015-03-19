@@ -29,6 +29,8 @@ namespace ModTools
                 }
 
                 GUILayout.EndHorizontal();
+                float aspect = (float) previewTexture.width/(float) previewTexture.height;
+                rect.height = rect.width/aspect;
                 GUI.DrawTexture(new Rect(0.0f, 120.0f, rect.width, rect.height), previewTexture, ScaleMode.ScaleToFit, false);
             }
             else
