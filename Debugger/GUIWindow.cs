@@ -196,6 +196,23 @@ namespace ModTools
                                     var pos = new Vector2(mouse.x, mouse.y) + moveDragHandle;
                                     rect.x = pos.x;
                                     rect.y = pos.y;
+                                    if (rect.x < 0.0f)
+                                    {
+                                        rect.x = 0.0f;
+                                    }
+                                    if (rect.x + rect.width > Screen.width)
+                                    {
+                                        rect.x = Screen.width - rect.width;
+                                    }
+
+                                    if (rect.y < 0.0f)
+                                    {
+                                        rect.y = 0.0f;
+                                    }
+                                    if (rect.y + rect.height > Screen.height)
+                                    {
+                                        rect.y = Screen.height - rect.height;
+                                    }
                                 }
                                 else
                                 {
@@ -244,6 +261,16 @@ namespace ModTools
                                     
                                     rect.width = size.x;
                                     rect.height = size.y;
+
+                                    if (rect.x + rect.width >= Screen.width)
+                                    {
+                                        rect.width = Screen.width - rect.x;
+                                    }
+
+                                    if (rect.y + rect.height >= Screen.height)
+                                    {
+                                        rect.height = Screen.height - rect.y;
+                                    }
                                 }
                                 else
                                 {
