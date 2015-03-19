@@ -1,7 +1,9 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Reflection;
 using ColossalFramework;
 using UnityEngine;
+using UnityExtension;
 
 namespace ModTools
 {
@@ -25,6 +27,21 @@ namespace ModTools
 
             File.WriteAllBytes(pngOutPath, tex.EncodeToPNG());
             RenderTexture.active = oldRT;
+        }
+
+        public static void DumpMeshOBJ(Mesh mesh, string outputPath)
+        {
+            if (File.Exists(outputPath))
+            {
+                File.Delete(outputPath);
+            }
+
+            using (var stream = new FileStream(outputPath, FileMode.Create))
+            {
+                OBJLoader.ExportOBJ(mesh.EncodeOBJ(), stream);
+                stream.Close();
+                Log.Warning(String.Format("Dumped mesh \"{0}\" to \"{1}\"", ((Mesh)mesh).name, outputPath));
+            }
         }
 
         public static FieldInfo FindField<T>(T o, string fieldName)

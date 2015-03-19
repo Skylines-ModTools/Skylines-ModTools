@@ -368,7 +368,7 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Length);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -381,7 +381,7 @@ namespace ModTools
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Space(treeIdentSpacing * refChain.Length);
+            GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
 
             GUI.contentColor = Color.white;
 
@@ -649,21 +649,9 @@ namespace ModTools
                 {
                     if (GUILayout.Button("Dump .obj"))
                     {
-                        string outputPath = hash + ".obj";
-                        outputPath = outputPath.Replace(' ', '_');
-
-                        if (File.Exists(outputPath))
-                        {
-                            File.Delete(outputPath);
-                        }
-
-                        using (var stream = new FileStream(outputPath, FileMode.Create))
-                        {
-                            Mesh outMesh = (Mesh)value;
-                            OBJLoader.ExportOBJ(outMesh.EncodeOBJ(), stream);
-                            stream.Close();
-                            Log.Warning(String.Format("Dumped mesh \"{0}\" to \"{1}\"", ((Mesh)value).name, outputPath));
-                        }
+                        var outPath = refChain.ToString() + ".obj";
+                        outPath = outPath.Replace(' ', '_');
+                        Util.DumpMeshOBJ(value as Mesh, outPath);
                     }
                 }
             }
@@ -700,7 +688,7 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Length);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -713,7 +701,7 @@ namespace ModTools
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Space(treeIdentSpacing * refChain.Length);
+            GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
 
             bool propertyWasEvaluated = false;
             object value = null;
@@ -1003,21 +991,9 @@ namespace ModTools
                 {
                     if (GUILayout.Button("Dump .obj"))
                     {
-                        string outputPath = hash + ".obj";
-                        outputPath = outputPath.Replace(' ', '_');
-
-                        if (File.Exists(outputPath))
-                        {
-                            File.Delete(outputPath);
-                        }
-
-                        using (var stream = new FileStream(outputPath, FileMode.Create))
-                        {
-                            Mesh outMesh = (Mesh) value;
-                            OBJLoader.ExportOBJ(outMesh.EncodeOBJ(), stream);
-                            stream.Close();
-                            Log.Warning(String.Format("Dumped mesh \"{0}\" to \"{1}\"", ((Mesh)value).name, outputPath));
-                        }
+                        var outPath = refChain.ToString() + ".obj";
+                        outPath = outPath.Replace(' ', '_');
+                        Util.DumpMeshOBJ(value as Mesh, outPath);
                     }
                 }
             }
@@ -1052,7 +1028,7 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Length);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -1065,7 +1041,7 @@ namespace ModTools
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Space(treeIdentSpacing * refChain.Length);
+            GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
 
             GUILayout.Label("method ");
             string signature = method.ReturnType.ToString() + " " + method.Name + "(";
@@ -1102,13 +1078,13 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Length);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
             }
 
-            GUIControls.Vector3Field(refChain.ToString(), name, ref vec, treeIdentSpacing * refChain.Length, () =>
+            GUIControls.Vector3Field(refChain.ToString(), name, ref vec, treeIdentSpacing * (refChain.Length - 1), () =>
             {
                 try
                 {
@@ -1128,7 +1104,7 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Length);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -1183,7 +1159,7 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Length);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -1205,7 +1181,7 @@ namespace ModTools
                 var type = value.GetType();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * oldRefChain.Length);
+                GUILayout.Space(treeIdentSpacing * refChain.Length);
 
                 GUI.contentColor = Color.white;
 
@@ -1267,7 +1243,7 @@ namespace ModTools
                 if (count >= 128)
                 {
                     GUILayout.BeginHorizontal();
-                    GUILayout.Space(treeIdentSpacing * oldRefChain.Length);
+                    GUILayout.Space(treeIdentSpacing * refChain.Length);
                     GUILayout.Label("Array too large to display");
                     GUILayout.EndHorizontal();
                     break;
@@ -1280,7 +1256,7 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Length);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -1295,7 +1271,7 @@ namespace ModTools
             if (preventCircularReferences.ContainsKey(obj.GetHashCode()))
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Length);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Circular reference detected");
                 GUILayout.EndHorizontal();
                 return;
@@ -1341,7 +1317,7 @@ namespace ModTools
                     catch (Exception ex)
                     {
                         GUILayout.BeginHorizontal();
-                        GUILayout.Space(treeIdentSpacing * refChain.Length);
+                        GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                         GUILayout.Label(String.Format("Exception when fetching field \"{0}\" - {1}", field.Name, ex.Message));
                         GUILayout.EndHorizontal();
                     }
@@ -1357,7 +1333,7 @@ namespace ModTools
                     catch (Exception ex)
                     {
                         GUILayout.BeginHorizontal();
-                        GUILayout.Space(treeIdentSpacing * refChain.Length);
+                        GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                         GUILayout.Label(String.Format("Exception when fetching property \"{0}\" - {1}", property.Name, ex.Message));
                         GUILayout.EndHorizontal();
                     }
@@ -1373,7 +1349,7 @@ namespace ModTools
                     catch (Exception ex)
                     {
                         GUILayout.BeginHorizontal();
-                        GUILayout.Space(treeIdentSpacing * refChain.Length);
+                        GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                         GUILayout.Label(String.Format("Exception when fetching method \"{0}\" - {1}", method.Name, ex.Message));
                         GUILayout.EndHorizontal();
                     }
@@ -1391,7 +1367,7 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Length);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -1404,7 +1380,7 @@ namespace ModTools
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Space(treeIdentSpacing * refChain.Length);
+            GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
 
             if (expandedComponents.ContainsKey(refChain))
             {
@@ -1438,7 +1414,7 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Length);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -1458,7 +1434,7 @@ namespace ModTools
             if (expanded.ContainsKey(refChain))
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Length);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
 
                 if (GUILayout.Button("-", GUILayout.Width(16)))
                 {
@@ -1482,7 +1458,7 @@ namespace ModTools
             else
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Length);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
 
                 if (GUILayout.Button("+", GUILayout.Width(16)))
                 {
