@@ -1121,7 +1121,7 @@ namespace ModTools
             var localPosition = transform.localPosition;
             OnSceneTreeReflectUnityEngineVector3(refChain.Add("localPosition"), transform, "localPosition", ref localPosition);
             transform.localPosition = localPosition;
-         
+
             var localEulerAngles = transform.eulerAngles;
             OnSceneTreeReflectUnityEngineVector3(refChain.Add("localEulerAngles"), transform, "localEulerAngles", ref localEulerAngles);
             transform.eulerAngles = localEulerAngles;
@@ -1129,6 +1129,204 @@ namespace ModTools
             var localScale = transform.localScale;
             OnSceneTreeReflectUnityEngineVector3(refChain.Add("localScale"), transform, "localScale", ref localScale);
             transform.localScale = localScale;
+        }
+
+        private static readonly string[] textureProps = new string[28]
+        {
+          "_BackTex",
+          "_BumpMap",
+          "_BumpSpecMap",
+          "_Control",
+          "_DecalTex",
+          "_Detail",
+          "_DownTex",
+          "_FrontTex",
+          "_GlossMap",
+          "_Illum",
+          "_LeftTex",
+          "_LightMap",
+          "_LightTextureB0",
+          "_MainTex",
+          "_XYSMap",
+          "_ACIMap",
+          "_XYCAMap",
+          "_ParallaxMap",
+          "_RightTex",
+          "_ShadowOffset",
+          "_Splat0",
+          "_Splat1",
+          "_Splat2",
+          "_Splat3",
+          "_TranslucencyMap",
+          "_UpTex",
+          "_Tex",
+          "_Cube"
+        };
+        private static readonly string[] colorProps = new string[5]
+        {
+          "_Color",
+          "_ColorV0",
+          "_ColorV1",
+          "_ColorV2",
+          "_ColorV3"
+        };
+        private static readonly string[] vectorProps = new string[4]
+        {
+          "_FloorParams",
+          "_UvAnimation",
+          "_WindAnimation",
+          "_WindAnimationB"
+        };
+
+        private void OnSceneReflectUnityEngineMaterial(ReferenceChain refChain, UnityEngine.Material material)
+        {
+            AddDebugLine("OnSceneTreeReflectUnityEngineTransform(caller = {0}, material = {1})", refChain, material);
+
+            var hash = refChain.GetHashCode().ToString();
+
+            if (refChain.CheckDepth())
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Label("Hierarchy too deep, sorry :(");
+                GUILayout.EndHorizontal();
+                return;
+            }
+
+            if(material == null)
+            {
+                GUILayout.Label("null");
+                return;
+            }
+
+            ReferenceChain oldRefChain = refChain;
+
+            foreach (string prop in textureProps)
+            {
+                Texture value = material.GetTexture(prop);
+                if (value == null)
+                    continue;
+                refChain = oldRefChain.Add(prop);
+
+                var type = value.GetType();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * refChain.Length);
+
+                GUI.contentColor = Color.white;
+
+                if (IsReflectableType(type) && !IsEnumerable(type))
+                {
+                    if (expandedObjects.ContainsKey(refChain))
+                    {
+                        if (GUILayout.Button("-", GUILayout.Width(16)))
+                        {
+                            expandedObjects.Remove(refChain);
+                        }
+                    }
+                    else
+                    {
+                        if (GUILayout.Button("+", GUILayout.Width(16)))
+                        {
+                            expandedObjects.Add(refChain, true);
+                        }
+                    }
+                }
+
+                GUI.contentColor = Color.green;
+
+                GUILayout.Label(type.ToString() + " ");
+
+                GUI.contentColor = Color.red;
+
+                GUILayout.Label(prop);
+
+                GUI.contentColor = Color.white;
+
+                GUILayout.Label(" = ");
+                GUILayout.Label(value == null ? "null" : value.ToString());
+
+                GUILayout.FlexibleSpace();
+
+                if (GUILayout.Button("LiveView"))
+                {
+                    rtLiveView.previewTexture = (Texture)value;
+                    rtLiveView.caller = refChain;
+                    rtLiveView.visible = true;
+                }
+
+                if (GUILayout.Button("Dump .png"))
+                {
+                    RTLiveView.DumpTextureToPNG((Texture)value);
+                }
+                GUILayout.EndHorizontal();
+
+                if (IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
+                {
+                    OnSceneTreeReflect(refChain, value);
+                }
+
+            }
+            foreach (string prop in colorProps)
+            {
+                Color value = material.GetColor(prop);
+                if (value == null)
+                    continue;
+                refChain = oldRefChain.Add(prop);
+
+                var type = value.GetType();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * refChain.Length);
+
+                GUI.contentColor = Color.white;
+
+                if (IsReflectableType(type) && !IsEnumerable(type))
+                {
+                    if (expandedObjects.ContainsKey(refChain))
+                    {
+                        if (GUILayout.Button("-", GUILayout.Width(16)))
+                        {
+                            expandedObjects.Remove(refChain);
+                        }
+                    }
+                    else
+                    {
+                        if (GUILayout.Button("+", GUILayout.Width(16)))
+                        {
+                            expandedObjects.Add(refChain, true);
+                        }
+                    }
+                }
+
+                GUI.contentColor = Color.green;
+
+                GUILayout.Label(type.ToString() + " ");
+
+                GUI.contentColor = Color.red;
+
+                GUILayout.Label(prop);
+
+                GUI.contentColor = Color.white;
+
+                GUILayout.Label(" = ");
+                var f = value;
+                GUIControls.ColorField(hash, "", ref f, 0.0f, null, true, true);
+                if (f != value)
+                {
+                    material.SetColor(prop, f);
+                }
+                GUILayout.FlexibleSpace();
+
+                GUILayout.EndHorizontal();
+
+                if (IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
+                {
+                    OnSceneTreeReflect(refChain, value);
+                }
+
+            }
+
         }
 
         private bool IsEnumerable(object myProperty)
@@ -1278,6 +1476,12 @@ namespace ModTools
             if (IsEnumerable(obj))
             {
                 OnSceneTreeReflectIEnumerable(refChain, obj);
+                return;
+            }
+
+            if(type == typeof(Material))
+            {
+                OnSceneReflectUnityEngineMaterial(refChain, (UnityEngine.Material)obj);
                 return;
             }
 
