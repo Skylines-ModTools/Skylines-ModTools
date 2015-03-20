@@ -1203,6 +1203,8 @@ namespace ModTools
 
             foreach (string prop in textureProps)
             {
+                if (!material.HasProperty(prop))
+                    continue;
                 Texture value = material.GetTexture(prop);
                 if (value == null)
                     continue;
@@ -1269,9 +1271,9 @@ namespace ModTools
             }
             foreach (string prop in colorProps)
             {
-                Color value = material.GetColor(prop);
-                if (value == null)
+                if (!material.HasProperty(prop))
                     continue;
+                Color value = material.GetColor(prop);
                 refChain = oldRefChain.Add(prop);
 
                 var type = value.GetType();
