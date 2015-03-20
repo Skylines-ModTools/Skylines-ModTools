@@ -1162,6 +1162,7 @@ namespace ModTools
           "_Tex",
           "_Cube"
         };
+
         private static readonly string[] colorProps = new string[5]
         {
           "_Color",
@@ -1170,6 +1171,7 @@ namespace ModTools
           "_ColorV2",
           "_ColorV3"
         };
+
         private static readonly string[] vectorProps = new string[4]
         {
           "_FloorParams",
@@ -1208,6 +1210,7 @@ namespace ModTools
                 Texture value = material.GetTexture(prop);
                 if (value == null)
                     continue;
+
                 refChain = oldRefChain.Add(prop);
 
                 var type = value.GetType();
@@ -1313,11 +1316,12 @@ namespace ModTools
 
                 GUILayout.Label(" = ");
                 var f = value;
-                GUIControls.ColorField(hash, "", ref f, 0.0f, null, true, true);
+                GUIControls.ColorField(refChain.ToString(), "", ref f, 0.0f, null, true, true);
                 if (f != value)
                 {
                     material.SetColor(prop, f);
                 }
+
                 GUILayout.FlexibleSpace();
 
                 GUILayout.EndHorizontal();
@@ -1326,7 +1330,6 @@ namespace ModTools
                 {
                     OnSceneTreeReflect(refChain, value);
                 }
-
             }
 
         }
@@ -1369,7 +1372,7 @@ namespace ModTools
                 var type = value.GetType();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Length);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
 
                 GUI.contentColor = Color.white;
 
