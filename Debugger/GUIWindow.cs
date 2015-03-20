@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ModTools
@@ -8,7 +9,10 @@ namespace ModTools
 
         public delegate void OnDraw();
 
+        public delegate void OnException(Exception ex);
+
         public OnDraw onDraw = null;
+        public OnException onException = null;
 
         public Rect rect = new Rect(0, 0, 64, 64);
 
@@ -155,9 +159,23 @@ namespace ModTools
                 {
                     if (onDraw != null)
                     {
-                        GUILayout.Space(20.0f);
+                        GUILayout.Space(8.0f);
 
-                        onDraw();
+                        try
+                        {
+                            onDraw();
+                        }
+                        catch (Exception ex)
+                        {
+                            if (onException != null)
+                            {
+                                onException(ex);
+                            }
+                            else
+                            {
+                                throw;
+                            }
+                        }
 
                         GUILayout.Space(16.0f);
 
@@ -178,10 +196,28 @@ namespace ModTools
                                     var pos = new Vector2(mouse.x, mouse.y) + moveDragHandle;
                                     rect.x = pos.x;
                                     rect.y = pos.y;
+                                    if (rect.x < 0.0f)
+                                    {
+                                        rect.x = 0.0f;
+                                    }
+                                    if (rect.x + rect.width > Screen.width)
+                                    {
+                                        rect.x = Screen.width - rect.width;
+                                    }
+
+                                    if (rect.y < 0.0f)
+                                    {
+                                        rect.y = 0.0f;
+                                    }
+                                    if (rect.y + rect.height > Screen.height)
+                                    {
+                                        rect.y = Screen.height - rect.height;
+                                    }
                                 }
                                 else
                                 {
                                     movingWindow = null;
+                                    ModTools.Instance.SaveConfig();
                                 }
                             }
                         }
@@ -225,10 +261,21 @@ namespace ModTools
                                     
                                     rect.width = size.x;
                                     rect.height = size.y;
+
+                                    if (rect.x + rect.width >= Screen.width)
+                                    {
+                                        rect.width = Screen.width - rect.x;
+                                    }
+
+                                    if (rect.y + rect.height >= Screen.height)
+                                    {
+                                        rect.height = Screen.height - rect.y;
+                                    }
                                 }
                                 else
                                 {
                                     resizingWindow = null;
+                                    ModTools.Instance.SaveConfig();
                                 }
                             }
                         }
@@ -256,6 +303,7 @@ namespace ModTools
                                 resizingWindow = null;
                                 movingWindow = null;
                                 visible = false;
+                                ModTools.Instance.SaveConfig();
                             }
                         }
 

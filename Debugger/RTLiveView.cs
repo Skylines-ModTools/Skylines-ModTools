@@ -8,7 +8,7 @@ namespace ModTools
     {
 
         public Texture previewTexture = null;
-        public string caller = "";
+        public ReferenceChain caller = null;
 
         public RTLiveView() : base("RenderTexture LiveView", new Rect(512, 128, 512, 512), skin)
         {
@@ -19,25 +19,25 @@ namespace ModTools
         {
             if (previewTexture != null)
             {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label(String.Format("Previewing {0} \"{1}\"", caller, previewTexture.name));
-                GUILayout.FlexibleSpace();
+                title = String.Format("Previewing {0} \"{1}\"", caller, previewTexture.name);
 
-                if (GUILayout.Button("Dump .png"))
+                if (GUILayout.Button("Dump .png", GUILayout.Width(128)))
                 {
-                    DumpTextureToPNG();
+                    DumpTextureToPNG(previewTexture);
                 }
 
-                GUILayout.EndHorizontal();
-                GUI.DrawTexture(new Rect(0.0f, 60.0f, rect.width, rect.height), previewTexture, ScaleMode.ScaleToFit, false);
+                float aspect = (float)previewTexture.width / ((float)previewTexture.height + 38.0f);
+                rect.width = rect.height * aspect;
+                GUI.DrawTexture(new Rect(0.0f, 38.0f, rect.width, rect.height), previewTexture, ScaleMode.ScaleToFit, false);
             }
             else
             {
+                title = "RenderTexture LiveView";
                 GUILayout.Label("Use the Scene Explorer to select a RenderTexture for live view");
             }
         }
 
-        void DumpTextureToPNG()
+        public static void DumpTextureToPNG(Texture previewTexture)
         {
             string filename = "";
             var filenamePrefix = String.Format("rt_dump_{0}", previewTexture.name);
@@ -63,7 +63,37 @@ namespace ModTools
             }
             else if (previewTexture is Texture2D)
             {
-                File.WriteAllBytes(filename, ((Texture2D)previewTexture).EncodeToPNG());
+                var texture = previewTexture as Texture2D;
+                byte[] bytes = null;
+
+                try
+                {
+                    bytes = texture.EncodeToPNG();
+                }
+                catch (UnityException)
+                {
+                    Log.Warning(String.Format("Texture \"{0}\" is marked as read-only, running workaround..", texture.name));
+                }
+
+                if (bytes == null)
+                {
+                    try
+                    {
+                        var rt = RenderTexture.GetTemporary(texture.width, texture.height, 0);
+                        Graphics.Blit(texture, rt);
+                        Util.DumpRenderTexture(rt, filename);
+                        RenderTexture.ReleaseTemporary(rt);
+                        Log.Warning(String.Format("Texture dumped to \"{0}\"", filename));
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error("There was an error while dumping the texture - " + ex.Message);
+                    }
+
+                    return;
+                }
+
+                File.WriteAllBytes(filename, bytes);
                 Log.Warning(String.Format("Texture dumped to \"{0}\"", filename));
             }
             else

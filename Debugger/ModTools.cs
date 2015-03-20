@@ -18,6 +18,62 @@ namespace ModTools
         public static bool logExceptionsToConsole = true;
         public static bool evaluatePropertiesAutomatically = true;
 
+        public Configuration config = new Configuration();
+        public static readonly string configPath = "ModToolsConfig.xml";
+
+        private static ModTools instance = null;
+
+        public static ModTools Instance
+        {
+            get
+            {
+                instance = instance ?? FindObjectOfType<ModTools>();
+                return instance;
+            }
+        }
+
+        public void LoadConfig()
+        {
+            config = Configuration.Deserialize(configPath);
+            if (config == null)
+            {
+                config = new Configuration();
+                SaveConfig();
+            }
+
+            rect = config.mainWindowRect;
+            visible= config.mainWindowVisible;
+
+            rtLiveView.rect = config.rtLiveViewRect ;
+            rtLiveView.visible = config.rtLiveViewVisible;
+
+            watches.rect = config.watchesRect;
+            watches.visible = config.watchesVisible;
+
+            sceneExplorer.rect = config.sceneExplorerRect;
+            sceneExplorer.visible = config.sceneExplorerVisible;
+        }
+
+        public void SaveConfig()
+        {
+            if (config != null)
+            {
+                config.mainWindowRect = rect;
+                config.mainWindowVisible = visible;
+
+                config.rtLiveViewRect = rtLiveView.rect;
+                config.rtLiveViewVisible = rtLiveView.visible;
+
+                config.watchesRect = watches.rect;
+                config.watchesVisible = watches.visible;
+
+                config.sceneExplorerRect = sceneExplorer.rect;
+                config.sceneExplorerVisible = sceneExplorer.visible;
+
+                Configuration.Serialize(configPath, config);
+            }
+        }
+
         public ModTools() : base("Mod Tools", new Rect(128, 128, 356, 260), skin)
         {
             onDraw = DoMainWindow;
@@ -51,6 +107,8 @@ namespace ModTools
             sceneExplorer = gameObject.AddComponent<SceneExplorer>();
             watches = gameObject.AddComponent<Watches>();
             rtLiveView = gameObject.AddComponent<RTLiveView>();
+
+            LoadConfig();
         }
 
         void Update()
@@ -92,6 +150,11 @@ namespace ModTools
             GUILayout.BeginHorizontal();
             GUILayout.Label("Evaluate properties automatically");
             evaluatePropertiesAutomatically = GUILayout.Toggle(evaluatePropertiesAutomatically, "");
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("SceneExplorer debug mode");
+            SceneExplorer.debugMode = GUILayout.Toggle(SceneExplorer.debugMode, "");
             GUILayout.EndHorizontal();
 
             if (GUILayout.Button("Watches (Ctrl+W)"))

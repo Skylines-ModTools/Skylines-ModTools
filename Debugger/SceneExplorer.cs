@@ -10,6 +10,207 @@ using UnityExtension;
 namespace ModTools
 {
 
+    public class ReferenceChain
+    {
+        private enum ReferenceType
+        {
+            GameObject = 0,
+            Component = 1,
+            Field = 2,
+            Property = 3,
+            Method = 4,
+            EnumerableItem = 5,
+            SpecialNamedProperty = 6
+        }
+
+        private readonly object[] chainObjects = new object[SceneExplorer.maxHierarchyDepth];
+        private readonly ReferenceType[] chainTypes = new ReferenceType[SceneExplorer.maxHierarchyDepth];
+        private int count = 0;
+
+        public int Length
+        {
+            get { return count; }
+        }
+
+        public string LastItemName
+        {
+            get
+            {
+                return ItemToString(count - 1);
+            }
+        }
+
+        public bool CheckDepth()
+        {
+            if (count >= SceneExplorer.maxHierarchyDepth)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public ReferenceChain Copy()
+        {
+            ReferenceChain copy = new ReferenceChain();
+            copy.count = count;
+            for (int i = 0; i < count; i++)
+            {
+                copy.chainObjects[i] = chainObjects[i];
+                copy.chainTypes[i] = chainTypes[i];
+            }
+
+            return copy;
+        }
+        
+        public ReferenceChain Add(GameObject go)
+        {
+            ReferenceChain copy = Copy();
+            copy.chainObjects[count] = go;
+            copy.chainTypes[count] = ReferenceType.GameObject;
+            copy.count++;
+            return copy;
+        }
+
+        public ReferenceChain Add(Component component)
+        {
+            ReferenceChain copy = Copy();
+            copy.chainObjects[count] = component;
+            copy.chainTypes[count] = ReferenceType.Component;
+            copy.count++;
+            return copy;
+        }
+
+        public ReferenceChain Add(FieldInfo fieldInfo)
+        {
+            ReferenceChain copy = Copy();
+            copy.chainObjects[count] = fieldInfo;
+            copy.chainTypes[count] = ReferenceType.Field;
+            copy.count++;
+            return copy;
+        }
+
+        public ReferenceChain Add(PropertyInfo propertyInfo)
+        {
+            ReferenceChain copy = Copy();
+            copy.chainObjects[count] = propertyInfo;
+            copy.chainTypes[count] = ReferenceType.Property;
+            copy.count++;
+            return copy;
+        }
+
+        public ReferenceChain Add(MethodInfo methodInfo)
+        {
+            ReferenceChain copy = Copy();
+            copy.chainObjects[count] = methodInfo;
+            copy.chainTypes[count] = ReferenceType.Method;
+            copy.count++;
+            return copy;
+        }
+
+        public ReferenceChain Add(int index)
+        {
+            ReferenceChain copy = Copy();
+            copy.chainObjects[count] = index;
+            copy.chainTypes[count] = ReferenceType.EnumerableItem;
+            copy.count++;
+            return copy;
+        }
+
+        public ReferenceChain Add(string namedProperty)
+        {
+            ReferenceChain copy = Copy();
+            copy.chainObjects[count] = namedProperty;
+            copy.chainTypes[count] = ReferenceType.SpecialNamedProperty;
+            copy.count++;
+            return copy;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is ReferenceChain))
+            {
+                return false;
+            }
+
+            var other = (ReferenceChain) obj;
+
+            if (other.count != count)
+            {
+                return false;
+            }
+
+            for (int i = count - 1; i >= 0; i--)
+            {
+                if (chainTypes[i] != other.chainTypes[i])
+                {
+                    return false;
+                }
+
+                if (chainObjects[i].GetHashCode() != other.chainObjects[i].GetHashCode())
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            int hash = HashCodeHelper.Initialize();
+
+            for(int i = 0; i < count; i++)
+            {
+                hash = HashCodeHelper.Hash(hash, chainTypes[i]);
+                hash = HashCodeHelper.Hash(hash, chainObjects[i]);
+            }
+
+            return hash;
+        }
+
+        private string ItemToString(int i)
+        {
+            switch (chainTypes[i])
+            {
+                case ReferenceType.GameObject:
+                    return ((GameObject)chainObjects[i]).name;
+                case ReferenceType.Component:
+                    return ((Component)chainObjects[i]).name;
+                case ReferenceType.Field:
+                    return ((FieldInfo)chainObjects[i]).Name;
+                case ReferenceType.Property:
+                    return ((PropertyInfo)chainObjects[i]).Name;
+                case ReferenceType.Method:
+                    return ((MethodInfo)chainObjects[i]).Name;
+                case ReferenceType.EnumerableItem:
+                    return String.Format("[{0}]", (int)chainObjects[i]);
+                case ReferenceType.SpecialNamedProperty:
+                    return (string)chainObjects[i];
+            }
+
+            return "";
+        }
+
+        public override string ToString()
+        {
+            string result = "";
+
+            for (int i = 0; i < count; i++)
+            {
+                result += ItemToString(i);
+
+                if (i != count - 1)
+                {
+                    result += '.';
+                }
+            }
+
+            return result;
+        }
+
+    }
+
     public class SceneExplorer : GUIWindow
     {
 
@@ -21,12 +222,15 @@ namespace ModTools
         }
 
         private float treeIdentSpacing = 16.0f;
+        public static int maxHierarchyDepth = 20;
 
-        private Dictionary<int, bool> expanded = new Dictionary<int, bool>();
-        private Dictionary<int, bool> expandedComponents = new Dictionary<int, bool>();
-        private Dictionary<int, bool> expandedObjects = new Dictionary<int, bool>();
+        private Dictionary<ReferenceChain, bool> expanded = new Dictionary<ReferenceChain, bool>();
+        private Dictionary<ReferenceChain, bool> expandedComponents = new Dictionary<ReferenceChain, bool>();
+        private Dictionary<ReferenceChain, bool> expandedObjects = new Dictionary<ReferenceChain, bool>();
 
-        private Dictionary<int, bool> evaluatedProperties = new Dictionary<int, bool>();
+        private Dictionary<ReferenceChain, bool> evaluatedProperties = new Dictionary<ReferenceChain, bool>();
+
+        private Dictionary<int, bool> preventCircularReferences = new Dictionary<int, bool>(); 
 
         private Dictionary<GameObject, bool> sceneRoots = new Dictionary<GameObject, bool>();
 
@@ -42,10 +246,40 @@ namespace ModTools
         private Watches watches;
         private RTLiveView rtLiveView;
 
+        public static bool debugMode = false;
+        public static string debugOutput = "";
+        public static string lastCrashReport = "";
+
+        private void AddDebugLine(string line, params System.Object[] arg)
+        {
+            if (debugMode)
+            {
+                debugOutput += String.Format(line, arg) + '\n';
+            }
+        }
+
         public SceneExplorer()
-            : base("Scene Explorer", new Rect(128, 440, 800, 500), ModTools.skin)
+            : base("Scene Explorer", new Rect(128, 440, 800, 500), skin)
         {
             onDraw = DrawWindow;
+            onException = ExceptionHandler;
+        }
+
+        void ExceptionHandler(Exception ex)
+        {
+            Log.Error("Exception in Scene Explorer - " + ex.Message);
+
+            if (debugMode)
+            {
+                var filename = "ModTools_Crash_Report.log";
+                File.WriteAllText(filename, lastCrashReport);
+                Log.Warning(String.Format("ModTools - crash log dumped to \"{0}\"", filename));
+            }
+
+            expanded.Clear();
+            expandedComponents.Clear();
+            expandedObjects.Clear();
+            evaluatedProperties.Clear();
         }
 
         public void Refresh()
@@ -124,12 +358,17 @@ namespace ModTools
             return false;
         }
 
-        private void OnSceneTreeReflectField(string caller, System.Object obj, FieldInfo field, int ident)
+        private void OnSceneTreeReflectField(ReferenceChain refChain, System.Object obj, FieldInfo field)
         {
-            if (ident >= 12)
+            AddDebugLine("OnSceneTreeReflectField(caller = {0}, obj = {1}, field = {2})",
+                refChain, obj, field);
+
+            var hash = refChain.GetHashCode().ToString();
+
+            if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -142,26 +381,34 @@ namespace ModTools
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Space(treeIdentSpacing * ident);
+            GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
 
             GUI.contentColor = Color.white;
 
-            var value = field.GetValue(obj);
+            object value = null;
+
+            try
+            {
+                value = field.GetValue(obj);
+            }
+            catch (Exception)
+            {
+            }
 
             if (value != null && IsReflectableType(field.FieldType) && !IsEnumerable(obj))
             {
-                if (expandedObjects.ContainsKey(value.GetHashCode()))
+                if (expandedObjects.ContainsKey(refChain))
                 {
                     if (GUILayout.Button("-", GUILayout.Width(16)))
                     {
-                        expandedObjects.Remove(value.GetHashCode());
+                        expandedObjects.Remove(refChain);
                     }
                 }
                 else
                 {
                     if (GUILayout.Button("+", GUILayout.Width(16)))
                     {
-                        expandedObjects.Add(value.GetHashCode(), true);
+                        expandedObjects.Add(refChain, true);
                     }
                 }
             }
@@ -211,9 +458,9 @@ namespace ModTools
             }
             else if (field.FieldType.ToString() == "System.Single")
             {
-                var f = (float) value;
-                GUIControls.FloatField(caller+field.Name, "", ref f, 0.0f, true, true);
-                if(f != (float)value)
+                var f = (float)value;
+                GUIControls.FloatField(hash, "", ref f, 0.0f, true, true);
+                if (f != (float)value)
                 {
                     field.SetValue(obj, f);
                 }
@@ -221,7 +468,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.Double")
             {
                 var f = (double)value;
-                GUIControls.DoubleField(caller + field.Name, "", ref f, 0.0f, true, true);
+                GUIControls.DoubleField(hash, "", ref f, 0.0f, true, true);
                 if (f != (double)value)
                 {
                     field.SetValue(obj, f);
@@ -230,7 +477,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.Byte")
             {
                 var f = (byte)value;
-                GUIControls.ByteField(caller + field.Name, "", ref f, 0.0f, true, true);
+                GUIControls.ByteField(hash, "", ref f, 0.0f, true, true);
                 if (f != (byte)value)
                 {
                     field.SetValue(obj, f);
@@ -239,7 +486,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.Int32")
             {
                 var f = (int)value;
-                GUIControls.IntField(caller + field.Name, "", ref f, 0.0f, true, true);
+                GUIControls.IntField(hash, "", ref f, 0.0f, true, true);
                 if (f != (int)value)
                 {
                     field.SetValue(obj, f);
@@ -248,7 +495,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.UInt32")
             {
                 var f = (uint)value;
-                GUIControls.UIntField(caller + field.Name, "", ref f, 0.0f, true, true);
+                GUIControls.UIntField(hash, "", ref f, 0.0f, true, true);
                 if (f != (uint)value)
                 {
                     field.SetValue(obj, f);
@@ -257,7 +504,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.Int64")
             {
                 var f = (Int64)value;
-                GUIControls.Int64Field(caller + field.Name, "", ref f, 0.0f, true, true);
+                GUIControls.Int64Field(hash, "", ref f, 0.0f, true, true);
                 if (f != (Int64)value)
                 {
                     field.SetValue(obj, f);
@@ -266,7 +513,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.UInt64")
             {
                 var f = (UInt64)value;
-                GUIControls.UInt64Field(caller + field.Name, "", ref f, 0.0f, true, true);
+                GUIControls.UInt64Field(hash, "", ref f, 0.0f, true, true);
                 if (f != (UInt64)value)
                 {
                     field.SetValue(obj, f);
@@ -275,7 +522,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.Int16")
             {
                 var f = (Int16)value;
-                GUIControls.Int16Field(caller + field.Name, "", ref f, 0.0f, true, true);
+                GUIControls.Int16Field(hash, "", ref f, 0.0f, true, true);
                 if (f != (Int16)value)
                 {
                     field.SetValue(obj, f);
@@ -284,7 +531,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.UInt16")
             {
                 var f = (UInt16)value;
-                GUIControls.UInt16Field(caller + field.Name, "", ref f, 0.0f, true, true);
+                GUIControls.UInt16Field(hash, "", ref f, 0.0f, true, true);
                 if (f != (UInt16)value)
                 {
                     field.SetValue(obj, f);
@@ -302,7 +549,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.String")
             {
                 var f = (string)value;
-                GUIControls.StringField(caller + field.Name, "", ref f, 0.0f, true, true);
+                GUIControls.StringField(hash, "", ref f, 0.0f, true, true);
                 if (f != (string)value)
                 {
                     field.SetValue(obj, f);
@@ -311,7 +558,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "System.Char")
             {
                 var f = (char)value;
-                GUIControls.CharField(caller + field.Name, "", ref f, 0.0f, true, true);
+                GUIControls.CharField(hash, "", ref f, 0.0f, true, true);
                 if (f != (char)value)
                 {
                     field.SetValue(obj, f);
@@ -320,7 +567,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "UnityEngine.Vector2")
             {
                 var f = (Vector2)value;
-                GUIControls.Vector2Field(caller + field.Name, "", ref f, 0.0f, null, true, true);
+                GUIControls.Vector2Field(hash, "", ref f, 0.0f, null, true, true);
                 if (f != (Vector2)value)
                 {
                     field.SetValue(obj, f);
@@ -329,7 +576,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "UnityEngine.Vector3")
             {
                 var f = (Vector3)value;
-                GUIControls.Vector3Field(caller + field.Name, "", ref f, 0.0f, null, true, true);
+                GUIControls.Vector3Field(hash, "", ref f, 0.0f, null, true, true);
                 if (f != (Vector3)value)
                 {
                     field.SetValue(obj, f);
@@ -338,7 +585,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "UnityEngine.Vector4")
             {
                 var f = (Vector4)value;
-                GUIControls.Vector4Field(caller + field.Name, "", ref f, 0.0f, null, true, true);
+                GUIControls.Vector4Field(hash, "", ref f, 0.0f, null, true, true);
                 if (f != (Vector4)value)
                 {
                     field.SetValue(obj, f);
@@ -347,7 +594,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "UnityEngine.Quaternion")
             {
                 var f = (Quaternion)value;
-                GUIControls.QuaternionField(caller + field.Name, "", ref f, 0.0f, null, true, true);
+                GUIControls.QuaternionField(hash, "", ref f, 0.0f, null, true, true);
                 if (f != (Quaternion)value)
                 {
                     field.SetValue(obj, f);
@@ -356,7 +603,7 @@ namespace ModTools
             else if (field.FieldType.ToString() == "UnityEngine.Color")
             {
                 var f = (Color)value;
-                GUIControls.ColorField(caller + field.Name, "", ref f, 0.0f, null, true, true);
+                GUIControls.ColorField(hash, "", ref f, 0.0f, null, true, true);
                 if (f != (Color)value)
                 {
                     field.SetValue(obj, f);
@@ -365,8 +612,8 @@ namespace ModTools
             else if (field.FieldType.ToString() == "UnityEngine.Color32")
             {
                 var f = (Color32)value;
-                GUIControls.Color32Field(caller + field.Name, "", ref f, 0.0f, null, true, true);
-                var v = (Color32) value;
+                GUIControls.Color32Field(hash, "", ref f, 0.0f, null, true, true);
+                var v = (Color32)value;
                 if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
                 {
                     field.SetValue(obj, f);
@@ -379,68 +626,69 @@ namespace ModTools
 
             if (GUILayout.Button("Watch"))
             {
-                watches.AddWatch(caller + "." + field.Name, field, obj);
+                watches.AddWatch(refChain, field, obj);
             }
 
-            if (IsTextureType(field.FieldType))
+            if (IsTextureType(field.FieldType) && value != null)
             {
                 if (GUILayout.Button("LiveView"))
                 {
                     rtLiveView.previewTexture = (Texture)value;
-                    rtLiveView.caller = caller + "." + field.Name;
+                    rtLiveView.caller = refChain;
                     rtLiveView.visible = true;
                 }
+
+                if (GUILayout.Button("Dump .png"))
+                {
+                    RTLiveView.DumpTextureToPNG((Texture)value);
+                }
             }
-            else if (field.FieldType.ToString() == "UnityEngine.Mesh")
+            else if (field.FieldType.ToString() == "UnityEngine.Mesh" && value != null)
             {
-                if (((Mesh) value).isReadable)
+                if (((Mesh)value).isReadable)
                 {
                     if (GUILayout.Button("Dump .obj"))
                     {
-                        string outputPath = caller + "." + field.Name + ".obj";
-                        outputPath = outputPath.Replace(' ', '_');
-
-                        if (File.Exists(outputPath))
-                        {
-                            File.Delete(outputPath);
-                        }
-
-                        using (var stream = new FileStream(outputPath, FileMode.Create))
-                        {
-                            Mesh outMesh = (Mesh) value;
-                            OBJLoader.ExportOBJ(outMesh.EncodeOBJ(), stream);
-                            stream.Close();
-                            Log.Warning(String.Format("Dumped mesh \"{0}\" to \"{1}\"", ((Mesh)value).name, outputPath));
-                        }
+                        var outPath = refChain.ToString() + ".obj";
+                        outPath = outPath.Replace(' ', '_');
+                        Util.DumpMeshOBJ(value as Mesh, outPath);
                     }
                 }
             }
 
             GUILayout.EndHorizontal();
-
-            if (value != null && IsReflectableType(field.FieldType) && expandedObjects.ContainsKey(value.GetHashCode()))
+            if (value != null && IsReflectableType(field.FieldType) && expandedObjects.ContainsKey(refChain))
             {
                 if (value is GameObject)
                 {
-                    OnSceneTreeComponents(caller + "." + field.Name, (GameObject)value, ident + 1);   
+                    var go = value as GameObject;
+                    foreach (var component in go.GetComponents<Component>())
+                    {
+                        OnSceneTreeComponent(refChain, component);
+                    }
                 }
                 else if (value is Transform)
                 {
-                    OnSceneTreeReflectUnityEngineTransform(caller + "." + field.Name, (Transform)value, ident + 1);
+                    OnSceneTreeReflectUnityEngineTransform(refChain, (Transform)value);
                 }
                 else
                 {
-                    OnSceneTreeReflect(caller + "." + field.Name, value, ident + 1);
+                    OnSceneTreeReflect(refChain, value);
                 }
             }
         }
 
-        private void OnSceneTreeReflectProperty(string caller, System.Object obj, PropertyInfo property, int ident)
+        private void OnSceneTreeReflectProperty(ReferenceChain refChain, System.Object obj, PropertyInfo property)
         {
-            if (ident >= 12)
+            AddDebugLine("OnSceneTreeReflectProperty(caller = {0}, obj = {1}, property = {2})",
+                refChain, obj, property);
+
+            var hash = refChain.GetHashCode().ToString();
+
+            if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -453,30 +701,36 @@ namespace ModTools
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Space(treeIdentSpacing * ident);
+            GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
 
             bool propertyWasEvaluated = false;
             object value = null;
 
-            if (property.CanRead && ModTools.evaluatePropertiesAutomatically || evaluatedProperties.ContainsKey(property.GetHashCode()))
+            if (property.CanRead && ModTools.evaluatePropertiesAutomatically || evaluatedProperties.ContainsKey(refChain))
             {
-                value = property.GetValue(obj, null);
-                propertyWasEvaluated = true;
+                try
+                {
+                    value = property.GetValue(obj, null);
+                    propertyWasEvaluated = true;
+                }
+                catch (Exception)
+                {
+                }
 
                 if (value != null && IsReflectableType(property.PropertyType) && !IsEnumerable(obj))
                 {
-                    if (expandedObjects.ContainsKey(value.GetHashCode()))
+                    if (expandedObjects.ContainsKey(refChain))
                     {
                         if (GUILayout.Button("-", GUILayout.Width(16)))
                         {
-                            expandedObjects.Remove(value.GetHashCode());
+                            expandedObjects.Remove(refChain);
                         }
                     }
                     else
                     {
                         if (GUILayout.Button("+", GUILayout.Width(16)))
                         {
-                            expandedObjects.Add(value.GetHashCode(), true);
+                            expandedObjects.Add(refChain, true);
                         }
                     }
                 }
@@ -502,21 +756,29 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            if (!ModTools.evaluatePropertiesAutomatically && !evaluatedProperties.ContainsKey(property.GetHashCode()))
+            if (!ModTools.evaluatePropertiesAutomatically && !evaluatedProperties.ContainsKey(refChain))
             {
                 GUI.enabled = true;
 
                 if(GUILayout.Button("Evaluate"))
                 {
-                    evaluatedProperties.Add(property.GetHashCode(), true);    
+                    evaluatedProperties.Add(refChain, true);    
                 }
             }
             else
             {
                 if (!propertyWasEvaluated && property.CanRead)
                 {
-                    value = property.GetValue(obj, null);
+                    try
+                    {
+                        value = property.GetValue(obj, null);
+                        propertyWasEvaluated = true;
+                    }
+                    catch (Exception)
+                    {
+                    }
                 }
+
 
                 if (value == null || !IsBuiltInType(property.PropertyType))
                 {
@@ -538,7 +800,7 @@ namespace ModTools
                 else if (property.PropertyType.ToString() == "System.Single")
                 {
                     var f = (float)value;
-                    GUIControls.FloatField(caller + property.Name, "", ref f, 0.0f, true, true);
+                    GUIControls.FloatField(hash, "", ref f, 0.0f, true, true);
                     if (f != (float)value)
                     {
                         property.SetValue(obj, f, null);
@@ -547,7 +809,7 @@ namespace ModTools
                 else if (property.PropertyType.ToString() == "System.Double")
                 {
                     var f = (double)value;
-                    GUIControls.DoubleField(caller + property.Name, "", ref f, 0.0f, true, true);
+                    GUIControls.DoubleField(hash, "", ref f, 0.0f, true, true);
                     if (f != (double)value)
                     {
                         property.SetValue(obj, f, null);
@@ -556,7 +818,7 @@ namespace ModTools
                 else if (property.PropertyType.ToString() == "System.Byte")
                 {
                     var f = (byte)value;
-                    GUIControls.ByteField(caller + property.Name, "", ref f, 0.0f, true, true);
+                    GUIControls.ByteField(hash, "", ref f, 0.0f, true, true);
                     if (f != (byte)value)
                     {
                         property.SetValue(obj, f, null);
@@ -565,7 +827,7 @@ namespace ModTools
                 else if (property.PropertyType.ToString() == "System.Int32")
                 {
                     var f = (int)value;
-                    GUIControls.IntField(caller + property.Name, "", ref f, 0.0f, true, true);
+                    GUIControls.IntField(hash, "", ref f, 0.0f, true, true);
                     if (f != (int)value)
                     {
                         property.SetValue(obj, f, null);
@@ -574,7 +836,7 @@ namespace ModTools
                 else if (property.PropertyType.ToString() == "System.UInt32")
                 {
                     var f = (uint)value;
-                    GUIControls.UIntField(caller + property.Name, "", ref f, 0.0f, true, true);
+                    GUIControls.UIntField(hash, "", ref f, 0.0f, true, true);
                     if (f != (uint)value)
                     {
                         property.SetValue(obj, f, null);
@@ -583,7 +845,7 @@ namespace ModTools
                 else if (property.PropertyType.ToString() == "System.Int64")
                 {
                     var f = (Int64)value;
-                    GUIControls.Int64Field(caller + property.Name, "", ref f, 0.0f, true, true);
+                    GUIControls.Int64Field(hash, "", ref f, 0.0f, true, true);
                     if (f != (Int64)value)
                     {
                         property.SetValue(obj, f, null);
@@ -592,7 +854,7 @@ namespace ModTools
                 else if (property.PropertyType.ToString() == "System.UInt64")
                 {
                     var f = (UInt64)value;
-                    GUIControls.UInt64Field(caller + property.Name, "", ref f, 0.0f, true, true);
+                    GUIControls.UInt64Field(hash, "", ref f, 0.0f, true, true);
                     if (f != (UInt64)value)
                     {
                         property.SetValue(obj, f, null);
@@ -601,7 +863,7 @@ namespace ModTools
                 else if (property.PropertyType.ToString() == "System.Int16")
                 {
                     var f = (Int16)value;
-                    GUIControls.Int16Field(caller + property.Name, "", ref f, 0.0f, true, true);
+                    GUIControls.Int16Field(hash, "", ref f, 0.0f, true, true);
                     if (f != (Int16)value)
                     {
                         property.SetValue(obj, f, null);
@@ -610,7 +872,7 @@ namespace ModTools
                 else if (property.PropertyType.ToString() == "System.UInt16")
                 {
                     var f = (UInt16)value;
-                    GUIControls.UInt16Field(caller + property.Name, "", ref f, 0.0f, true, true);
+                    GUIControls.UInt16Field(hash, "", ref f, 0.0f, true, true);
                     if (f != (UInt16)value)
                     {
                         property.SetValue(obj, f, null);
@@ -628,7 +890,7 @@ namespace ModTools
                 else if (property.PropertyType.ToString() == "System.String")
                 {
                     var f = (string)value;
-                    GUIControls.StringField(caller + property.Name, "", ref f, 0.0f, true, true);
+                    GUIControls.StringField(hash, "", ref f, 0.0f, true, true);
                     if (f != (string)value)
                     {
                         property.SetValue(obj, f, null);
@@ -637,7 +899,7 @@ namespace ModTools
                 else if (property.PropertyType.ToString() == "System.Char")
                 {
                     var f = (char)value;
-                    GUIControls.CharField(caller + property.Name, "", ref f, 0.0f, true, true);
+                    GUIControls.CharField(hash, "", ref f, 0.0f, true, true);
                     if (f != (char)value)
                     {
                         property.SetValue(obj, f, null);
@@ -646,7 +908,7 @@ namespace ModTools
                 else if (property.PropertyType.ToString() == "UnityEngine.Vector2")
                 {
                     var f = (Vector2)value;
-                    GUIControls.Vector2Field(caller + property.Name, "", ref f, 0.0f, null, true, true);
+                    GUIControls.Vector2Field(hash, "", ref f, 0.0f, null, true, true);
                     if (f != (Vector2)value)
                     {
                         property.SetValue(obj, f, null);
@@ -655,7 +917,7 @@ namespace ModTools
                 else if (property.PropertyType.ToString() == "UnityEngine.Vector3")
                 {
                     var f = (Vector3)value;
-                    GUIControls.Vector3Field(caller + property.Name, "", ref f, 0.0f, null, true, true);
+                    GUIControls.Vector3Field(hash, "", ref f, 0.0f, null, true, true);
                     if (f != (Vector3)value)
                     {
                         property.SetValue(obj, f, null);
@@ -664,7 +926,7 @@ namespace ModTools
                 else if (property.PropertyType.ToString() == "UnityEngine.Vector4")
                 {
                     var f = (Vector4)value;
-                    GUIControls.Vector4Field(caller + property.Name, "", ref f, 0.0f, null, true, true);
+                    GUIControls.Vector4Field(hash, "", ref f, 0.0f, null, true, true);
                     if (f != (Vector4)value)
                     {
                         property.SetValue(obj, f, null);
@@ -673,7 +935,7 @@ namespace ModTools
                 else if (property.PropertyType.ToString() == "UnityEngine.Quaternion")
                 {
                     var f = (Quaternion)value;
-                    GUIControls.QuaternionField(caller + property.Name, "", ref f, 0.0f, null, true, true);
+                    GUIControls.QuaternionField(hash, "", ref f, 0.0f, null, true, true);
                     if (f != (Quaternion)value)
                     {
                         property.SetValue(obj, f, null);
@@ -682,7 +944,7 @@ namespace ModTools
                 else if (property.PropertyType.ToString() == "UnityEngine.Color")
                 {
                     var f = (Color)value;
-                    GUIControls.ColorField(caller + property.Name, "", ref f, 0.0f, null, true, true);
+                    GUIControls.ColorField(hash, "", ref f, 0.0f, null, true, true);
                     if (f != (Color)value)
                     {
                         property.SetValue(obj, f, null);
@@ -691,7 +953,7 @@ namespace ModTools
                 else if (property.PropertyType.ToString() == "UnityEngine.Color32")
                 {
                     var f = (Color32)value;
-                    GUIControls.Color32Field(caller + property.Name, "", ref f, 0.0f, null, true, true);
+                    GUIControls.Color32Field(hash, "", ref f, 0.0f, null, true, true);
                     var v = (Color32)value;
                     if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
                     {
@@ -706,68 +968,67 @@ namespace ModTools
 
             if (GUILayout.Button("Watch"))
             {
-                watches.AddWatch(caller + "." + property.Name, property, obj);
+                watches.AddWatch(refChain, property, obj);
             }
 
-            if (IsTextureType(property.PropertyType))
+            if (IsTextureType(property.PropertyType) && value != null)
             {
                 if (GUILayout.Button("LiveView"))
                 {
                     rtLiveView.previewTexture = (Texture)value;
-                    rtLiveView.caller = caller + "." + property.Name;
+                    rtLiveView.caller = refChain;
                     rtLiveView.visible = true;
                 }
+
+                if (GUILayout.Button("Dump .png"))
+                {
+                    RTLiveView.DumpTextureToPNG((Texture)value);
+                }
             }
-            else if (property.PropertyType.ToString() == "UnityEngine.Mesh")
+            else if (property.PropertyType.ToString() == "UnityEngine.Mesh" && value != null)
             {
                 if (((Mesh) value).isReadable)
                 {
                     if (GUILayout.Button("Dump .obj"))
                     {
-                        string outputPath = caller + "." + property.Name + ".obj";
-                        outputPath = outputPath.Replace(' ', '_');
-
-                        if (File.Exists(outputPath))
-                        {
-                            File.Delete(outputPath);
-                        }
-
-                        using (var stream = new FileStream(outputPath, FileMode.Create))
-                        {
-                            Mesh outMesh = (Mesh) value;
-                            OBJLoader.ExportOBJ(outMesh.EncodeOBJ(), stream);
-                            stream.Close();
-                            Log.Warning(String.Format("Dumped mesh \"{0}\" to \"{1}\"", ((Mesh)value).name, outputPath));
-                        }
+                        var outPath = refChain.ToString() + ".obj";
+                        outPath = outPath.Replace(' ', '_');
+                        Util.DumpMeshOBJ(value as Mesh, outPath);
                     }
                 }
             }
-
+            
             GUILayout.EndHorizontal();
 
-            if (value != null && expandedObjects.ContainsKey(value.GetHashCode()))
+            if (value != null && expandedObjects.ContainsKey(refChain))
             {
                 if (value is GameObject)
                 {
-                    OnSceneTreeComponents(caller + "." + property.Name, (GameObject)value, ident + 1);
+                    var go = value as GameObject;
+                    foreach (var component in go.GetComponents<Component>())
+                    {
+                       OnSceneTreeComponent(refChain, component);
+                    }
                 }
                 else if (value is Transform)
                 {
-                    OnSceneTreeReflectUnityEngineTransform(caller + "." + property.Name, (Transform)value, ident + 1);
+                    OnSceneTreeReflectUnityEngineTransform(refChain, (Transform)value);
                 }
                 else
                 {
-                    OnSceneTreeReflect(caller + "." + property.Name, value, ident + 1);
+                    OnSceneTreeReflect(refChain, value);
                 }
             }
         }
 
-        private void OnSceneTreeReflectMethod(System.Object obj, MethodInfo method, int ident)
+        private void OnSceneTreeReflectMethod(ReferenceChain refChain, System.Object obj, MethodInfo method)
         {
-            if (ident >= 12)
+            AddDebugLine("OnSceneTreeReflectMethod(obj = {0}, method = {1})", obj, method);
+
+            if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -780,7 +1041,7 @@ namespace ModTools
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Space(treeIdentSpacing * ident);
+            GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
 
             GUILayout.Label("method ");
             string signature = method.ReturnType.ToString() + " " + method.Name + "(";
@@ -809,49 +1070,25 @@ namespace ModTools
             GUILayout.EndHorizontal();
         }
 
-        private void OnSceneTreeReflectUnityEngineVector2(string hash, string name, ref UnityEngine.Vector2 vec, int ident)
+        private void OnSceneTreeReflectUnityEngineVector3<T>(ReferenceChain refChain, T obj, string name, ref UnityEngine.Vector3 vec)
         {
-            if (ident >= 12)
+            AddDebugLine("OnSceneTreeReflectUnityEngineVector3(caller = {0}, obj = {1}, name = {2}, vec = {3})",
+                refChain, obj, name, vec);
+            
+            if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
             }
 
-            GUILayout.BeginHorizontal();
-
-            GUILayout.Space(treeIdentSpacing * ident);
-
-            GUILayout.Label("Vector2");
-            GUILayout.Label(name);
-
-            GUILayout.BeginVertical();
-            GUIControls.FloatField(hash+".x", "x", ref vec.x);
-            GUIControls.FloatField(hash+".y", "y", ref vec.y);
-            GUILayout.EndVertical();
-
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
-        }
-
-        private void OnSceneTreeReflectUnityEngineVector3<T>(string caller, T obj, string name, ref UnityEngine.Vector3 vec, int ident)
-        {
-            if (ident >= 12)
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * ident);
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
-
-            GUIControls.Vector3Field(caller+name, name, ref vec, treeIdentSpacing * ident, () =>
+            GUIControls.Vector3Field(refChain.ToString(), name, ref vec, treeIdentSpacing * (refChain.Length - 1), () =>
             {
                 try
                 {
-                    watches.AddWatch(caller + "." + name, typeof(T).GetProperty(name), obj);
+                    watches.AddWatch(refChain, typeof(T).GetProperty(name), obj);
                 }
                 catch (Exception ex)
                 {
@@ -860,31 +1097,14 @@ namespace ModTools
             });
         }
 
-        private void OnSceneTreeReflectUnityEngineVector4(string caller, string name, ref UnityEngine.Vector4 vec, int ident)
+        private void OnSceneTreeReflectUnityEngineTransform(ReferenceChain refChain, UnityEngine.Transform transform)
         {
-            if (ident >= 12)
+            AddDebugLine("OnSceneTreeReflectUnityEngineTransform(caller = {0}, transform = {1})", refChain, transform);
+
+            if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * ident);
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
-
-            GUIControls.Vector4Field(caller+name, name, ref vec, treeIdentSpacing * ident);
-        }
-
-        private void OnSceneTreeReflectBool(string name, ref bool value, int ident)
-        {
-            GUIControls.BoolField(name, ref value, treeIdentSpacing * ident);
-        }
-
-        private void OnSceneTreeReflectUnityEngineTransform(string caller, UnityEngine.Transform transform, int ident)
-        {
-            if (ident >= 12)
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -896,29 +1116,19 @@ namespace ModTools
                 return;
             }
 
-            var localPosition = transform.localPosition;
-            OnSceneTreeReflectUnityEngineVector3(caller, transform, "localPosition", ref localPosition, ident + 1);
-            transform.localPosition = localPosition;
+            var hash = refChain.GetHashCode().ToString();
 
+            var localPosition = transform.localPosition;
+            OnSceneTreeReflectUnityEngineVector3(refChain.Add("localPosition"), transform, "localPosition", ref localPosition);
+            transform.localPosition = localPosition;
+         
             var localEulerAngles = transform.eulerAngles;
-            OnSceneTreeReflectUnityEngineVector3(caller, transform, "localEulerAngles", ref localEulerAngles, ident + 1);
+            OnSceneTreeReflectUnityEngineVector3(refChain.Add("localEulerAngles"), transform, "localEulerAngles", ref localEulerAngles);
             transform.eulerAngles = localEulerAngles;
 
             var localScale = transform.localScale;
-            OnSceneTreeReflectUnityEngineVector3(caller, transform, "localScale", ref localScale, ident + 1);
+            OnSceneTreeReflectUnityEngineVector3(refChain.Add("localScale"), transform, "localScale", ref localScale);
             transform.localScale = localScale;
-
-            var forward = transform.forward;
-            OnSceneTreeReflectUnityEngineVector3(caller, transform, "forward", ref forward, ident + 1);
-            transform.forward = forward;
-
-            var right = transform.right;
-            OnSceneTreeReflectUnityEngineVector3(caller, transform, "right", ref right, ident + 1);
-            transform.right = right;
-
-            var up = transform.up;
-            OnSceneTreeReflectUnityEngineVector3(caller, transform, "up", ref up, ident + 1);
-            transform.up = up;
         }
 
         private bool IsEnumerable(object myProperty)
@@ -930,12 +1140,14 @@ namespace ModTools
             return false;
         }
 
-        private void OnSceneTreeReflectIEnumerable(string caller, System.Object myProperty, int ident)
+        private void OnSceneTreeReflectIEnumerable(ReferenceChain refChain, System.Object myProperty)
         {
-            if (ident >= 12)
+            AddDebugLine("OnSceneTreeReflectIEnumerable(caller = {0}, obj = {1})", refChain, myProperty);
+
+            if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -948,29 +1160,33 @@ namespace ModTools
             }
 
             int count = 0;
+            var oldRefChain = refChain;
+
             foreach (var value in enumerable)
             {
+                refChain = oldRefChain.Add(count);
+
                 var type = value.GetType();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Space(treeIdentSpacing * refChain.Length);
 
                 GUI.contentColor = Color.white;
 
-                if (value != null && IsReflectableType(type) && !IsEnumerable(type))
+                if (IsReflectableType(type) && !IsEnumerable(type))
                 {
-                    if (expandedObjects.ContainsKey(value.GetHashCode() + count << 8))
+                    if (expandedObjects.ContainsKey(refChain))
                     {
                         if (GUILayout.Button("-", GUILayout.Width(16)))
                         {
-                            expandedObjects.Remove(value.GetHashCode() + count << 8);
+                            expandedObjects.Remove(refChain);
                         }
                     }
                     else
                     {
                         if (GUILayout.Button("+", GUILayout.Width(16)))
                         {
-                            expandedObjects.Add(value.GetHashCode() + count << 8, true);
+                            expandedObjects.Add(refChain, true);
                         }
                     }
                 }
@@ -981,7 +1197,7 @@ namespace ModTools
 
                 GUI.contentColor = Color.red;
 
-                GUILayout.Label(caller + ".[" + count.ToString() + "]");
+                GUILayout.Label(String.Format("{0}.[{1}]", oldRefChain.LastItemName, count));
 
                 GUI.contentColor = Color.white;
 
@@ -991,19 +1207,23 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
 
-                if (value != null && IsReflectableType(type) && expandedObjects.ContainsKey(value.GetHashCode() + count << 8))
+                if (IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
                 {
                     if (value is GameObject)
                     {
-                        OnSceneTreeComponents(caller + ".[" + count.ToString() + "]", (GameObject)value, ident + 1);
+                        var go = value as GameObject;
+                        foreach (var component in go.GetComponents<Component>())
+                        {
+                            OnSceneTreeComponent(refChain, component);
+                        }
                     }
                     else if (value is Transform)
                     {
-                        OnSceneTreeReflectUnityEngineTransform(caller + ".[" + count.ToString() + "]", (Transform)value, ident + 1);
+                        OnSceneTreeReflectUnityEngineTransform(refChain, (Transform)value);
                     }
                     else
                     {
-                        OnSceneTreeReflect(caller + ".[" + count.ToString() + "]", value, ident + 1);
+                        OnSceneTreeReflect(refChain, value);
                     }
                 }
 
@@ -1011,7 +1231,7 @@ namespace ModTools
                 if (count >= 128)
                 {
                     GUILayout.BeginHorizontal();
-                    GUILayout.Space(treeIdentSpacing * ident);
+                    GUILayout.Space(treeIdentSpacing * refChain.Length);
                     GUILayout.Label("Array too large to display");
                     GUILayout.EndHorizontal();
                     break;
@@ -1019,12 +1239,12 @@ namespace ModTools
             }
         }
 
-        private void OnSceneTreeReflect(string caller, System.Object obj, int ident)
+        private void OnSceneTreeReflect(ReferenceChain refChain, System.Object obj)
         {
-            if (ident >= 12)
+            if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -1036,17 +1256,28 @@ namespace ModTools
                 return;
             }
 
+            if (preventCircularReferences.ContainsKey(obj.GetHashCode()))
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Label("Circular reference detected");
+                GUILayout.EndHorizontal();
+                return;
+            }
+
+            preventCircularReferences.Add(obj.GetHashCode(), true);
+
             Type type = obj.GetType();
 
             if (type == typeof(UnityEngine.Transform))
             {
-                OnSceneTreeReflectUnityEngineTransform(caller, (UnityEngine.Transform)obj, ident);
+                OnSceneTreeReflectUnityEngineTransform(refChain, (UnityEngine.Transform)obj);
                 return;
             }
             
             if (IsEnumerable(obj))
             {
-                OnSceneTreeReflectIEnumerable(caller, obj, ident);
+                OnSceneTreeReflectIEnumerable(refChain, obj);
                 return;
             }
 
@@ -1066,17 +1297,50 @@ namespace ModTools
                 if (member.MemberType == MemberTypes.Field && showFields)
                 {
                     field = (FieldInfo)member;
-                    OnSceneTreeReflectField(caller, obj, field, ident);
+
+                    try
+                    {
+                        OnSceneTreeReflectField(refChain.Add(field), obj, field);
+                    }
+                    catch (Exception ex)
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                        GUILayout.Label(String.Format("Exception when fetching field \"{0}\" - {1}", field.Name, ex.Message));
+                        GUILayout.EndHorizontal();
+                    }
                 }
                 else if (member.MemberType == MemberTypes.Property && showProperties)
                 {
                     property = (PropertyInfo)member;
-                    OnSceneTreeReflectProperty(caller, obj, property, ident);
+
+                    try
+                    {
+                        OnSceneTreeReflectProperty(refChain.Add(property), obj, property);
+                    }
+                    catch (Exception ex)
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                        GUILayout.Label(String.Format("Exception when fetching property \"{0}\" - {1}", property.Name, ex.Message));
+                        GUILayout.EndHorizontal();
+                    }
                 }
                 else if (member.MemberType == MemberTypes.Method && showMethods)
                 {
                     method = (MethodInfo)member;
-                    OnSceneTreeReflectMethod(obj, method, ident);
+
+                    try
+                    {
+                        OnSceneTreeReflectMethod(refChain.Add(method), obj, method);
+                    }
+                    catch (Exception ex)
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                        GUILayout.Label(String.Format("Exception when fetching method \"{0}\" - {1}", method.Name, ex.Message));
+                        GUILayout.EndHorizontal();
+                    }
                 }
 
                 if (field == null)
@@ -1086,67 +1350,61 @@ namespace ModTools
             }
         }
 
-        private void OnSceneTreeComponents(string caller, GameObject obj, int ident)
+        private void OnSceneTreeComponent(ReferenceChain refChain, Component component)
         {
-            if (ident >= 12)
+            if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
             }
 
-            var components = obj.GetComponents(typeof(Component));
-            foreach (var component in components)
+          
+            if (filterType == FilterType.Components && !component.name.ToLower().Contains(nameFilter))
             {
-                if (filterType == FilterType.Components && !component.name.ToLower().Contains(nameFilter))
+                return;
+            }
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+
+            if (expandedComponents.ContainsKey(refChain))
+            {
+                if (GUILayout.Button("-", GUILayout.Width(16)))
                 {
-                    continue;
+                    expandedComponents.Remove(refChain);
                 }
 
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Label(component.name + " (" + component.GetType().ToString() + ")");
 
-                if (expandedComponents.ContainsKey(component.GetHashCode()))
+                GUILayout.EndHorizontal();
+
+                OnSceneTreeReflect(refChain, component);
+            }
+            else
+            {
+                if (GUILayout.Button("+", GUILayout.Width(16)))
                 {
-                    if (GUILayout.Button("-", GUILayout.Width(16)))
-                    {
-                        expandedComponents.Remove(component.GetHashCode());
-                    }
-
-                    GUILayout.Label(component.name + " (" + component.GetType().ToString() + ")");
-
-                    GUILayout.EndHorizontal();
-
-                    OnSceneTreeReflect(caller + "." + component.name, component, ident + 1);
+                    expandedComponents.Add(refChain, true);
                 }
-                else
-                {
-                    if (GUILayout.Button("+", GUILayout.Width(16)))
-                    {
-                        expandedComponents.Add(component.GetHashCode(), true);
-                    }
 
-                    GUILayout.Label(component.name + " (" + component.GetType().ToString() + ")");
-                    GUILayout.EndHorizontal();
-                }
+                GUILayout.Label(component.name + " (" + component.GetType().ToString() + ")");
+                GUILayout.EndHorizontal();
             }
         }
 
-        private void OnSceneTreeRecursive(string caller, GameObject obj, int ident = 0)
+        private void OnSceneTreeRecursive(ReferenceChain refChain, GameObject obj)
         {
-            if (ident >= 12)
+            AddDebugLine("OnSceneTreeRecursive(caller = {0}, obj = {1})", refChain, obj);
+
+            if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
-                return;
-            }
-
-            if (filterType == FilterType.GameObjects && !obj.name.ToLower().Contains(nameFilter))
-            {
                 return;
             }
 
@@ -1156,34 +1414,43 @@ namespace ModTools
                 return;
             }
 
-            if (expanded.ContainsKey(obj.GetHashCode()))
+            if (filterType == FilterType.GameObjects && !obj.name.ToLower().Contains(nameFilter))
+            {
+                return;
+            }
+
+            if (expanded.ContainsKey(refChain))
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
 
                 if (GUILayout.Button("-", GUILayout.Width(16)))
                 {
-                    expanded.Remove(obj.GetHashCode());
+                    expanded.Remove(refChain);
                 }
 
                 GUILayout.Label(obj.name);
                 GUILayout.EndHorizontal();
 
-                OnSceneTreeComponents(obj.name, obj, ident + 1);
+                var components = obj.GetComponents(typeof(Component));
+                foreach (var component in components)
+                {
+                    OnSceneTreeComponent(refChain.Add(component), component);
+                }
 
                 for (int i = 0; i < obj.transform.childCount; i++)
                 {
-                    OnSceneTreeRecursive(obj.name, obj.transform.GetChild(i).gameObject, ident + 1);
+                    OnSceneTreeRecursive(refChain.Add(obj.transform.GetChild(i)), obj.transform.GetChild(i).gameObject);
                 }
             }
             else
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * ident);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
 
                 if (GUILayout.Button("+", GUILayout.Width(16)))
                 {
-                    expanded.Add(obj.GetHashCode(), true);
+                    expanded.Add(refChain, true);
                 }
 
                 GUILayout.Label(obj.name);
@@ -1193,6 +1460,14 @@ namespace ModTools
 
         public void DrawWindow()
         {
+            if (debugMode)
+            {
+                lastCrashReport = debugOutput;
+                debugOutput = "";
+            }
+
+            preventCircularReferences.Clear();
+
             watches = watches ?? FindObjectOfType<Watches>();
             if (watches == null)
             {
@@ -1284,18 +1559,9 @@ namespace ModTools
 
             scrollPosition = GUILayout.BeginScrollView(scrollPosition);
 
-            try
+            foreach (var obj in sceneRoots)
             {
-                foreach (var obj in sceneRoots)
-                {
-                    OnSceneTreeRecursive("", obj.Key);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error("Debugger: Exception - " + ex.Message);
-                expanded.Clear();
-                expandedComponents.Clear();
+                OnSceneTreeRecursive(new ReferenceChain().Add(obj.Key), obj.Key);
             }
 
             GUILayout.EndScrollView();

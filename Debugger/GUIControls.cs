@@ -50,6 +50,13 @@ namespace ModTools
                 hotControlBuffer = "";
             }
 
+            if (currentHotControl == hash && (HotControl() == null || HotControl() == ""))
+            {
+                res = hotControlBuffer;
+                currentHotControl = null;
+                hotControlBuffer = "";
+            }
+
             return res;
         }
 
