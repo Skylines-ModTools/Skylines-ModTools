@@ -42,7 +42,7 @@ namespace ModTools
             }
 
             rect = config.mainWindowRect;
-            visible= config.mainWindowVisible;
+            visible = config.mainWindowVisible;
 
             rtLiveView.rect = config.rtLiveViewRect ;
             rtLiveView.visible = config.rtLiveViewVisible;
@@ -52,6 +52,10 @@ namespace ModTools
 
             sceneExplorer.rect = config.sceneExplorerRect;
             sceneExplorer.visible = config.sceneExplorerVisible;
+            if (sceneExplorer.visible)
+            {
+                sceneExplorer.Refresh();
+            }
         }
 
         public void SaveConfig()

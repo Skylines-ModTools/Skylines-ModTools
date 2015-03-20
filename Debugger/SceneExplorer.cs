@@ -1208,6 +1208,7 @@ namespace ModTools
                 Texture value = material.GetTexture(prop);
                 if (value == null)
                     continue;
+
                 refChain = oldRefChain.Add(prop);
 
                 var type = value.GetType();
@@ -1311,7 +1312,7 @@ namespace ModTools
 
                 GUILayout.Label(" = ");
                 var f = value;
-                GUIControls.ColorField(hash, "", ref f, 0.0f, null, true, true);
+                GUIControls.ColorField(refChain.ToString(), "", ref f, 0.0f, null, true, true);
                 if (f != value)
                 {
                     material.SetColor(prop, f);
@@ -1367,7 +1368,7 @@ namespace ModTools
                 var type = value.GetType();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Length);
+                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
 
                 GUI.contentColor = Color.white;
 
