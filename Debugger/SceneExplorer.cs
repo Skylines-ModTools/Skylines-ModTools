@@ -1162,6 +1162,7 @@ namespace ModTools
           "_Tex",
           "_Cube"
         };
+
         private static readonly string[] colorProps = new string[5]
         {
           "_Color",
@@ -1170,6 +1171,7 @@ namespace ModTools
           "_ColorV2",
           "_ColorV3"
         };
+
         private static readonly string[] vectorProps = new string[4]
         {
           "_FloorParams",
@@ -1270,8 +1272,6 @@ namespace ModTools
             foreach (string prop in colorProps)
             {
                 Color value = material.GetColor(prop);
-                if (value == null)
-                    continue;
                 refChain = oldRefChain.Add(prop);
 
                 var type = value.GetType();
@@ -1316,6 +1316,7 @@ namespace ModTools
                 {
                     material.SetColor(prop, f);
                 }
+
                 GUILayout.FlexibleSpace();
 
                 GUILayout.EndHorizontal();
@@ -1324,7 +1325,6 @@ namespace ModTools
                 {
                     OnSceneTreeReflect(refChain, value);
                 }
-
             }
 
         }
