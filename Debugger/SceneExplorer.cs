@@ -1695,15 +1695,12 @@ namespace ModTools
             GUILayout.BeginHorizontal();
 
             GUILayout.Label("Show: ");
-            GUILayout.FlexibleSpace();
 
             GUILayout.Label("Fields");
             showFields = GUILayout.Toggle(showFields, "");
-            GUILayout.FlexibleSpace();
 
             GUILayout.Label("Properties");
             showProperties = GUILayout.Toggle(showProperties, "");
-            GUILayout.FlexibleSpace();
 
             GUILayout.Label("Methods");
             showMethods = GUILayout.Toggle(showMethods, "");
