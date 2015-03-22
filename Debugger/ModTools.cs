@@ -23,6 +23,13 @@ namespace ModTools
 
         private static ModTools instance = null;
 
+        public void OnDestroy()
+        {
+            Destroy(sceneExplorer);
+            Destroy(watches);
+            Destroy(rtLiveView);
+        }
+
         public static ModTools Instance
         {
             get

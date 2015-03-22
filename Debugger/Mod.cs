@@ -22,12 +22,18 @@ namespace ModTools
     public class ModLoad : LoadingExtensionBase
     {
 
+        private ModTools modTools;
+
         public override void OnLevelLoaded(LoadMode mode)
         {
             var controller = GameObject.FindObjectOfType<CameraController>();
-            controller.gameObject.AddComponent<ModTools>();
+            modTools = controller.gameObject.AddComponent<ModTools>();
         }
 
+        public override void OnLevelUnloading()
+        {
+            GameObject.Destroy(modTools);
+        }
     }
 
 }
