@@ -1720,15 +1720,24 @@ namespace ModTools
             GUILayout.BeginHorizontal();
             GUILayout.Label("GameObject.Find");
             findGameObjectFilter = GUILayout.TextField(findGameObjectFilter, GUILayout.Width(256));
+
+            if (findGameObjectFilter.Trim().Length == 0)
+            {
+                GUI.enabled = false;
+            }
+
             if (GUILayout.Button("Find"))
             {
                 ClearExpanded();
                 var go = GameObject.Find(findGameObjectFilter.Trim());
-                sceneRoots.Clear();
-                expandedGameObjects.Add(new ReferenceChain().Add(go), true);
-                sceneRoots.Add(go, true);
-                scrollPosition = Vector2.zero;
-                searchDisplayString = String.Format("Showing results for GameObject.Find(\"{0}\")", findGameObjectFilter);
+                if (go != null)
+                {
+                    sceneRoots.Clear();
+                    expandedGameObjects.Add(new ReferenceChain().Add(go), true);
+                    sceneRoots.Add(go, true);
+                    scrollPosition = Vector2.zero;
+                    searchDisplayString = String.Format("Showing results for GameObject.Find(\"{0}\")", findGameObjectFilter);
+                }
             }
 
             if (GUILayout.Button("Reset"))
@@ -1738,12 +1747,21 @@ namespace ModTools
                 scrollPosition = Vector2.zero;
                 searchDisplayString = "";
             }
+
+            GUI.enabled = true;
+
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Label("GameObject.FindObjectsOfType");
             findObjectTypeFilter = GUILayout.TextField(findObjectTypeFilter, GUILayout.Width(256));
+
+            if (findObjectTypeFilter.Trim().Length == 0)
+            {
+                GUI.enabled = false;
+            }
+            
             if (GUILayout.Button("Find"))
             {
                 var gameObjects = FindComponentsOfType(findObjectTypeFilter.Trim());
@@ -1753,7 +1771,10 @@ namespace ModTools
                 {
                     ClearExpanded();
                     expandedGameObjects.Add(new ReferenceChain().Add(item.Key), true);
-                    expandedComponents.Add(new ReferenceChain().Add(item.Key).Add(item.Value), true);
+                    if (gameObjects.Count == 1)
+                    {
+                        expandedComponents.Add(new ReferenceChain().Add(item.Key).Add(item.Value), true);
+                    }
                     sceneRoots.Add(item.Key, true);
                     scrollPosition = Vector2.zero;
                     searchDisplayString = String.Format("Showing results for GameObject.FindObjectsOfType({0})", findObjectTypeFilter);
@@ -1767,6 +1788,9 @@ namespace ModTools
                 scrollPosition = Vector2.zero;
                 searchDisplayString = "";
             }
+
+            GUI.enabled = true;
+
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
 
