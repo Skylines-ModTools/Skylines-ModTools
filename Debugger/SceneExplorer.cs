@@ -1443,7 +1443,7 @@ namespace ModTools
                 }
 
                 count++;
-                if (count >= 128)
+                if (count >= 1024)
                 {
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(treeIdentSpacing * refChain.Length);
@@ -1665,6 +1665,13 @@ namespace ModTools
 
         public void DrawWindow()
         {
+            bool enterPressed = Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter);
+
+            if (enterPressed)
+            {
+                GUI.FocusControl(null);
+            }
+
             if (debugMode)
             {
                 lastCrashReport = debugOutput;
