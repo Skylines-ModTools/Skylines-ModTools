@@ -1694,7 +1694,9 @@ namespace ModTools
 
             GUILayout.BeginHorizontal();
 
+            GUI.contentColor = Color.green;
             GUILayout.Label("Show: ");
+            GUI.contentColor = Color.white;
 
             GUILayout.Label("Fields");
             showFields = GUILayout.Toggle(showFields, "");
