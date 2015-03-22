@@ -1765,7 +1765,9 @@ namespace ModTools
 
             if (searchDisplayString != "")
             {
+                GUI.contentColor = Color.green;
                 GUILayout.Label(searchDisplayString);
+                GUI.contentColor = Color.white;
             }
 
             scrollPosition = GUILayout.BeginScrollView(scrollPosition);
