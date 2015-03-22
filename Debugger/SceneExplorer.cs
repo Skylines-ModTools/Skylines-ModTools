@@ -1769,6 +1769,8 @@ namespace ModTools
                 GUILayout.Label(searchDisplayString);
                 GUI.contentColor = Color.white;
             }
+            
+            GUILayout.Space(8);
 
             scrollPosition = GUILayout.BeginScrollView(scrollPosition);
 
