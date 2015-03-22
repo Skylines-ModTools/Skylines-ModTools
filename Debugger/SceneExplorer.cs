@@ -1716,11 +1716,12 @@ namespace ModTools
             if (GUILayout.Button("Find"))
             {
                 ClearExpanded();
-                var gameObject = GameObject.Find(findGameObjectFilter.Trim());
+                var go = GameObject.Find(findGameObjectFilter.Trim());
                 sceneRoots.Clear();
-                sceneRoots.Add(gameObject, true);
+                expandedGameObjects.Add(new ReferenceChain().Add(go), true);
+                sceneRoots.Add(go, true);
                 scrollPosition = Vector2.zero;
-                searchDisplayString = String.Format("Showing results for GameObject.Find(\"{0}\"", findGameObjectFilter);
+                searchDisplayString = String.Format("Showing results for GameObject.Find(\"{0}\")", findGameObjectFilter);
             }
 
             if (GUILayout.Button("Reset"))
