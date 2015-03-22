@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
-
+using System.Linq;
 using UnityEngine;
 using UnityExtension;
 
@@ -23,8 +23,8 @@ namespace ModTools
             SpecialNamedProperty = 6
         }
 
-        private readonly object[] chainObjects = new object[SceneExplorer.maxHierarchyDepth];
-        private readonly ReferenceType[] chainTypes = new ReferenceType[SceneExplorer.maxHierarchyDepth];
+        private object[] chainObjects = new object[SceneExplorer.maxHierarchyDepth];
+        private ReferenceType[] chainTypes = new ReferenceType[SceneExplorer.maxHierarchyDepth];
         private int count = 0;
 
         public int Length
@@ -209,6 +209,17 @@ namespace ModTools
             return result;
         }
 
+        public ReferenceChain Reverse
+        {
+            get
+            {
+                ReferenceChain chain = Copy();
+                chain.chainObjects = chain.chainObjects.Reverse().ToArray();
+                chain.chainTypes = chain.chainTypes.Reverse().ToArray();
+                return chain;
+            }
+        }
+
     }
 
     public class SceneExplorer : GUIWindow
@@ -224,7 +235,7 @@ namespace ModTools
         private float treeIdentSpacing = 16.0f;
         public static int maxHierarchyDepth = 20;
 
-        private Dictionary<ReferenceChain, bool> expanded = new Dictionary<ReferenceChain, bool>();
+        private Dictionary<ReferenceChain, bool> expandedGameObjects = new Dictionary<ReferenceChain, bool>();
         private Dictionary<ReferenceChain, bool> expandedComponents = new Dictionary<ReferenceChain, bool>();
         private Dictionary<ReferenceChain, bool> expandedObjects = new Dictionary<ReferenceChain, bool>();
 
@@ -240,8 +251,9 @@ namespace ModTools
         private bool showProperties = true;
         private bool showMethods = false;
 
-        private string nameFilter = "";
-        private FilterType filterType = FilterType.GameObjects;
+        private string findGameObjectFilter = "";
+        private string findObjectTypeFilter = "";
+        private string searchDisplayString = "";
 
         private Watches watches;
         private RTLiveView rtLiveView;
@@ -276,7 +288,7 @@ namespace ModTools
                 Log.Warning(String.Format("ModTools - crash log dumped to \"{0}\"", filename));
             }
 
-            expanded.Clear();
+            expandedGameObjects.Clear();
             expandedComponents.Clear();
             expandedObjects.Clear();
             evaluatedProperties.Clear();
@@ -1494,11 +1506,6 @@ namespace ModTools
 
             foreach (MemberInfo member in fields)
             {
-                if (filterType == FilterType.FieldsAndProps && !member.Name.ToLower().Contains(nameFilter))
-                {
-                    continue;
-                }
-
                 FieldInfo field = null;
                 PropertyInfo property = null;
                 MethodInfo method = null;
@@ -1570,12 +1577,6 @@ namespace ModTools
                 return;
             }
 
-          
-            if (filterType == FilterType.Components && !component.name.ToLower().Contains(nameFilter))
-            {
-                return;
-            }
-
             GUILayout.BeginHorizontal();
             GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
 
@@ -1623,19 +1624,14 @@ namespace ModTools
                 return;
             }
 
-            if (filterType == FilterType.GameObjects && !obj.name.ToLower().Contains(nameFilter))
-            {
-                return;
-            }
-
-            if (expanded.ContainsKey(refChain))
+            if (expandedGameObjects.ContainsKey(refChain))
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
 
                 if (GUILayout.Button("-", GUILayout.Width(16)))
                 {
-                    expanded.Remove(refChain);
+                    expandedGameObjects.Remove(refChain);
                 }
 
                 GUILayout.Label(obj.name);
@@ -1659,7 +1655,7 @@ namespace ModTools
 
                 if (GUILayout.Button("+", GUILayout.Width(16)))
                 {
-                    expanded.Add(refChain, true);
+                    expandedGameObjects.Add(refChain, true);
                 }
 
                 GUILayout.Label(obj.name);
@@ -1716,55 +1712,61 @@ namespace ModTools
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUIControls.StringField("ModTools.NameFilter", "Filter", ref nameFilter, 0.0f, true, true);
-            nameFilter = nameFilter.Trim().ToLower();
+            GUILayout.Label("GameObject.Find");
+            findGameObjectFilter = GUILayout.TextField(findGameObjectFilter, GUILayout.Width(256));
+            if (GUILayout.Button("Find"))
+            {
+                ClearExpanded();
+                var gameObject = GameObject.Find(findGameObjectFilter.Trim());
+                sceneRoots.Clear();
+                sceneRoots.Add(gameObject, true);
+                scrollPosition = Vector2.zero;
+                searchDisplayString = String.Format("Showing results for GameObject.Find(\"{0}\"", findGameObjectFilter);
+            }
+
+            if (GUILayout.Button("Reset"))
+            {
+                ClearExpanded();
+                sceneRoots = FindSceneRoots();
+                scrollPosition = Vector2.zero;
+                searchDisplayString = "";
+            }
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
-
-            bool filterGameObject = filterType == FilterType.GameObjects;
-            bool filterComponent = filterType == FilterType.Components;
-            bool filterFields = filterType == FilterType.FieldsAndProps;
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Filter type:");
+            GUILayout.Label("GameObject.FindObjectsOfType");
+            findObjectTypeFilter = GUILayout.TextField(findObjectTypeFilter, GUILayout.Width(256));
+            if (GUILayout.Button("Find"))
+            {
+                var gameObjects = FindComponentsOfType(findObjectTypeFilter.Trim());
 
+                sceneRoots.Clear();
+                foreach(var item in gameObjects)
+                {
+                    ClearExpanded();
+                    expandedGameObjects.Add(new ReferenceChain().Add(item.Key), true);
+                    expandedComponents.Add(new ReferenceChain().Add(item.Key).Add(item.Value), true);
+                    sceneRoots.Add(item.Key, true);
+                    scrollPosition = Vector2.zero;
+                    searchDisplayString = String.Format("Showing results for GameObject.FindObjectsOfType({0})", findObjectTypeFilter);
+                }
+            }
+
+            if (GUILayout.Button("Reset"))
+            {
+                ClearExpanded();
+                sceneRoots = FindSceneRoots();
+                scrollPosition = Vector2.zero;
+                searchDisplayString = "";
+            }
             GUILayout.FlexibleSpace();
-
-            GUILayout.Label("GameObject");
-            filterGameObject = GUILayout.Toggle(filterGameObject, "");
-            if (filterGameObject)
-            {
-                filterComponent = false;
-                filterFields = false;
-            }
-
-            GUILayout.FlexibleSpace();
-
-            GUILayout.Label("Component");
-            filterComponent = GUILayout.Toggle(filterComponent, "");
-            if (filterComponent)
-            {
-                filterFields = false;
-            }
-
-            GUILayout.FlexibleSpace();
-
-            GUILayout.Label("Fields and properties");
-            filterFields = GUILayout.Toggle(filterFields, "");
-            if (filterFields)
-            {
-                filterType = FilterType.FieldsAndProps;
-            }
-            else if (filterComponent)
-            {
-                filterType = FilterType.Components;
-            }
-            else
-            {
-                filterType = FilterType.GameObjects;
-            }
-
             GUILayout.EndHorizontal();
+
+            if (searchDisplayString != "")
+            {
+                GUILayout.Label(searchDisplayString);
+            }
 
             scrollPosition = GUILayout.BeginScrollView(scrollPosition);
 
@@ -1777,10 +1779,64 @@ namespace ModTools
 
             if (GUILayout.Button("Fold all"))
             {
-                expanded.Clear();
-                expandedComponents.Clear();
-                expandedObjects.Clear();
-                evaluatedProperties.Clear();
+                ClearExpanded();
+            }
+        }
+
+        private void ClearExpanded()
+        {
+            expandedGameObjects.Clear();
+            expandedComponents.Clear();
+            expandedObjects.Clear();
+            evaluatedProperties.Clear();
+            searchDisplayString = "";
+            scrollPosition = Vector2.zero;
+        }
+
+        private ReferenceChain BuildRefChain(GameObject go)
+        {
+            ReferenceChain chain = new ReferenceChain();
+            chain.Add(go);
+
+            var obj = go;
+            while (obj.transform.parent != null)
+            {
+                obj = obj.transform.parent.gameObject;
+                chain.Add(obj);
+            }
+
+            return chain.Reverse;
+        }
+
+        private ReferenceChain BuildRefChain(GameObject gameObject, Component component)
+        {
+            ReferenceChain chain = BuildRefChain(gameObject);
+            chain.Add(component);
+            return chain;
+        }
+
+        private List<KeyValuePair<GameObject, Component>> FindComponentsOfType(string typeName)
+        {
+            var roots = FindSceneRoots();
+            var list = new List<KeyValuePair<GameObject, Component>>();
+            foreach (var root in roots.Keys)
+            {
+                FindComponentsOfType(typeName, root, list);
+            }
+            return list;
+        }
+
+        private void FindComponentsOfType(string typeName, GameObject gameObject, List<KeyValuePair<GameObject, Component>> list)
+        {
+            var component = gameObject.GetComponent(typeName);
+            if (component != null)
+            {
+                list.Add(new KeyValuePair<GameObject, Component>(gameObject, component));
+            }
+
+            for (int i = 0; i < gameObject.transform.childCount; i++)
+            {
+                FindComponentsOfType(typeName, gameObject.transform.GetChild(i).gameObject, list);
             }
         }
 
