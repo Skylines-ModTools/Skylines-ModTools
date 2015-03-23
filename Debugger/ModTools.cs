@@ -197,9 +197,9 @@ namespace ModTools
 
             if (newExtendGamePanels != extendGamePanels)
             {
+                extendGamePanels = newExtendGamePanels;
                 SaveConfig();
 
-                extendGamePanels = newExtendGamePanels;
                 if (extendGamePanels)
                 {
                     gameObject.AddComponent<GamePanelExtender>();
