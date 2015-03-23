@@ -32,14 +32,18 @@ namespace ModTools
 
         void OnDestroy()
         {
-            Destroy(zonedBuildingAssetNameLabel);
-            Destroy(zonedBuildingShowExplorerButton);
-            Destroy(zonedBuildingDumpMeshTextureButton);
+            Destroy(zonedBuildingAssetNameLabel.gameObject);
+            Destroy(zonedBuildingShowExplorerButton.gameObject);
+            Destroy(zonedBuildingDumpMeshTextureButton.gameObject);
+
+            zonedBuildingInfoPanel.component.Find<UILabel>("AllGood").isVisible = true;
+            zonedBuildingInfoPanel.component.Find<UIPanel>("ProblemsPanel").isVisible = true;
         }
 
         UIButton CreateButton(string text, int width, int height, UIComponent parentComponent, Vector3 offset, UIAlignAnchor anchor, MouseEventHandler handler)
         {
             var button = uiView.AddUIComponent(typeof(UIButton)) as UIButton;
+            button.name = "ModTools Button";
             button.text = text;
             button.textScale = 0.8f;
             button.width = width;
@@ -65,6 +69,7 @@ namespace ModTools
         {
             var label = uiView.AddUIComponent(typeof (UILabel)) as UILabel;
             label.text = text;
+            label.name = "ModTools Label";
             label.width = width;
             label.height = height;
             label.textColor = new Color32(255, 255, 255, 255);
@@ -75,6 +80,9 @@ namespace ModTools
 
         void AddZonedBuildingPanelControls()
         {
+            zonedBuildingInfoPanel.component.Find<UILabel>("AllGood").isVisible = false;
+            zonedBuildingInfoPanel.component.Find<UIPanel>("ProblemsPanel").isVisible = false;
+
             zonedBuildingAssetNameLabel = CreateLabel
             (
                 "AssetName: <>", 160, 24,
