@@ -52,6 +52,10 @@ namespace ModTools
                 SaveConfig();
             }
 
+            logExceptionsToConsole = config.logExceptionsToConsole;
+            evaluatePropertiesAutomatically = config.evaluatePropertiesAutomatically;
+            extendGamePanels = config.extendGamePanels;
+
             rect = config.mainWindowRect;
             visible = config.mainWindowVisible;
 
@@ -73,6 +77,10 @@ namespace ModTools
         {
             if (config != null)
             {
+                config.logExceptionsToConsole = logExceptionsToConsole;
+                config.evaluatePropertiesAutomatically = evaluatePropertiesAutomatically;
+                config.extendGamePanels = extendGamePanels;
+
                 config.mainWindowRect = rect;
                 config.mainWindowVisible = visible;
 
@@ -163,11 +171,19 @@ namespace ModTools
             GUILayout.Label("Log exceptions to console");
             logExceptionsToConsole = GUILayout.Toggle(logExceptionsToConsole, "");
             GUILayout.EndHorizontal();
+            if (logExceptionsToConsole != config.logExceptionsToConsole)
+            {
+                SaveConfig();
+            }
 
             GUILayout.BeginHorizontal();
             GUILayout.Label("Evaluate properties automatically");
             evaluatePropertiesAutomatically = GUILayout.Toggle(evaluatePropertiesAutomatically, "");
             GUILayout.EndHorizontal();
+            if (evaluatePropertiesAutomatically != config.evaluatePropertiesAutomatically)
+            {
+                SaveConfig();
+            }
 
             /*GUILayout.BeginHorizontal();
             GUILayout.Label("SceneExplorer debug mode");
@@ -178,8 +194,11 @@ namespace ModTools
             GUILayout.Label("Game panel extensions");
             var newExtendGamePanels = GUILayout.Toggle(extendGamePanels, "");
             GUILayout.EndHorizontal();
+
             if (newExtendGamePanels != extendGamePanels)
             {
+                SaveConfig();
+
                 extendGamePanels = newExtendGamePanels;
                 if (extendGamePanels)
                 {

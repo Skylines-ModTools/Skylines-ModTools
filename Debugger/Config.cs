@@ -20,6 +20,10 @@ namespace ModTools
         public Rect rtLiveViewRect = new Rect(512, 128, 512, 512);
         public bool rtLiveViewVisible = false;
 
+        public bool logExceptionsToConsole = true;
+        public bool evaluatePropertiesAutomatically = true;
+        public bool extendGamePanels = true;
+
         public void OnPreSerialize()
         {
 
