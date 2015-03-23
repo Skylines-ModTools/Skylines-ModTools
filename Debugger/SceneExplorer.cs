@@ -3,224 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
-using System.Linq;
 using UnityEngine;
-using UnityExtension;
 
 namespace ModTools
 {
-
-    public class ReferenceChain
-    {
-        private enum ReferenceType
-        {
-            GameObject = 0,
-            Component = 1,
-            Field = 2,
-            Property = 3,
-            Method = 4,
-            EnumerableItem = 5,
-            SpecialNamedProperty = 6
-        }
-
-        private object[] chainObjects = new object[SceneExplorer.maxHierarchyDepth];
-        private ReferenceType[] chainTypes = new ReferenceType[SceneExplorer.maxHierarchyDepth];
-        private int count = 0;
-
-        public int Length
-        {
-            get { return count; }
-        }
-
-        public string LastItemName
-        {
-            get
-            {
-                return ItemToString(count - 1);
-            }
-        }
-
-        public bool CheckDepth()
-        {
-            if (count >= SceneExplorer.maxHierarchyDepth)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        public ReferenceChain Copy()
-        {
-            ReferenceChain copy = new ReferenceChain();
-            copy.count = count;
-            for (int i = 0; i < count; i++)
-            {
-                copy.chainObjects[i] = chainObjects[i];
-                copy.chainTypes[i] = chainTypes[i];
-            }
-
-            return copy;
-        }
-        
-        public ReferenceChain Add(GameObject go)
-        {
-            ReferenceChain copy = Copy();
-            copy.chainObjects[count] = go;
-            copy.chainTypes[count] = ReferenceType.GameObject;
-            copy.count++;
-            return copy;
-        }
-
-        public ReferenceChain Add(Component component)
-        {
-            ReferenceChain copy = Copy();
-            copy.chainObjects[count] = component;
-            copy.chainTypes[count] = ReferenceType.Component;
-            copy.count++;
-            return copy;
-        }
-
-        public ReferenceChain Add(FieldInfo fieldInfo)
-        {
-            ReferenceChain copy = Copy();
-            copy.chainObjects[count] = fieldInfo;
-            copy.chainTypes[count] = ReferenceType.Field;
-            copy.count++;
-            return copy;
-        }
-
-        public ReferenceChain Add(PropertyInfo propertyInfo)
-        {
-            ReferenceChain copy = Copy();
-            copy.chainObjects[count] = propertyInfo;
-            copy.chainTypes[count] = ReferenceType.Property;
-            copy.count++;
-            return copy;
-        }
-
-        public ReferenceChain Add(MethodInfo methodInfo)
-        {
-            ReferenceChain copy = Copy();
-            copy.chainObjects[count] = methodInfo;
-            copy.chainTypes[count] = ReferenceType.Method;
-            copy.count++;
-            return copy;
-        }
-
-        public ReferenceChain Add(int index)
-        {
-            ReferenceChain copy = Copy();
-            copy.chainObjects[count] = index;
-            copy.chainTypes[count] = ReferenceType.EnumerableItem;
-            copy.count++;
-            return copy;
-        }
-
-        public ReferenceChain Add(string namedProperty)
-        {
-            ReferenceChain copy = Copy();
-            copy.chainObjects[count] = namedProperty;
-            copy.chainTypes[count] = ReferenceType.SpecialNamedProperty;
-            copy.count++;
-            return copy;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (!(obj is ReferenceChain))
-            {
-                return false;
-            }
-
-            var other = (ReferenceChain) obj;
-
-            if (other.count != count)
-            {
-                return false;
-            }
-
-            for (int i = count - 1; i >= 0; i--)
-            {
-                if (chainTypes[i] != other.chainTypes[i])
-                {
-                    return false;
-                }
-
-                if (chainObjects[i].GetHashCode() != other.chainObjects[i].GetHashCode())
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        public override int GetHashCode()
-        {
-            int hash = HashCodeHelper.Initialize();
-
-            for(int i = 0; i < count; i++)
-            {
-                hash = HashCodeHelper.Hash(hash, chainTypes[i]);
-                hash = HashCodeHelper.Hash(hash, chainObjects[i]);
-            }
-
-            return hash;
-        }
-
-        private string ItemToString(int i)
-        {
-            switch (chainTypes[i])
-            {
-                case ReferenceType.GameObject:
-                    return ((GameObject)chainObjects[i]).name;
-                case ReferenceType.Component:
-                    return ((Component)chainObjects[i]).name;
-                case ReferenceType.Field:
-                    return ((FieldInfo)chainObjects[i]).Name;
-                case ReferenceType.Property:
-                    return ((PropertyInfo)chainObjects[i]).Name;
-                case ReferenceType.Method:
-                    return ((MethodInfo)chainObjects[i]).Name;
-                case ReferenceType.EnumerableItem:
-                    return String.Format("[{0}]", (int)chainObjects[i]);
-                case ReferenceType.SpecialNamedProperty:
-                    return (string)chainObjects[i];
-            }
-
-            return "";
-        }
-
-        public override string ToString()
-        {
-            string result = "";
-
-            for (int i = 0; i < count; i++)
-            {
-                result += ItemToString(i);
-
-                if (i != count - 1)
-                {
-                    result += '.';
-                }
-            }
-
-            return result;
-        }
-
-        public ReferenceChain Reverse
-        {
-            get
-            {
-                ReferenceChain chain = Copy();
-                chain.chainObjects = chain.chainObjects.Reverse().ToArray();
-                chain.chainTypes = chain.chainTypes.Reverse().ToArray();
-                return chain;
-            }
-        }
-
-    }
 
     public class SceneExplorer : GUIWindow
     {
@@ -240,6 +26,9 @@ namespace ModTools
         private Dictionary<ReferenceChain, bool> expandedObjects = new Dictionary<ReferenceChain, bool>();
 
         private Dictionary<ReferenceChain, bool> evaluatedProperties = new Dictionary<ReferenceChain, bool>();
+
+        private Dictionary<ReferenceChain, int> selectedArrayStartIndices = new Dictionary<ReferenceChain, int>();
+        private Dictionary<ReferenceChain, int> selectedArrayEndIndices = new Dictionary<ReferenceChain, int>(); 
 
         private Dictionary<int, bool> preventCircularReferences = new Dictionary<int, bool>(); 
 
@@ -297,6 +86,68 @@ namespace ModTools
         public void Refresh()
         {
             sceneRoots = FindSceneRoots();
+        }
+
+        public void ExpandFromRefChain(ReferenceChain refChain)
+        {
+            if (refChain.Length == 0)
+            {
+                Log.Error("SceneExplorer: ExpandFromRefChain(): Invalid refChain, expected Length >= 0");
+                return;
+            }
+
+            if (refChain.chainTypes[0] != ReferenceChain.ReferenceType.GameObject)
+            {
+                Log.Error(String.Format("SceneExplorer: ExpandFromRefChain(): invalid chain type for element [0] - expected {0}, got {1}",
+                    ReferenceChain.ReferenceType.GameObject, refChain.chainTypes[0]));
+                return;
+            }
+
+            sceneRoots.Clear();
+            ClearExpanded();
+            searchDisplayString = String.Format("Showing results for \"{0}\"", refChain.ToString());
+
+            var rootGameObject = (GameObject) refChain.chainObjects[0];
+            sceneRoots.Add(rootGameObject, true);
+
+            var expandedRefChain = new ReferenceChain().Add(rootGameObject);
+            expandedGameObjects.Add(expandedRefChain, true);
+
+            for (int i = 1; i < refChain.Length; i++)
+            {
+                switch (refChain.chainTypes[i])
+                {
+                    case ReferenceChain.ReferenceType.GameObject:
+                        var go = (GameObject) refChain.chainObjects[i];
+                        expandedRefChain = expandedRefChain.Add(go);
+                        expandedGameObjects.Add(expandedRefChain, true);
+                        break;
+                    case ReferenceChain.ReferenceType.Component:
+                        var component = (Component) refChain.chainObjects[i];
+                        expandedRefChain = expandedRefChain.Add(component);
+                        expandedComponents.Add(expandedRefChain, true);
+                        break;
+                    case ReferenceChain.ReferenceType.Field:
+                        var field = (FieldInfo) refChain.chainObjects[i];
+                        expandedRefChain = expandedRefChain.Add(field);
+                        expandedObjects.Add(expandedRefChain, true);
+                        break;
+                    case ReferenceChain.ReferenceType.Property:
+                        var property = (PropertyInfo) refChain.chainObjects[i];
+                        expandedRefChain = expandedRefChain.Add(property);
+                        expandedObjects.Add(expandedRefChain, true);
+                        break;
+                    case ReferenceChain.ReferenceType.Method:
+                        break;
+                    case ReferenceChain.ReferenceType.EnumerableItem:
+                        var index = (int) refChain.chainObjects[i];
+                        selectedArrayStartIndices[expandedRefChain] = index;
+                        selectedArrayEndIndices[expandedRefChain] = index;
+                        expandedRefChain = expandedRefChain.Add(index);
+                        expandedObjects.Add(expandedRefChain, true);
+                        break;
+                }
+            }
         }
 
         private Dictionary<GameObject, bool> FindSceneRoots()
@@ -652,7 +503,7 @@ namespace ModTools
 
                 if (GUILayout.Button("Dump .png"))
                 {
-                    RTLiveView.DumpTextureToPNG((Texture)value);
+                    Util.DumpTextureToPNG((Texture)value);
                 }
             }
             else if (field.FieldType.ToString() == "UnityEngine.Mesh" && value != null)
@@ -994,7 +845,7 @@ namespace ModTools
 
                 if (GUILayout.Button("Dump .png"))
                 {
-                    RTLiveView.DumpTextureToPNG((Texture)value);
+                    Util.DumpTextureToPNG((Texture)value);
                 }
             }
             else if (property.PropertyType.ToString() == "UnityEngine.Mesh" && value != null)
@@ -1274,7 +1125,7 @@ namespace ModTools
 
                 if (GUILayout.Button("Dump .png"))
                 {
-                    RTLiveView.DumpTextureToPNG((Texture)value);
+                    Util.DumpTextureToPNG((Texture)value);
                 }
                 GUILayout.EndHorizontal();
 
@@ -1348,8 +1199,8 @@ namespace ModTools
 
         private bool IsEnumerable(object myProperty)
         {
-            if (typeof(IEnumerable).IsAssignableFrom(myProperty.GetType())
-                || typeof(IEnumerable<>).IsAssignableFrom(myProperty.GetType()))
+            if (typeof (IEnumerable).IsAssignableFrom(myProperty.GetType())
+                || typeof (IEnumerable<>).IsAssignableFrom(myProperty.GetType()))
                 return true;
 
             return false;
@@ -1377,79 +1228,205 @@ namespace ModTools
             int count = 0;
             var oldRefChain = refChain;
 
-            foreach (var value in enumerable)
-            {
-                refChain = oldRefChain.Add(count);
+            var collection = enumerable as ICollection;
 
-                var type = value.GetType();
+            if (collection != null)
+            {
+                var collectionSize = collection.Count;
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Label("Collection size: " + collectionSize);
 
-                GUI.contentColor = Color.white;
-
-                if (IsReflectableType(type) && !IsEnumerable(type))
+                if (!selectedArrayStartIndices.ContainsKey(refChain))
                 {
-                    if (expandedObjects.ContainsKey(refChain))
-                    {
-                        if (GUILayout.Button("-", GUILayout.Width(16)))
-                        {
-                            expandedObjects.Remove(refChain);
-                        }
-                    }
-                    else
-                    {
-                        if (GUILayout.Button("+", GUILayout.Width(16)))
-                        {
-                            expandedObjects.Add(refChain, true);
-                        }
-                    }
+                    selectedArrayStartIndices.Add(refChain, 0);
                 }
 
-                GUI.contentColor = Color.green;
+                if (!selectedArrayEndIndices.ContainsKey(refChain))
+                {
+                    selectedArrayEndIndices.Add(refChain, 32);
+                }
 
-                GUILayout.Label(type.ToString() + " ");
+                var arrayStart = selectedArrayStartIndices[refChain];
+                var arrayEnd = selectedArrayEndIndices[refChain];
 
-                GUI.contentColor = Color.red;
-
-                GUILayout.Label(String.Format("{0}.[{1}]", oldRefChain.LastItemName, count));
-
-                GUI.contentColor = Color.white;
-
-                GUILayout.Label(" = ");
-                GUILayout.Label(value == null ? "null" : value.ToString());
-
+                GUIControls.IntField(oldRefChain.ToString() + ".arrayStart", "Start index", ref arrayStart, 0.0f, true, true);
+                GUIControls.IntField(oldRefChain.ToString() + ".arrayEnd", "End index", ref arrayEnd, 0.0f, true, true);
+                GUILayout.Label("(32 items max)");
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
 
-                if (IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
+                arrayStart = Mathf.Clamp(arrayStart, 0, collectionSize - 1);
+                arrayEnd = Mathf.Clamp(arrayEnd, 0, collectionSize - 1);
+                if (arrayStart > arrayEnd)
                 {
-                    if (value is GameObject)
-                    {
-                        var go = value as GameObject;
-                        foreach (var component in go.GetComponents<Component>())
-                        {
-                            OnSceneTreeComponent(refChain, component);
-                        }
-                    }
-                    else if (value is Transform)
-                    {
-                        OnSceneTreeReflectUnityEngineTransform(refChain, (Transform)value);
-                    }
-                    else
-                    {
-                        OnSceneTreeReflect(refChain, value);
-                    }
+                    arrayEnd = arrayStart;
                 }
 
-                count++;
-                if (count >= 1024)
+                if (arrayEnd - arrayStart > 32)
                 {
+                    arrayEnd = arrayStart + 32;
+                    arrayEnd = Mathf.Clamp(arrayEnd, 0, collectionSize - 1);
+                }
+
+                selectedArrayStartIndices[refChain] = arrayStart;
+                selectedArrayEndIndices[refChain] = arrayEnd;
+
+                foreach (var value in enumerable)
+                {
+                    if (count < arrayStart)
+                    {
+                        count++;
+                        continue;
+                    }
+                    
+                    refChain = oldRefChain.Add(count);
+
+                    var type = value.GetType();
+
                     GUILayout.BeginHorizontal();
-                    GUILayout.Space(treeIdentSpacing * refChain.Length);
-                    GUILayout.Label("Array too large to display");
+                    GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+
+                    GUI.contentColor = Color.white;
+
+                    if (IsReflectableType(type) && !IsEnumerable(type))
+                    {
+                        if (expandedObjects.ContainsKey(refChain))
+                        {
+                            if (GUILayout.Button("-", GUILayout.Width(16)))
+                            {
+                                expandedObjects.Remove(refChain);
+                            }
+                        }
+                        else
+                        {
+                            if (GUILayout.Button("+", GUILayout.Width(16)))
+                            {
+                                expandedObjects.Add(refChain, true);
+                            }
+                        }
+                    }
+
+                    GUI.contentColor = Color.green;
+
+                    GUILayout.Label(type.ToString() + " ");
+
+                    GUI.contentColor = Color.red;
+
+                    GUILayout.Label(String.Format("{0}.[{1}]", oldRefChain.LastItemName, count));
+
+                    GUI.contentColor = Color.white;
+
+                    GUILayout.Label(" = ");
+                    GUILayout.Label(value == null ? "null" : value.ToString());
+
+                    GUILayout.FlexibleSpace();
                     GUILayout.EndHorizontal();
-                    break;
+
+                    if (IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
+                    {
+                        if (value is GameObject)
+                        {
+                            var go = value as GameObject;
+                            foreach (var component in go.GetComponents<Component>())
+                            {
+                                OnSceneTreeComponent(refChain, component);
+                            }
+                        }
+                        else if (value is Transform)
+                        {
+                            OnSceneTreeReflectUnityEngineTransform(refChain, (Transform)value);
+                        }
+                        else
+                        {
+                            OnSceneTreeReflect(refChain, value);
+                        }
+                    }
+
+                    count++;
+                    if (count > arrayEnd)
+                    {
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                foreach (var value in enumerable)
+                {
+                    refChain = oldRefChain.Add(count);
+
+                    var type = value.GetType();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+
+                    GUI.contentColor = Color.white;
+
+                    if (IsReflectableType(type) && !IsEnumerable(type))
+                    {
+                        if (expandedObjects.ContainsKey(refChain))
+                        {
+                            if (GUILayout.Button("-", GUILayout.Width(16)))
+                            {
+                                expandedObjects.Remove(refChain);
+                            }
+                        }
+                        else
+                        {
+                            if (GUILayout.Button("+", GUILayout.Width(16)))
+                            {
+                                expandedObjects.Add(refChain, true);
+                            }
+                        }
+                    }
+
+                    GUI.contentColor = Color.green;
+
+                    GUILayout.Label(type.ToString() + " ");
+
+                    GUI.contentColor = Color.red;
+
+                    GUILayout.Label(String.Format("{0}.[{1}]", oldRefChain.LastItemName, count));
+
+                    GUI.contentColor = Color.white;
+
+                    GUILayout.Label(" = ");
+                    GUILayout.Label(value == null ? "null" : value.ToString());
+
+                    GUILayout.FlexibleSpace();
+                    GUILayout.EndHorizontal();
+
+                    if (IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
+                    {
+                        if (value is GameObject)
+                        {
+                            var go = value as GameObject;
+                            foreach (var component in go.GetComponents<Component>())
+                            {
+                                OnSceneTreeComponent(refChain, component);
+                            }
+                        }
+                        else if (value is Transform)
+                        {
+                            OnSceneTreeReflectUnityEngineTransform(refChain, (Transform)value);
+                        }
+                        else
+                        {
+                            OnSceneTreeReflect(refChain, value);
+                        }
+                    }
+
+                    count++;
+                    if (count >= 1024)
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(treeIdentSpacing * refChain.Length);
+                        GUILayout.Label("Array too large to display");
+                        GUILayout.EndHorizontal();
+                        break;
+                    }
                 }
             }
         }
@@ -1824,6 +1801,8 @@ namespace ModTools
             expandedComponents.Clear();
             expandedObjects.Clear();
             evaluatedProperties.Clear();
+            selectedArrayStartIndices.Clear();
+            selectedArrayEndIndices.Clear();
             searchDisplayString = "";
             scrollPosition = Vector2.zero;
         }

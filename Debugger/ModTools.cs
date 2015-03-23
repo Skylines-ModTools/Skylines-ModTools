@@ -15,8 +15,11 @@ namespace ModTools
         private Watches watches;
         private RTLiveView rtLiveView;
 
+        private GamePanelExtender panelExtender;
+
         public static bool logExceptionsToConsole = true;
         public static bool evaluatePropertiesAutomatically = true;
+        public static bool extendGamePanels = true;
 
         public Configuration config = new Configuration();
         public static readonly string configPath = "ModToolsConfig.xml";
@@ -28,6 +31,7 @@ namespace ModTools
             Destroy(sceneExplorer);
             Destroy(watches);
             Destroy(rtLiveView);
+            Destroy(panelExtender);
         }
 
         public static ModTools Instance
@@ -119,6 +123,8 @@ namespace ModTools
             watches = gameObject.AddComponent<Watches>();
             rtLiveView = gameObject.AddComponent<RTLiveView>();
 
+            panelExtender = gameObject.AddComponent<GamePanelExtender>();
+
             LoadConfig();
         }
 
@@ -163,10 +169,27 @@ namespace ModTools
             evaluatePropertiesAutomatically = GUILayout.Toggle(evaluatePropertiesAutomatically, "");
             GUILayout.EndHorizontal();
 
-            GUILayout.BeginHorizontal();
+            /*GUILayout.BeginHorizontal();
             GUILayout.Label("SceneExplorer debug mode");
             SceneExplorer.debugMode = GUILayout.Toggle(SceneExplorer.debugMode, "");
+            GUILayout.EndHorizontal();*/
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Game panel extensions");
+            var newExtendGamePanels = GUILayout.Toggle(extendGamePanels, "");
             GUILayout.EndHorizontal();
+            if (newExtendGamePanels != extendGamePanels)
+            {
+                extendGamePanels = newExtendGamePanels;
+                if (extendGamePanels)
+                {
+                    gameObject.AddComponent<GamePanelExtender>();
+                }
+                else
+                {
+                    Destroy(gameObject.GetComponent<GamePanelExtender>());
+                }
+            }
 
             if (GUILayout.Button("Watches (Ctrl+W)"))
             {

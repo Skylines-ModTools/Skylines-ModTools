@@ -23,7 +23,7 @@ namespace ModTools
 
                 if (GUILayout.Button("Dump .png", GUILayout.Width(128)))
                 {
-                    DumpTextureToPNG(previewTexture);
+                    Util.DumpTextureToPNG(previewTexture);
                 }
 
                 float aspect = (float)previewTexture.width / ((float)previewTexture.height + 38.0f);
@@ -37,70 +37,7 @@ namespace ModTools
             }
         }
 
-        public static void DumpTextureToPNG(Texture previewTexture)
-        {
-            string filename = "";
-            var filenamePrefix = String.Format("rt_dump_{0}", previewTexture.name);
-            if (!File.Exists(filenamePrefix + ".png"))
-            {
-                filename = filenamePrefix + ".png";
-            }
-            else
-            {
-                int i = 1;
-                while (File.Exists(String.Format("{0}_{1}.png", filenamePrefix, i)))
-                {
-                    i++;
-                }
-
-                filename = String.Format("{0}_{1}.png", filenamePrefix, i);
-            }
-
-            if (previewTexture is RenderTexture)
-            {
-                Util.DumpRenderTexture((RenderTexture)previewTexture, filename);
-                Log.Warning(String.Format("Texture dumped to \"{0}\"", filename));
-            }
-            else if (previewTexture is Texture2D)
-            {
-                var texture = previewTexture as Texture2D;
-                byte[] bytes = null;
-
-                try
-                {
-                    bytes = texture.EncodeToPNG();
-                }
-                catch (UnityException)
-                {
-                    Log.Warning(String.Format("Texture \"{0}\" is marked as read-only, running workaround..", texture.name));
-                }
-
-                if (bytes == null)
-                {
-                    try
-                    {
-                        var rt = RenderTexture.GetTemporary(texture.width, texture.height, 0);
-                        Graphics.Blit(texture, rt);
-                        Util.DumpRenderTexture(rt, filename);
-                        RenderTexture.ReleaseTemporary(rt);
-                        Log.Warning(String.Format("Texture dumped to \"{0}\"", filename));
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error("There was an error while dumping the texture - " + ex.Message);
-                    }
-
-                    return;
-                }
-
-                File.WriteAllBytes(filename, bytes);
-                Log.Warning(String.Format("Texture dumped to \"{0}\"", filename));
-            }
-            else
-            {
-                Log.Warning(String.Format("Don't know how to dump tyoe \"{0}\"", previewTexture.GetType()));
-            }
-        }
+        
 
     }
 }
