@@ -32,7 +32,9 @@ namespace ModTools
 
         void OnDestroy()
         {
+            Destroy(zonedBuildingAssetNameLabel);
             Destroy(zonedBuildingShowExplorerButton);
+            Destroy(zonedBuildingDumpMeshTextureButton);
         }
 
         UIButton CreateButton(string text, int width, int height, UIComponent parentComponent, Vector3 offset, UIAlignAnchor anchor, MouseEventHandler handler)
