@@ -8,29 +8,24 @@ namespace ModTools
 
         public static bool IsBuiltInType(Type t)
         {
-            switch (t.ToString())
-            {
-                case "System.Char":
-                case "System.String":
-                case "System.Boolean":
-                case "System.Single":
-                case "System.Double":
-                case "System.Byte":
-                case "System.Int32":
-                case "System.UInt32":
-                case "System.Int64":
-                case "System.UInt64":
-                case "System.Int16":
-                case "System.UInt16":
-                case "UnityEngine.Vector2":
-                case "UnityEngine.Vector3":
-                case "UnityEngine.Vector4":
-                case "UnityEngine.Quaternion":
-                case "UnityEngine.Color":
-                case "UnityEngine.Color32":
-                    return true;
-            }
-
+            if (t == typeof (System.Char)) return true;
+            if (t == typeof (System.String)) return true;
+            if (t == typeof (System.Boolean)) return true;
+            if (t == typeof (System.Single)) return true;
+            if (t == typeof (System.Double)) return true;
+            if (t == typeof (System.Byte)) return true;
+            if (t == typeof (System.Int32)) return true;
+            if (t == typeof (System.UInt32)) return true;
+            if (t == typeof (System.Int64)) return true;
+            if (t == typeof (System.UInt64)) return true;
+            if (t == typeof (System.Int16)) return true;
+            if (t == typeof (System.UInt16)) return true;
+            if (t == typeof (UnityEngine.Vector2)) return true;
+            if (t == typeof (UnityEngine.Vector3)) return true;
+            if (t == typeof (UnityEngine.Vector4)) return true;
+            if (t == typeof (UnityEngine.Quaternion)) return true;
+            if (t == typeof (UnityEngine.Color)) return true;
+            if (t == typeof (UnityEngine.Color32)) return true;
             return false;
         }
 

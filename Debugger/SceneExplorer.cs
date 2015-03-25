@@ -188,126 +188,217 @@ namespace ModTools
             {
                 var f = (float)value;
                 GUIControls.FloatField(hash, "", ref f, 0.0f, true, true);
-                return f;
-            }
+                if (f != (float)value)
+                {
+                    return f;
+                }
 
+                return value;
+            }
+            
             if (type == typeof(System.Double))
             {
                 var f = (double)value;
                 GUIControls.DoubleField(hash, "", ref f, 0.0f, true, true);
-                return f;
+                if (f != (double)value)
+                {
+                    return f;
+                }
+
+                return value;
             }
 
             if (type == typeof(System.Byte))
             {
                 var f = (byte)value;
                 GUIControls.ByteField(hash, "", ref f, 0.0f, true, true);
-                return f;
+                if (f != (byte)value)
+                {
+                    return f;
+                }
+
+                return value;
             }
 
             if (type == typeof(System.Int32))
             {
                 var f = (int)value;
                 GUIControls.IntField(hash, "", ref f, 0.0f, true, true);
-                return f;
+                if (f != (int)value)
+                {
+                    return f;
+                }
+
+                return value;
             }
             
             if (type == typeof(System.UInt32))
             {
                 var f = (uint)value;
                 GUIControls.UIntField(hash, "", ref f, 0.0f, true, true);
-                return f;
+                if (f != (uint)value)
+                {
+                    return f;
+                }
+
+                return value;
             }
             
             if (type == typeof(System.Int64))
             {
                 var f = (Int64)value;
                 GUIControls.Int64Field(hash, "", ref f, 0.0f, true, true);
-                return f;
+                if (f != (Int64)value)
+                {
+                    return f;
+                }
+
+                return value;
             }
             
             if (type == typeof(System.UInt64))
             {
                 var f = (UInt64)value;
                 GUIControls.UInt64Field(hash, "", ref f, 0.0f, true, true);
-                return f;
+                if (f != (UInt64)value)
+                {
+                    return f;
+                }
+
+                return value;
             }
             
             if (type == typeof(System.Int16))
             {
                 var f = (Int16)value;
                 GUIControls.Int16Field(hash, "", ref f, 0.0f, true, true);
-                return f;
+                if (f != (Int16)value)
+                {
+                    return f;
+                }
+
+                return value;
             }
             
             if (type == typeof(System.UInt16))
             {
                 var f = (UInt16)value;
                 GUIControls.UInt16Field(hash, "", ref f, 0.0f, true, true);
-                return f;
+                if (f != (UInt16)value)
+                {
+                    return f;
+                }
+
+                return value;
             }
             
             if (type == typeof(System.Boolean))
             {
                 var f = (bool)value;
                 GUIControls.BoolField("", ref f, 0.0f, true, true);
-                return f;
+                if (f != (bool)value)
+                {
+                    return f;
+                }
+
+                return value;
             }
             
             if (type == typeof(System.String))
             {
                 var f = (string)value;
                 GUIControls.StringField(hash, "", ref f, 0.0f, true, true);
-                return f;
+                if (f != (string)value)
+                {
+                    return f;
+                }
+
+                return value;
             }
             
             if (type == typeof(System.Char))
             {
                 var f = (char)value;
                 GUIControls.CharField(hash, "", ref f, 0.0f, true, true);
-                return f;
+                if (f != (char)value)
+                {
+                    return f;
+                }
+
+                return value;
             }
             
             if (type == typeof(UnityEngine.Vector2))
             {
                 var f = (Vector2)value;
                 GUIControls.Vector2Field(hash, "", ref f, 0.0f, null, true, true);
-                return f;
+                if (f != (Vector2)value)
+                {
+                    return f;
+                }
+
+                return value;
             }
             
             if (type == typeof(UnityEngine.Vector3))
             {
                 var f = (Vector3)value;
                 GUIControls.Vector3Field(hash, "", ref f, 0.0f, null, true, true);
-                return f;
+                if (f != (Vector3)value)
+                {
+                    return f;
+                }
+
+                return value;
             }
             
             if (type == typeof(UnityEngine.Vector4))
             {
                 var f = (Vector4)value;
                 GUIControls.Vector4Field(hash, "", ref f, 0.0f, null, true, true);
-                return f;
+                if (f != (Vector4)value)
+                {
+                    return f;
+                }
+
+                return value;
             }
             
             if (type == typeof(UnityEngine.Quaternion))
             {
                 var f = (Quaternion)value;
                 GUIControls.QuaternionField(hash, "", ref f, 0.0f, null, true, true);
-                return f;
+                if (f != (Quaternion)value)
+                {
+                    return f;
+                }
+
+                return value;
             }
             
             if (type == typeof(UnityEngine.Color))
             {
                 var f = (Color)value;
                 GUIControls.ColorField(hash, "", ref f, 0.0f, null, true, true);
-                return f;
+                if (f != (Color)value)
+                {
+                    return f;
+                }
+
+                return value;
             }
             
             if (type == typeof(UnityEngine.Color32))
             {
                 var f = (Color32)value;
                 GUIControls.Color32Field(hash, "", ref f, 0.0f, null, true, true);
-                return f;
+                var v = (Color32)value;
+                if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
+                {
+                    return f;
+                }
+
+                return value;
             }
 
             return value;
