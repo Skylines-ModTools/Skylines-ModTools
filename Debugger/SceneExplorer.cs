@@ -366,14 +366,11 @@ namespace ModTools
             GUILayout.Label(field.Name);
 
             GUI.contentColor = Color.white;
+            GUILayout.Label(" = ");
 
             if (value == null || !IsBuiltInType(field.FieldType))
             {
-                GUI.contentColor = Color.white;
-                GUILayout.Label(" = ");
-                GUI.contentColor = Color.white;
                 GUILayout.Label(value == null ? "null" : value.ToString());
-                GUI.contentColor = Color.white;
             }
             else if (field.FieldType.ToString() == "System.Single")
             {
@@ -678,6 +675,7 @@ namespace ModTools
             GUILayout.Label(property.Name);
 
             GUI.contentColor = Color.white;
+            GUILayout.Label(" = ");
 
             if (!ModTools.evaluatePropertiesAutomatically && !evaluatedProperties.ContainsKey(refChain))
             {
@@ -705,10 +703,6 @@ namespace ModTools
 
                 if (value == null || !IsBuiltInType(property.PropertyType))
                 {
-                    GUI.contentColor = Color.white;
-                    GUILayout.Label(" = ");
-                    GUI.contentColor = Color.white;
-
                     if (property.CanRead)
                     {
                         GUILayout.Label(value == null ? "null" : value.ToString());
