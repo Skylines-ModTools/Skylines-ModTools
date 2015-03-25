@@ -57,6 +57,7 @@
     <Compile Include="ExtensionMethods\StringExtensions.cs" />
     <Compile Include="ExtensionMethods\UnityExtension.cs" />
     <Compile Include="ExtensionMethods\VectorExtension.cs" />
+    <Compile Include="GameObjectUtil.cs" />
     <Compile Include="GamePanelExtender.cs" />
     <Compile Include="GraphViewer.cs" />
     <Compile Include="GUIArea.cs" />
@@ -79,6 +80,7 @@
     <Compile Include="TextureViewer.cs" />
     <Compile Include="SceneExplorer.cs" />
     <Compile Include="TextToTexture.cs" />
+    <Compile Include="TypeUtil.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="Watches.cs" />
   </ItemGroup>

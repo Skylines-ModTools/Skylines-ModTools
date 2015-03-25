@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
 using System.Linq;
-using ColossalFramework;
 using UnityEngine;
 
 namespace ModTools
@@ -12,27 +11,19 @@ namespace ModTools
 
     public class SceneExplorer : GUIWindow
     {
-
-        public enum FilterType
-        {
-            FieldsAndProps,
-            GameObjects,
-            Components
-        }
-
-        private float treeIdentSpacing = 16.0f;
+        private const float treeIdentSpacing = 16.0f;
         public static int maxHierarchyDepth = 20;
 
-        private Dictionary<ReferenceChain, bool> expandedGameObjects = new Dictionary<ReferenceChain, bool>();
-        private Dictionary<ReferenceChain, bool> expandedComponents = new Dictionary<ReferenceChain, bool>();
-        private Dictionary<ReferenceChain, bool> expandedObjects = new Dictionary<ReferenceChain, bool>();
+        private readonly Dictionary<ReferenceChain, bool> expandedGameObjects = new Dictionary<ReferenceChain, bool>();
+        private readonly Dictionary<ReferenceChain, bool> expandedComponents = new Dictionary<ReferenceChain, bool>();
+        private readonly Dictionary<ReferenceChain, bool> expandedObjects = new Dictionary<ReferenceChain, bool>();
 
-        private Dictionary<ReferenceChain, bool> evaluatedProperties = new Dictionary<ReferenceChain, bool>();
+        private readonly Dictionary<ReferenceChain, bool> evaluatedProperties = new Dictionary<ReferenceChain, bool>();
 
-        private Dictionary<ReferenceChain, int> selectedArrayStartIndices = new Dictionary<ReferenceChain, int>();
-        private Dictionary<ReferenceChain, int> selectedArrayEndIndices = new Dictionary<ReferenceChain, int>(); 
+        private readonly Dictionary<ReferenceChain, int> selectedArrayStartIndices = new Dictionary<ReferenceChain, int>();
+        private readonly Dictionary<ReferenceChain, int> selectedArrayEndIndices = new Dictionary<ReferenceChain, int>();
 
-        private Dictionary<int, bool> preventCircularReferences = new Dictionary<int, bool>(); 
+        private readonly Dictionary<int, bool> preventCircularReferences = new Dictionary<int, bool>();
 
         private Dictionary<GameObject, bool> sceneRoots = new Dictionary<GameObject, bool>();
 
@@ -123,7 +114,7 @@ namespace ModTools
 
         public void Refresh()
         {
-            sceneRoots = FindSceneRoots();
+            sceneRoots = GameObjectUtil.FindSceneRoots();
         }
 
         public void ExpandFromRefChain(ReferenceChain refChain)
@@ -168,8 +159,7 @@ namespace ModTools
                         expandedComponents.Add(expandedRefChain, true);
                         if (!firstComponent)
                         {
-                            currentRefChain = expandedRefChain.Copy();
-                            currentRefChain.identOffset = -currentRefChain.Length - 1;
+                            
                             firstComponent = true;
                         }
                         break;
@@ -194,87 +184,9 @@ namespace ModTools
                         break;
                 }
             }
-        }
 
-        private Dictionary<GameObject, bool> FindSceneRoots()
-        {
-            Dictionary<GameObject, bool> roots = new Dictionary<GameObject, bool>();
-
-            GameObject[] objects = GameObject.FindObjectsOfType<GameObject>();
-            foreach (var obj in objects)
-            {
-                if (!roots.ContainsKey(obj.transform.root.gameObject))
-                {
-                    roots.Add(obj.transform.root.gameObject, true);
-                }
-            }
-
-            return roots;
-        }
-
-        private bool IsBuiltInType(Type t)
-        {
-            switch (t.ToString())
-            {
-                case "System.Char":
-                case "System.String":
-                case "System.Boolean":
-                case "System.Single":
-                case "System.Double":
-                case "System.Byte":
-                case "System.Int32":
-                case "System.UInt32":
-                case "System.Int64":
-                case "System.UInt64":
-                case "System.Int16":
-                case "System.UInt16":
-                case "UnityEngine.Vector2":
-                case "UnityEngine.Vector3":
-                case "UnityEngine.Vector4":
-                case "UnityEngine.Quaternion":
-                case "UnityEngine.Color":
-                case "UnityEngine.Color32":
-                    return true;
-            }
-
-            return false;
-        }
-
-        private bool IsReflectableType(Type t)
-        {
-            if (IsBuiltInType(t))
-            {
-                return false;
-            }
-
-            if (t.IsEnum)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        private bool IsTextureType(Type t)
-        {
-            if (t == typeof (UnityEngine.Texture) || t == typeof (UnityEngine.Texture2D) ||
-                t == typeof (UnityEngine.RenderTexture))
-
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        private bool IsMeshType(Type t)
-        {
-            if (t == typeof (UnityEngine.Mesh))
-            {
-                return true;
-            }
-
-            return false;
+            currentRefChain = refChain.Copy();
+            currentRefChain.identOffset = -currentRefChain.Length;
         }
 
         private void OnSceneTreeReflectField(ReferenceChain refChain, System.Object obj, FieldInfo field)
@@ -314,7 +226,7 @@ namespace ModTools
             {
             }
 
-            if (value != null && IsReflectableType(field.FieldType) && !IsEnumerable(obj))
+            if (value != null && TypeUtil.IsReflectableType(field.FieldType) && !IsEnumerable(obj))
             {
                 if (expandedObjects.ContainsKey(refChain))
                 {
@@ -368,7 +280,7 @@ namespace ModTools
             GUI.contentColor = Color.white;
             GUILayout.Label(" = ");
 
-            if (value == null || !IsBuiltInType(field.FieldType))
+            if (value == null || !TypeUtil.IsBuiltInType(field.FieldType))
             {
                 GUILayout.Label(value == null ? "null" : value.ToString());
             }
@@ -545,7 +457,7 @@ namespace ModTools
                 ModTools.Instance.watches.AddWatch(refChain, field, obj);
             }
 
-            if (IsTextureType(field.FieldType) && value != null)
+            if (TypeUtil.IsTextureType(field.FieldType) && value != null)
             {
                 if (GUILayout.Button("Preview"))
                 {
@@ -559,7 +471,7 @@ namespace ModTools
                     Util.DumpTextureToPNG((Texture)value);
                 }
             }
-            else if (IsMeshType(field.FieldType) && value != null)
+            else if (TypeUtil.IsMeshType(field.FieldType) && value != null)
             {
                 /*if (GUILayout.Button("Preview"))
                 {
@@ -577,7 +489,7 @@ namespace ModTools
             }
 
             GUILayout.EndHorizontal();
-            if (value != null && IsReflectableType(field.FieldType) && expandedObjects.ContainsKey(refChain))
+            if (value != null && TypeUtil.IsReflectableType(field.FieldType) && expandedObjects.ContainsKey(refChain))
             {
                 if (value is GameObject)
                 {
@@ -637,7 +549,7 @@ namespace ModTools
                 {
                 }
 
-                if (value != null && IsReflectableType(property.PropertyType) && !IsEnumerable(obj))
+                if (value != null && TypeUtil.IsReflectableType(property.PropertyType) && !IsEnumerable(obj))
                 {
                     if (expandedObjects.ContainsKey(refChain))
                     {
@@ -701,7 +613,7 @@ namespace ModTools
                 }
 
 
-                if (value == null || !IsBuiltInType(property.PropertyType))
+                if (value == null || !TypeUtil.IsBuiltInType(property.PropertyType))
                 {
                     if (property.CanRead)
                     {
@@ -888,7 +800,7 @@ namespace ModTools
                 ModTools.Instance.watches.AddWatch(refChain, property, obj);
             }
 
-            if (IsTextureType(property.PropertyType) && value != null)
+            if (TypeUtil.IsTextureType(property.PropertyType) && value != null)
             {
                 if (GUILayout.Button("Preview"))
                 {
@@ -902,7 +814,7 @@ namespace ModTools
                     Util.DumpTextureToPNG((Texture)value);
                 }
             }
-            else if (IsMeshType(property.PropertyType) && value != null)
+            else if (TypeUtil.IsMeshType(property.PropertyType) && value != null)
             {
                /* if (GUILayout.Button("Preview"))
                 {
@@ -1146,7 +1058,7 @@ namespace ModTools
 
                 GUI.contentColor = Color.white;
 
-                if (IsReflectableType(type) && !IsEnumerable(type))
+                if (TypeUtil.IsReflectableType(type) && !IsEnumerable(type))
                 {
                     if (expandedObjects.ContainsKey(refChain))
                     {
@@ -1192,7 +1104,7 @@ namespace ModTools
                 }
                 GUILayout.EndHorizontal();
 
-                if (IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
+                if (TypeUtil.IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
                 {
                     OnSceneTreeReflect(refChain, value);
                 }
@@ -1212,7 +1124,7 @@ namespace ModTools
 
                 GUI.contentColor = Color.white;
 
-                if (IsReflectableType(type) && !IsEnumerable(type))
+                if (TypeUtil.IsReflectableType(type) && !IsEnumerable(type))
                 {
                     if (expandedObjects.ContainsKey(refChain))
                     {
@@ -1252,7 +1164,7 @@ namespace ModTools
 
                 GUILayout.EndHorizontal();
 
-                if (IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
+                if (TypeUtil.IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
                 {
                     OnSceneTreeReflect(refChain, value);
                 }
@@ -1353,7 +1265,7 @@ namespace ModTools
 
                     GUI.contentColor = Color.white;
 
-                    if (IsReflectableType(type) && !IsEnumerable(type))
+                    if (TypeUtil.IsReflectableType(type) && !IsEnumerable(type))
                     {
                         if (expandedObjects.ContainsKey(refChain))
                         {
@@ -1387,7 +1299,7 @@ namespace ModTools
                     GUILayout.FlexibleSpace();
                     GUILayout.EndHorizontal();
 
-                    if (IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
+                    if (TypeUtil.IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
                     {
                         if (value is GameObject)
                         {
@@ -1427,7 +1339,7 @@ namespace ModTools
 
                     GUI.contentColor = Color.white;
 
-                    if (IsReflectableType(type) && !IsEnumerable(type))
+                    if (TypeUtil.IsReflectableType(type) && !IsEnumerable(type))
                     {
                         if (expandedObjects.ContainsKey(refChain))
                         {
@@ -1461,7 +1373,7 @@ namespace ModTools
                     GUILayout.FlexibleSpace();
                     GUILayout.EndHorizontal();
 
-                    if (IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
+                    if (TypeUtil.IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
                     {
                         if (value is GameObject)
                         {
@@ -1602,11 +1514,6 @@ namespace ModTools
                         GUILayout.Label(String.Format("Exception when fetching method \"{0}\" - {1}", method.Name, ex.Message));
                         GUILayout.EndHorizontal();
                     }
-                }
-
-                if (field == null)
-                {
-                    continue;
                 }
             }
         }
@@ -1787,7 +1694,7 @@ namespace ModTools
                 if (GUILayout.Button("Reset"))
                 {
                     ClearExpanded();
-                    sceneRoots = FindSceneRoots();
+                    sceneRoots = GameObjectUtil.FindSceneRoots();
                     sceneTreeScrollPosition = Vector2.zero;
                     searchDisplayString = "";
                 }
@@ -1808,7 +1715,7 @@ namespace ModTools
 
                 if (GUILayout.Button("Find"))
                 {
-                    var gameObjects = FindComponentsOfType(findObjectTypeFilter.Trim());
+                    var gameObjects = GameObjectUtil.FindComponentsOfType(findObjectTypeFilter.Trim());
 
                     sceneRoots.Clear();
                     foreach (var item in gameObjects)
@@ -1828,7 +1735,7 @@ namespace ModTools
                 if (GUILayout.Button("Reset"))
                 {
                     ClearExpanded();
-                    sceneRoots = FindSceneRoots();
+                    sceneRoots = GameObjectUtil.FindSceneRoots();
                     sceneTreeScrollPosition = Vector2.zero;
                     searchDisplayString = "";
                 }
@@ -1849,9 +1756,9 @@ namespace ModTools
 
             GUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("Refresh", GUILayout.Width(200)))
+            if (GUILayout.Button("Refresh/ Clear", GUILayout.Width(200)))
             {
-                sceneRoots = FindSceneRoots();
+                sceneRoots = GameObjectUtil.FindSceneRoots();
             }
 
             if (GUILayout.Button("Fold all", GUILayout.Width(200)))
@@ -1903,7 +1810,7 @@ namespace ModTools
 
             if (currentRefChain != null)
             {
-                OnSceneTreeReflect(currentRefChain, currentRefChain.LastItem);
+                OnSceneTreeReflect(currentRefChain, currentRefChain.Evaluate());
             }
 
             GUILayout.EndScrollView();
@@ -1943,53 +1850,6 @@ namespace ModTools
             selectedArrayEndIndices.Clear();
             searchDisplayString = "";
             sceneTreeScrollPosition = Vector2.zero;
-        }
-
-        private ReferenceChain BuildRefChain(GameObject go)
-        {
-            ReferenceChain chain = new ReferenceChain();
-            chain.Add(go);
-
-            var obj = go;
-            while (obj.transform.parent != null)
-            {
-                obj = obj.transform.parent.gameObject;
-                chain.Add(obj);
-            }
-
-            return chain.Reverse;
-        }
-
-        private ReferenceChain BuildRefChain(GameObject gameObject, Component component)
-        {
-            ReferenceChain chain = BuildRefChain(gameObject);
-            chain.Add(component);
-            return chain;
-        }
-
-        private List<KeyValuePair<GameObject, Component>> FindComponentsOfType(string typeName)
-        {
-            var roots = FindSceneRoots();
-            var list = new List<KeyValuePair<GameObject, Component>>();
-            foreach (var root in roots.Keys)
-            {
-                FindComponentsOfType(typeName, root, list);
-            }
-            return list;
-        }
-
-        private void FindComponentsOfType(string typeName, GameObject gameObject, List<KeyValuePair<GameObject, Component>> list)
-        {
-            var component = gameObject.GetComponent(typeName);
-            if (component != null)
-            {
-                list.Add(new KeyValuePair<GameObject, Component>(gameObject, component));
-            }
-
-            for (int i = 0; i < gameObject.transform.childCount; i++)
-            {
-                FindComponentsOfType(typeName, gameObject.transform.GetChild(i).gameObject, list);
-            }
         }
 
     }
