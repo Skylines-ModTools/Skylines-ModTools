@@ -11,8 +11,11 @@ namespace ModTools
 
         public delegate void OnException(Exception ex);
 
+        public delegate void OnUnityGUI();
+
         public OnDraw onDraw = null;
         public OnException onException = null;
+        public OnUnityGUI onUnityGUI = null;
 
         public Rect rect = new Rect(0, 0, 64, 64);
 
@@ -310,6 +313,11 @@ namespace ModTools
                         GUI.DrawTexture(new Rect(rect.width - 20.0f, 0.0f, 16.0f, 8.0f), closeTex, ScaleMode.StretchToFill);
                     }
                 }, title);
+
+                if (onUnityGUI != null)
+                {
+                    onUnityGUI();
+                }
 
                 GUI.matrix = matrix;
 

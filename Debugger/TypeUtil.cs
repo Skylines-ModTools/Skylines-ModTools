@@ -26,17 +26,13 @@ namespace ModTools
             if (t == typeof (UnityEngine.Quaternion)) return true;
             if (t == typeof (UnityEngine.Color)) return true;
             if (t == typeof (UnityEngine.Color32)) return true;
+            if (t.IsEnum) return true;
             return false;
         }
 
         public static bool IsReflectableType(Type t)
         {
             if (IsBuiltInType(t))
-            {
-                return false;
-            }
-
-            if (t.IsEnum)
             {
                 return false;
             }

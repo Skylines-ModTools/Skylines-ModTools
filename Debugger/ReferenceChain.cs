@@ -173,12 +173,12 @@ namespace ModTools
 
         public override int GetHashCode()
         {
-            int hash = HashCodeHelper.Initialize();
+            int hash = HashCodeUtil.Initialize();
 
             for (int i = 0; i < count; i++)
             {
-                hash = HashCodeHelper.Hash(hash, chainTypes[i]);
-                hash = HashCodeHelper.Hash(hash, chainObjects[i]);
+                hash = HashCodeUtil.Hash(hash, chainTypes[i]);
+                hash = HashCodeUtil.Hash(hash, chainObjects[i]);
             }
 
             return hash;

@@ -69,6 +69,7 @@ namespace ModTools
         {
             onDraw = DrawWindow;
             onException = ExceptionHandler;
+            onUnityGUI = () => GUIComboBox.DrawGUI();
 
             RecalculateAreas();
         }
@@ -110,6 +111,7 @@ namespace ModTools
             expandedComponents.Clear();
             expandedObjects.Clear();
             evaluatedProperties.Clear();
+            currentRefChain = null;
         }
 
         public void Refresh()
@@ -394,6 +396,18 @@ namespace ModTools
                 GUIControls.Color32Field(hash, "", ref f, 0.0f, null, true, true);
                 var v = (Color32)value;
                 if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type.IsEnum)
+            {
+                var f = value;
+                GUIControls.EnumField("", ref f, 0.0f, true, true);
+                if (f != value)
                 {
                     return f;
                 }
@@ -1754,6 +1768,7 @@ namespace ModTools
             selectedArrayEndIndices.Clear();
             searchDisplayString = "";
             sceneTreeScrollPosition = Vector2.zero;
+            currentRefChain = null;
         }
 
     }
