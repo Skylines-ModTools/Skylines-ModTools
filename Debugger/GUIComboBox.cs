@@ -19,7 +19,7 @@ namespace ModTools
         // Position of the popuprect
         private static Rect rect;
         // Identifier of the caller of the popup, null if nobody is waiting for a value
-        private static object popupOwner = null;
+        private static string popupOwner = null;
         private static string[] entries;
         private static bool popupActive;
         // Result to be returned to the owner
@@ -91,7 +91,7 @@ namespace ModTools
                 popupOwner = null;
         }
 
-        public static int Box(int selectedItem, string[] entries, object caller)
+        public static int Box(int selectedItem, string[] entries, string caller)
         {
             // Trivial cases (0-1 items)
             if (entries.Length == 0)
@@ -122,7 +122,7 @@ namespace ModTools
                 }
             }
 
-            if (GUILayout.Button("↓ " + entries[selectedItem] + " ↓", GUILayout.Width(width+8)))
+            if (GUILayout.Button("↓ " + entries[selectedItem] + " ↓", GUILayout.Width(width+24)))
             {
                 // We will set the changed status when we return from the menu instead
                 GUI.changed = guiChanged;
@@ -134,7 +134,7 @@ namespace ModTools
                 rect = new Rect(0, 0, 0, 0);
             }
             // The GetLastRect method only works during repaint event, but the Button will return false during repaint
-            if (Event.current.type == EventType.Repaint && popupOwner == caller && rect.height == 0)
+            if (Event.current.type == EventType.Repaint && (string)popupOwner == (string)caller && rect.height == 0)
             {
                 rect = GUILayoutUtility.GetLastRect();
                 // But even worse, I can't find a clean way to convert from relative to absolute coordinates

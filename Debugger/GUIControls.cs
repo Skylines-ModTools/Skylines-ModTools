@@ -10,7 +10,7 @@ namespace ModTools
         public static float numberFieldSize = 100;
         public static float stringFieldSize = 200;
         public static float byteFieldSize = 40;
-        public static float charFieldSize = 10;
+        public static float charFieldSize = 25;
 
         public delegate void WatchButtonCallback();
 
@@ -515,7 +515,7 @@ namespace ModTools
             GUI.contentColor = Color.white;
         }
 
-        static public void EnumField(string name, ref object value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
+        static public void EnumField(string hash, string name, ref object value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
 
@@ -542,19 +542,25 @@ namespace ModTools
             }
 
             var enumNames = Enum.GetNames(enumType).ToArray();
-            var enumValues = Enum.GetValues(enumType);
 
-            int i = 0;
-            for (; i < enumNames.Length; i++)
+            if (TypeUtil.IsBitmaskEnum(enumType))
             {
-                if (value.ToString() == enumNames[i])
-                {
-                    break;
-                }
+                GUILayout.Label(value.ToString());
             }
-            
-            int newIndex = GUIComboBox.Box(i, enumNames, name);
-            value = Enum.Parse(enumType, enumNames[newIndex]);
+            else
+            {
+                int i = 0;
+                for (; i < enumNames.Length; i++)
+                {
+                    if (value.ToString() == enumNames[i])
+                    {
+                        break;
+                    }
+                }
+
+                int newIndex = GUIComboBox.Box(i, enumNames, hash);
+                value = Enum.Parse(enumType, enumNames[newIndex]);
+            }
 
             GUILayout.EndHorizontal();
             GUI.contentColor = Color.white;

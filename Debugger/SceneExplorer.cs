@@ -30,6 +30,7 @@ namespace ModTools
         private bool showFields = true;
         private bool showProperties = true;
         private bool showMethods = false;
+        private bool showModifiers = false;
 
         private string findGameObjectFilter = "";
         private string findObjectTypeFilter = "";
@@ -53,7 +54,7 @@ namespace ModTools
 
         private float windowTopMargin = 16.0f;
         private float windowBottomMargin = 8.0f;
-        private float headerHeight = 140.0f;
+        private float headerHeight = 160.0f;
         private float sceneTreeWidth = 300.0f;
 
         private void AddDebugLine(string line, params System.Object[] arg)
@@ -406,7 +407,7 @@ namespace ModTools
             if (type.IsEnum)
             {
                 var f = value;
-                GUIControls.EnumField("", ref f, 0.0f, true, true);
+                GUIControls.EnumField(hash, "", ref f, 0.0f, true, true);
                 if (f != value)
                 {
                     return f;
@@ -473,30 +474,37 @@ namespace ModTools
                 }
             }
 
-            if (field.IsPublic)
-            {
-                GUILayout.Label("public ");
-            }
-            else if (field.IsPrivate)
-            {
-                GUILayout.Label("private ");
-            }
-
-            GUI.contentColor = Color.white;
-
-            GUILayout.Label("field ");
-
-            if (field.IsStatic)
-            {
-                GUI.contentColor = Color.blue;
-                GUILayout.Label("static ");
-            }
-
             if (field.IsInitOnly)
             {
-                GUI.contentColor = Color.blue;
                 GUI.enabled = false;
-                GUILayout.Label("const ");
+            }
+
+            if (showModifiers)
+            {
+                if (field.IsPublic)
+                {
+                    GUILayout.Label("public ");
+                }
+                else if (field.IsPrivate)
+                {
+                    GUILayout.Label("private ");
+                }
+
+                GUI.contentColor = Color.white;
+
+                GUILayout.Label("field ");
+
+                if (field.IsStatic)
+                {
+                    GUI.contentColor = Color.blue;
+                    GUILayout.Label("static ");
+                }
+
+                if (field.IsInitOnly)
+                {
+                    GUI.contentColor = Color.blue;
+                    GUILayout.Label("const ");
+                }
             }
 
             GUI.contentColor = Color.green;
@@ -515,10 +523,17 @@ namespace ModTools
             }
             else
             {
-                var newValue = EditorValueField(hash, field.FieldType, value);
-                if (newValue != value)
+                try
                 {
-                    field.SetValue(obj, newValue);
+                    var newValue = EditorValueField(hash, field.FieldType, value);
+                    if (newValue != value)
+                    {
+                        field.SetValue(obj, newValue);
+                    }
+                }
+                catch (Exception)
+                {
+                    GUILayout.Label(value == null ? "null" : value.ToString());
                 }
             }
 
@@ -644,14 +659,22 @@ namespace ModTools
             
             GUI.contentColor = Color.white;
 
-            GUILayout.Label("property ");
-            
             if (!property.CanWrite)
             {
-                GUI.contentColor = Color.blue;
                 GUI.enabled = false;
-                GUILayout.Label("const ");
             }
+
+            if (showModifiers)
+            {
+                GUILayout.Label("property ");
+
+                if (!property.CanWrite)
+                {
+                    GUI.contentColor = Color.blue;
+                    GUILayout.Label("const ");
+                }
+            }
+
             GUI.contentColor = Color.green;
 
             GUILayout.Label(property.PropertyType.ToString() + " ");
@@ -701,10 +724,26 @@ namespace ModTools
                 }
                 else
                 {
-                    var newValue = EditorValueField(hash, property.PropertyType, value);
-                    if (newValue != value)
+                    try
                     {
-                        property.SetValue(obj, newValue, null);
+                        var newValue = EditorValueField(hash, property.PropertyType, value);
+                        if (newValue != value)
+                        {
+                            property.SetValue(obj, newValue, null);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        if (property.CanRead)
+                        {
+                            GUILayout.Label(value == null ? "null" : value.ToString());
+                        }
+                        else
+                        {
+                            GUILayout.Label("(no get method)");
+                        }
+
+                        GUI.contentColor = Color.white;
                     }
                 }
             }
@@ -1028,6 +1067,7 @@ namespace ModTools
                 }
 
             }
+
             foreach (string prop in colorProps)
             {
                 if (!material.HasProperty(prop))
@@ -1088,6 +1128,7 @@ namespace ModTools
                 }
             }
 
+            OnSceneTreeReflect(refChain, material, true);
         }
 
         private bool IsEnumerable(object myProperty)
@@ -1324,7 +1365,7 @@ namespace ModTools
             }
         }
 
-        private void OnSceneTreeReflect(ReferenceChain refChain, System.Object obj)
+        private void OnSceneTreeReflect(ReferenceChain refChain, System.Object obj, bool rawReflection = false)
         {
             if (refChain.CheckDepth())
             {
@@ -1341,35 +1382,38 @@ namespace ModTools
                 return;
             }
 
-            if (preventCircularReferences.ContainsKey(obj.GetHashCode()))
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Ident);
-                GUILayout.Label("Circular reference detected");
-                GUILayout.EndHorizontal();
-                return;
-            }
-
-            preventCircularReferences.Add(obj.GetHashCode(), true);
-
             Type type = obj.GetType();
 
-            if (type == typeof(UnityEngine.Transform))
+            if (!rawReflection)
             {
-                OnSceneTreeReflectUnityEngineTransform(refChain, (UnityEngine.Transform)obj);
-                return;
-            }
-            
-            if (IsEnumerable(obj))
-            {
-                OnSceneTreeReflectIEnumerable(refChain, obj);
-                return;
-            }
+                if (preventCircularReferences.ContainsKey(obj.GetHashCode()))
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(treeIdentSpacing * refChain.Ident);
+                    GUILayout.Label("Circular reference detected");
+                    GUILayout.EndHorizontal();
+                    return;
+                }
 
-            if(type == typeof(Material))
-            {
-                OnSceneReflectUnityEngineMaterial(refChain, (UnityEngine.Material)obj);
-                return;
+                preventCircularReferences.Add(obj.GetHashCode(), true);
+
+                if (type == typeof(UnityEngine.Transform))
+                {
+                    OnSceneTreeReflectUnityEngineTransform(refChain, (UnityEngine.Transform)obj);
+                    return;
+                }
+
+                if (IsEnumerable(obj))
+                {
+                    OnSceneTreeReflectIEnumerable(refChain, obj);
+                    return;
+                }
+
+                if (type == typeof(Material))
+                {
+                    OnSceneReflectUnityEngineMaterial(refChain, (UnityEngine.Material)obj);
+                    return;
+                }
             }
 
             MemberInfo[] members = type.GetMembers(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
@@ -1563,6 +1607,12 @@ namespace ModTools
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
+            GUILayout.Label("Show field/ property modifiers");
+            showModifiers = GUILayout.Toggle(showModifiers, "");
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
             GUI.contentColor = Color.green;
             GUILayout.Label("Show search options:");
             GUI.contentColor = Color.white;
@@ -1571,11 +1621,11 @@ namespace ModTools
             {
                 if (showSearchNew)
                 {
-                    headerHeight = 200.0f;
+                    headerHeight = 220.0f;
                 }
                 else
                 {
-                    headerHeight = 140.0f;
+                    headerHeight = 160.0f;
                 }
 
                 RecalculateAreas();
@@ -1674,14 +1724,15 @@ namespace ModTools
 
             GUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("Refresh/ Clear", GUILayout.Width(200)))
+            if (GUILayout.Button("Refresh", GUILayout.Width(200)))
             {
-                sceneRoots = GameObjectUtil.FindSceneRoots();
+                Refresh();
             }
 
-            if (GUILayout.Button("Fold all", GUILayout.Width(200)))
+            if (GUILayout.Button("Fold all/ Clear", GUILayout.Width(200)))
             {
                 ClearExpanded();
+                Refresh();
             }
 
             GUILayout.FlexibleSpace();

@@ -30,6 +30,11 @@ namespace ModTools
             return false;
         }
 
+        public static bool IsBitmaskEnum(Type t)
+        {
+            return t.IsDefined(typeof(FlagsAttribute), false);
+        }
+
         public static bool IsReflectableType(Type t)
         {
             if (IsBuiltInType(t))
