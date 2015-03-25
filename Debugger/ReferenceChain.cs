@@ -22,10 +22,21 @@ namespace ModTools
         public object[] chainObjects = new object[SceneExplorer.maxHierarchyDepth];
         public ReferenceType[] chainTypes = new ReferenceType[SceneExplorer.maxHierarchyDepth];
         public int count = 0;
+        public int identOffset = 0;
+
+        public int Ident
+        {
+            get { return count + identOffset - 1; }
+        }
 
         public int Length
         {
             get { return count; }
+        }
+
+        public object LastItem
+        {
+            get { return chainObjects[count - 1]; }
         }
 
         public string LastItemName
@@ -34,6 +45,11 @@ namespace ModTools
             {
                 return ItemToString(count - 1);
             }
+        }
+
+        public ReferenceType LastItemType
+        {
+            get { return chainTypes[count - 1]; }
         }
 
         public bool CheckDepth()
@@ -55,6 +71,8 @@ namespace ModTools
                 copy.chainObjects[i] = chainObjects[i];
                 copy.chainTypes[i] = chainTypes[i];
             }
+
+            copy.identOffset = identOffset;
 
             return copy;
         }

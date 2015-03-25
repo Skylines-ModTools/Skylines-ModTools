@@ -11,9 +11,10 @@ namespace ModTools
 
         private Vector2 mainScroll = Vector2.zero;
 
-        private SceneExplorer sceneExplorer;
-        private Watches watches;
-        private RTLiveView rtLiveView;
+        public SceneExplorer sceneExplorer;
+        public Watches watches;
+        public TextureViewer textureViewer;
+      //  public MeshViewer meshViewer;
 
         private GamePanelExtender panelExtender;
 
@@ -30,7 +31,8 @@ namespace ModTools
         {
             Destroy(sceneExplorer);
             Destroy(watches);
-            Destroy(rtLiveView);
+            Destroy(textureViewer);
+        //    Destroy(meshViewer);
             Destroy(panelExtender);
         }
 
@@ -59,8 +61,12 @@ namespace ModTools
             rect = config.mainWindowRect;
             visible = config.mainWindowVisible;
 
-            rtLiveView.rect = config.rtLiveViewRect ;
-            rtLiveView.visible = config.rtLiveViewVisible;
+            textureViewer.rect = config.textureViewerRect;
+            textureViewer.visible = config.textureViewerVisible;
+
+
+            //meshViewer.rect = config.meshViewerRect;
+            //meshViewer.visible = config.meshViewerVisible;
 
             watches.rect = config.watchesRect;
             watches.visible = config.watchesVisible;
@@ -84,8 +90,11 @@ namespace ModTools
                 config.mainWindowRect = rect;
                 config.mainWindowVisible = visible;
 
-                config.rtLiveViewRect = rtLiveView.rect;
-                config.rtLiveViewVisible = rtLiveView.visible;
+                config.textureViewerRect = textureViewer.rect;
+                config.textureViewerVisible = textureViewer.visible;
+
+               // config.meshViewerRect = meshViewer.rect;
+               // config.meshViewerVisible = meshViewer.visible;
 
                 config.watchesRect = watches.rect;
                 config.watchesVisible = watches.visible;
@@ -129,7 +138,8 @@ namespace ModTools
 
             sceneExplorer = gameObject.AddComponent<SceneExplorer>();
             watches = gameObject.AddComponent<Watches>();
-            rtLiveView = gameObject.AddComponent<RTLiveView>();
+            textureViewer = gameObject.AddComponent<TextureViewer>();
+            //meshViewer = gameObject.AddComponent<MeshViewer>();
 
             panelExtender = gameObject.AddComponent<GamePanelExtender>();
 
@@ -161,7 +171,12 @@ namespace ModTools
 
             if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.R))
             {
-                rtLiveView.visible = !rtLiveView.visible;
+                //meshViewer.visible = !meshViewer.visible;
+            }
+
+            if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.T))
+            {
+                textureViewer.visible = !textureViewer.visible;
             }
         }
 
@@ -224,10 +239,15 @@ namespace ModTools
                 }
             }
 
-            if (GUILayout.Button("RenderTexture LiveView (Ctrl+R)"))
+            if (GUILayout.Button("Texture Viewer (Ctrl+T)"))
             {
-                rtLiveView.visible = !rtLiveView.visible;
+                textureViewer.visible = !textureViewer.visible;
             }
+
+          /*  if (GUILayout.Button("Mesh Viewer (Ctrl+R)"))
+            {
+                meshViewer.visible = !meshViewer.visible;
+            }*/
 
             mainScroll = GUILayout.BeginScrollView(mainScroll);
 

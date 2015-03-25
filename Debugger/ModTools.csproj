@@ -59,6 +59,7 @@
     <Compile Include="ExtensionMethods\VectorExtension.cs" />
     <Compile Include="GamePanelExtender.cs" />
     <Compile Include="GraphViewer.cs" />
+    <Compile Include="GUIArea.cs" />
     <Compile Include="GUIWindow.cs" />
     <Compile Include="HashCodeHelper.cs" />
     <Compile Include="MeshOBJTools\Int32Converter.cs" />
@@ -68,13 +69,14 @@
     <Compile Include="MeshOBJTools\OBJGroup.cs" />
     <Compile Include="MeshOBJTools\OBJLoader.cs" />
     <Compile Include="MeshOBJTools\OBJMaterial.cs" />
+    <Compile Include="MeshViewer.cs" />
     <Compile Include="ModTools.cs" />
     <Compile Include="GUIControls.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Mod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReferenceChain.cs" />
-    <Compile Include="RTLiveView.cs" />
+    <Compile Include="TextureViewer.cs" />
     <Compile Include="SceneExplorer.cs" />
     <Compile Include="TextToTexture.cs" />
     <Compile Include="Util.cs" />

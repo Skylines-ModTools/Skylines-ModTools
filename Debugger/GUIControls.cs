@@ -6,7 +6,10 @@ namespace ModTools
     class GUIControls
     {
 
-        static float fieldSize = 200;
+        public static float numberFieldSize = 100;
+        public static float stringFieldSize = 200;
+        public static float byteFieldSize = 40;
+        public static float charFieldSize = 10;
 
         public delegate void WatchButtonCallback();
 
@@ -23,7 +26,7 @@ namespace ModTools
         public static string currentHotControl = null;
         public static string hotControlBuffer = "";
 
-        public static string BufferedTextField(string hash, string value)
+        public static string BufferedTextField(string hash, string value, float fieldSize)
         {
             GUI.SetNextControlName(hash);
             bool isHot = IsHot(hash);
@@ -85,7 +88,7 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
             {
                 float newValue;
@@ -123,7 +126,7 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
             {
                 double newValue;
@@ -163,7 +166,7 @@ namespace ModTools
             byte oldValue = value;
 
             GUI.contentColor = Color.white;
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), byteFieldSize);
             if (result != null)
             {
                 byte newValue;
@@ -202,7 +205,7 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
             {
                 int newValue;
@@ -242,7 +245,7 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
             {
                 uint newValue;
@@ -282,7 +285,7 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
             {
                 Int64 newValue;
@@ -321,7 +324,7 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
             {
                 UInt64 newValue;
@@ -362,7 +365,7 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
             {
                 Int16 newValue;
@@ -404,7 +407,7 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
             {
                 UInt16 newValue;
@@ -440,7 +443,7 @@ namespace ModTools
             }
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), stringFieldSize);
             if (result != null)
             {
                 value = result;
@@ -473,7 +476,7 @@ namespace ModTools
             }
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), charFieldSize);
             if (result != null)
             {
                 value = result[0];

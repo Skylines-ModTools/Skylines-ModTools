@@ -4,13 +4,13 @@ using UnityEngine;
 
 namespace ModTools
 {
-    class RTLiveView : GUIWindow
+    public class TextureViewer : GUIWindow
     {
 
         public Texture previewTexture = null;
         public ReferenceChain caller = null;
 
-        public RTLiveView() : base("RenderTexture LiveView", new Rect(512, 128, 512, 512), skin)
+        public TextureViewer() : base("Texture Viewer", new Rect(512, 128, 512, 512), skin)
         {
             onDraw = DrawWindow;
         }
@@ -19,7 +19,7 @@ namespace ModTools
         {
             if (previewTexture != null)
             {
-                title = String.Format("Previewing {0} \"{1}\"", caller, previewTexture.name);
+                title = String.Format("Previewing {0} \"{1}\"", caller.ToString(), previewTexture.name);
 
                 if (GUILayout.Button("Dump .png", GUILayout.Width(128)))
                 {
@@ -32,8 +32,8 @@ namespace ModTools
             }
             else
             {
-                title = "RenderTexture LiveView";
-                GUILayout.Label("Use the Scene Explorer to select a RenderTexture for live view");
+                title = "Texture Viewer";
+                GUILayout.Label("Use the Scene Explorer to select a Texture for preview");
             }
         }
 

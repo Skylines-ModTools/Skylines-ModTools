@@ -93,7 +93,7 @@ namespace ModTools
             }
             else
             {
-                Log.Warning(String.Format("Don't know how to dump tyoe \"{0}\"", previewTexture.GetType()));
+                Log.Error(String.Format("Don't know how to dump type \"{0}\"", previewTexture.GetType()));
             }
         }
 
@@ -104,11 +104,42 @@ namespace ModTools
                 File.Delete(outputPath);
             }
 
-            using (var stream = new FileStream(outputPath, FileMode.Create))
+            Mesh meshToDump = mesh;
+
+            if (!mesh.isReadable)
             {
-                OBJLoader.ExportOBJ(mesh.EncodeOBJ(), stream);
-                stream.Close();
-                Log.Warning(String.Format("Dumped mesh \"{0}\" to \"{1}\"", ((Mesh)mesh).name, outputPath));
+                Log.Warning(String.Format("Mesh \"{0}\" is marked as non-readable, running workaround..", mesh.name));
+
+                try
+                {
+                    meshToDump = new Mesh();
+
+                    // copy the relevant data to the temporary mesh 
+                    meshToDump.vertices = mesh.vertices;
+                    meshToDump.colors = mesh.colors;
+                    meshToDump.triangles = mesh.triangles;
+                    meshToDump.RecalculateBounds();
+                    meshToDump.Optimize();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(String.Format("Workaround failed with error - {0}", ex.Message));
+                    return;
+                }
+            }
+
+            try
+            {
+                using (var stream = new FileStream(outputPath, FileMode.Create))
+                {
+                    OBJLoader.ExportOBJ(meshToDump.EncodeOBJ(), stream);
+                    stream.Close();
+                    Log.Warning(String.Format("Dumped mesh \"{0}\" to \"{1}\"", ((Mesh)mesh).name, outputPath));
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(String.Format("There was an error while trying to dump mesh \"{0}\" - {1}", mesh.name, ex.Message));
             }
         }
 

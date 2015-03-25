@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
+using System.Linq;
+using ColossalFramework;
 using UnityEngine;
 
 namespace ModTools
@@ -34,8 +36,6 @@ namespace ModTools
 
         private Dictionary<GameObject, bool> sceneRoots = new Dictionary<GameObject, bool>();
 
-        private Vector2 scrollPosition = Vector2.zero;
-
         private bool showFields = true;
         private bool showProperties = true;
         private bool showMethods = false;
@@ -44,12 +44,26 @@ namespace ModTools
         private string findObjectTypeFilter = "";
         private string searchDisplayString = "";
 
-        private Watches watches;
-        private RTLiveView rtLiveView;
-
         public static bool debugMode = false;
         public static string debugOutput = "";
         public static string lastCrashReport = "";
+
+        private GUIArea headerArea;
+        private GUIArea sceneTreeArea;
+        private GUIArea componentArea;
+
+        private Vector2 sceneTreeScrollPosition = Vector2.zero;
+        private Vector2 componentScrollPosition = Vector2.zero;
+
+        private ReferenceChain currentRefChain = null;
+
+        private bool showSearchBar = false;
+        private bool sortAlphabetically = true;
+
+        private float windowTopMargin = 16.0f;
+        private float windowBottomMargin = 8.0f;
+        private float headerHeight = 140.0f;
+        private float sceneTreeWidth = 300.0f;
 
         private void AddDebugLine(string line, params System.Object[] arg)
         {
@@ -64,6 +78,30 @@ namespace ModTools
         {
             onDraw = DrawWindow;
             onException = ExceptionHandler;
+
+            RecalculateAreas();
+        }
+
+        void RecalculateAreas()
+        {
+            headerArea = new GUIArea(this);
+            headerArea.absolutePosition.y = windowTopMargin;
+            headerArea.relativeSize.x = 1.0f;
+            headerArea.absoluteSize.y = headerHeight - windowTopMargin;
+
+            sceneTreeArea = new GUIArea(this);
+            sceneTreeArea.absolutePosition.y = headerHeight - windowTopMargin;
+            sceneTreeArea.relativeSize.y = 1.0f;
+            sceneTreeArea.absoluteSize.x = sceneTreeWidth;
+            sceneTreeArea.absoluteSize.y = -(headerHeight - windowTopMargin) - windowBottomMargin;
+
+            componentArea = new GUIArea(this);
+            componentArea.absolutePosition.x = sceneTreeWidth;
+            componentArea.absolutePosition.y = headerHeight - windowTopMargin;
+            componentArea.relativeSize.x = 1.0f;
+            componentArea.relativeSize.y = 1.0f;
+            componentArea.absoluteSize.x = -sceneTreeWidth;
+            componentArea.absoluteSize.y = -(headerHeight - windowTopMargin) - windowBottomMargin;
         }
 
         void ExceptionHandler(Exception ex)
@@ -113,6 +151,8 @@ namespace ModTools
             var expandedRefChain = new ReferenceChain().Add(rootGameObject);
             expandedGameObjects.Add(expandedRefChain, true);
 
+            bool firstComponent = false;
+
             for (int i = 1; i < refChain.Length; i++)
             {
                 switch (refChain.chainTypes[i])
@@ -126,6 +166,12 @@ namespace ModTools
                         var component = (Component) refChain.chainObjects[i];
                         expandedRefChain = expandedRefChain.Add(component);
                         expandedComponents.Add(expandedRefChain, true);
+                        if (!firstComponent)
+                        {
+                            currentRefChain = expandedRefChain.Copy();
+                            currentRefChain.identOffset = -currentRefChain.Length - 1;
+                            firstComponent = true;
+                        }
                         break;
                     case ReferenceChain.ReferenceType.Field:
                         var field = (FieldInfo) refChain.chainObjects[i];
@@ -221,6 +267,16 @@ namespace ModTools
             return false;
         }
 
+        private bool IsMeshType(Type t)
+        {
+            if (t == typeof (UnityEngine.Mesh))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         private void OnSceneTreeReflectField(ReferenceChain refChain, System.Object obj, FieldInfo field)
         {
             AddDebugLine("OnSceneTreeReflectField(caller = {0}, obj = {1}, field = {2})",
@@ -231,7 +287,7 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -244,7 +300,7 @@ namespace ModTools
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+            GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
             GUI.contentColor = Color.white;
 
@@ -489,16 +545,16 @@ namespace ModTools
 
             if (GUILayout.Button("Watch"))
             {
-                watches.AddWatch(refChain, field, obj);
+                ModTools.Instance.watches.AddWatch(refChain, field, obj);
             }
 
             if (IsTextureType(field.FieldType) && value != null)
             {
-                if (GUILayout.Button("LiveView"))
+                if (GUILayout.Button("Preview"))
                 {
-                    rtLiveView.previewTexture = (Texture)value;
-                    rtLiveView.caller = refChain;
-                    rtLiveView.visible = true;
+                    ModTools.Instance.textureViewer.previewTexture = (Texture)value;
+                    ModTools.Instance.textureViewer.caller = refChain;
+                    ModTools.Instance.textureViewer.visible = true;
                 }
 
                 if (GUILayout.Button("Dump .png"))
@@ -506,16 +562,20 @@ namespace ModTools
                     Util.DumpTextureToPNG((Texture)value);
                 }
             }
-            else if (field.FieldType.ToString() == "UnityEngine.Mesh" && value != null)
+            else if (IsMeshType(field.FieldType) && value != null)
             {
-                if (((Mesh)value).isReadable)
+                /*if (GUILayout.Button("Preview"))
                 {
-                    if (GUILayout.Button("Dump .obj"))
-                    {
-                        var outPath = refChain.ToString() + ".obj";
-                        outPath = outPath.Replace(' ', '_');
-                        Util.DumpMeshOBJ(value as Mesh, outPath);
-                    }
+                    ModTools.Instance.meshViewer.previewMesh = (Mesh)value;
+                    ModTools.Instance.meshViewer.caller = refChain;
+                    ModTools.Instance.meshViewer.visible = true;
+                }*/
+
+                if (GUILayout.Button("Dump .obj"))
+                {
+                    var outPath = refChain.ToString() + ".obj";
+                    outPath = outPath.Replace(' ', '_');
+                    Util.DumpMeshOBJ(value as Mesh, outPath);
                 }
             }
 
@@ -551,7 +611,7 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -564,7 +624,7 @@ namespace ModTools
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+            GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
             bool propertyWasEvaluated = false;
             object value = null;
@@ -831,16 +891,16 @@ namespace ModTools
 
             if (GUILayout.Button("Watch"))
             {
-                watches.AddWatch(refChain, property, obj);
+                ModTools.Instance.watches.AddWatch(refChain, property, obj);
             }
 
             if (IsTextureType(property.PropertyType) && value != null)
             {
-                if (GUILayout.Button("LiveView"))
+                if (GUILayout.Button("Preview"))
                 {
-                    rtLiveView.previewTexture = (Texture)value;
-                    rtLiveView.caller = refChain;
-                    rtLiveView.visible = true;
+                    ModTools.Instance.textureViewer.previewTexture = (Texture)value;
+                    ModTools.Instance.textureViewer.caller = refChain;
+                    ModTools.Instance.textureViewer.visible = true;
                 }
 
                 if (GUILayout.Button("Dump .png"))
@@ -848,16 +908,20 @@ namespace ModTools
                     Util.DumpTextureToPNG((Texture)value);
                 }
             }
-            else if (property.PropertyType.ToString() == "UnityEngine.Mesh" && value != null)
+            else if (IsMeshType(property.PropertyType) && value != null)
             {
-                if (((Mesh) value).isReadable)
+               /* if (GUILayout.Button("Preview"))
                 {
-                    if (GUILayout.Button("Dump .obj"))
-                    {
-                        var outPath = refChain.ToString() + ".obj";
-                        outPath = outPath.Replace(' ', '_');
-                        Util.DumpMeshOBJ(value as Mesh, outPath);
-                    }
+                    ModTools.Instance.meshViewer.previewMesh = (Mesh)value;
+                    ModTools.Instance.meshViewer.caller = refChain;
+                    ModTools.Instance.meshViewer.visible = true;
+                }*/
+
+                if (GUILayout.Button("Dump .obj"))
+                {
+                    var outPath = refChain.ToString() + ".obj";
+                    outPath = outPath.Replace(' ', '_');
+                    Util.DumpMeshOBJ(value as Mesh, outPath);
                 }
             }
             
@@ -891,7 +955,7 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -904,7 +968,7 @@ namespace ModTools
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+            GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
             GUILayout.Label("method ");
             string signature = method.ReturnType.ToString() + " " + method.Name + "(";
@@ -941,17 +1005,17 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
             }
 
-            GUIControls.Vector3Field(refChain.ToString(), name, ref vec, treeIdentSpacing * (refChain.Length - 1), () =>
+            GUIControls.Vector3Field(refChain.ToString(), name, ref vec, treeIdentSpacing * refChain.Ident, () =>
             {
                 try
                 {
-                    watches.AddWatch(refChain, typeof(T).GetProperty(name), obj);
+                    ModTools.Instance.watches.AddWatch(refChain, typeof(T).GetProperty(name), obj);
                 }
                 catch (Exception ex)
                 {
@@ -967,7 +1031,7 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -1052,7 +1116,7 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -1069,17 +1133,22 @@ namespace ModTools
             foreach (string prop in textureProps)
             {
                 if (!material.HasProperty(prop))
+                {
                     continue;
+                }
+
                 Texture value = material.GetTexture(prop);
                 if (value == null)
+                {
                     continue;
+                }
 
                 refChain = oldRefChain.Add(prop);
 
                 var type = value.GetType();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Length);
+                GUILayout.Space(treeIdentSpacing * (refChain.Ident+1));
 
                 GUI.contentColor = Color.white;
 
@@ -1112,15 +1181,15 @@ namespace ModTools
                 GUI.contentColor = Color.white;
 
                 GUILayout.Label(" = ");
-                GUILayout.Label(value == null ? "null" : value.ToString());
+                GUILayout.Label(value.ToString());
 
                 GUILayout.FlexibleSpace();
 
-                if (GUILayout.Button("LiveView"))
+                if (GUILayout.Button("Preview"))
                 {
-                    rtLiveView.previewTexture = (Texture)value;
-                    rtLiveView.caller = refChain;
-                    rtLiveView.visible = true;
+                    ModTools.Instance.textureViewer.previewTexture = (Texture)value;
+                    ModTools.Instance.textureViewer.caller = refChain;
+                    ModTools.Instance.textureViewer.visible = true;
                 }
 
                 if (GUILayout.Button("Dump .png"))
@@ -1145,7 +1214,7 @@ namespace ModTools
                 var type = value.GetType();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Length);
+                GUILayout.Space(treeIdentSpacing * (refChain.Ident+1));
 
                 GUI.contentColor = Color.white;
 
@@ -1213,7 +1282,7 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -1235,7 +1304,7 @@ namespace ModTools
                 var collectionSize = collection.Count;
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
                 GUILayout.Label("Collection size: " + collectionSize);
 
                 if (!selectedArrayStartIndices.ContainsKey(refChain))
@@ -1286,7 +1355,7 @@ namespace ModTools
                     var type = value.GetType();
 
                     GUILayout.BeginHorizontal();
-                    GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                    GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
                     GUI.contentColor = Color.white;
 
@@ -1360,7 +1429,7 @@ namespace ModTools
                     var type = value.GetType();
 
                     GUILayout.BeginHorizontal();
-                    GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                    GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
                     GUI.contentColor = Color.white;
 
@@ -1422,7 +1491,7 @@ namespace ModTools
                     if (count >= 1024)
                     {
                         GUILayout.BeginHorizontal();
-                        GUILayout.Space(treeIdentSpacing * refChain.Length);
+                        GUILayout.Space(treeIdentSpacing * refChain.Ident);
                         GUILayout.Label("Array too large to display");
                         GUILayout.EndHorizontal();
                         break;
@@ -1436,7 +1505,7 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -1451,7 +1520,7 @@ namespace ModTools
             if (preventCircularReferences.ContainsKey(obj.GetHashCode()))
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
                 GUILayout.Label("Circular reference detected");
                 GUILayout.EndHorizontal();
                 return;
@@ -1479,9 +1548,14 @@ namespace ModTools
                 return;
             }
 
-            MemberInfo[] fields = type.GetMembers(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
+            MemberInfo[] members = type.GetMembers(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
 
-            foreach (MemberInfo member in fields)
+            if (sortAlphabetically)
+            {
+                Array.Sort(members, (info, info1) => info.Name.CompareTo(info1.Name));
+            }
+
+            foreach (MemberInfo member in members)
             {
                 FieldInfo field = null;
                 PropertyInfo property = null;
@@ -1498,7 +1572,7 @@ namespace ModTools
                     catch (Exception ex)
                     {
                         GUILayout.BeginHorizontal();
-                        GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                        GUILayout.Space(treeIdentSpacing * refChain.Ident);
                         GUILayout.Label(String.Format("Exception when fetching field \"{0}\" - {1}", field.Name, ex.Message));
                         GUILayout.EndHorizontal();
                     }
@@ -1514,7 +1588,7 @@ namespace ModTools
                     catch (Exception ex)
                     {
                         GUILayout.BeginHorizontal();
-                        GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                        GUILayout.Space(treeIdentSpacing * refChain.Ident);
                         GUILayout.Label(String.Format("Exception when fetching property \"{0}\" - {1}", property.Name, ex.Message));
                         GUILayout.EndHorizontal();
                     }
@@ -1530,7 +1604,7 @@ namespace ModTools
                     catch (Exception ex)
                     {
                         GUILayout.BeginHorizontal();
-                        GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                        GUILayout.Space(treeIdentSpacing * refChain.Ident);
                         GUILayout.Label(String.Format("Exception when fetching method \"{0}\" - {1}", method.Name, ex.Message));
                         GUILayout.EndHorizontal();
                     }
@@ -1548,38 +1622,39 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+            GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
-            if (expandedComponents.ContainsKey(refChain))
+            if (currentRefChain == null || !currentRefChain.Equals(refChain.Add(component)))
             {
-                if (GUILayout.Button("-", GUILayout.Width(16)))
+                if (GUILayout.Button(">", GUILayout.Width(16)))
                 {
-                    expandedComponents.Remove(refChain);
+                    currentRefChain = refChain.Add(component);
+                    currentRefChain.identOffset = -(refChain.Length + 1);
                 }
-
-                GUILayout.Label(component.name + " (" + component.GetType().ToString() + ")");
-
-                GUILayout.EndHorizontal();
-
-                OnSceneTreeReflect(refChain, component);
             }
             else
             {
-                if (GUILayout.Button("+", GUILayout.Width(16)))
+                if (GUILayout.Button("<", GUILayout.Width(16)))
                 {
-                    expandedComponents.Add(refChain, true);
+                    currentRefChain = null;
                 }
 
-                GUILayout.Label(component.name + " (" + component.GetType().ToString() + ")");
-                GUILayout.EndHorizontal();
+                GUI.contentColor = Color.green;
             }
+            
+       
+            GUILayout.Label(component.GetType().ToString());
+
+            GUI.contentColor = Color.white;
+
+            GUILayout.EndHorizontal();
         }
 
         private void OnSceneTreeRecursive(ReferenceChain refChain, GameObject obj)
@@ -1589,7 +1664,7 @@ namespace ModTools
             if (refChain.CheckDepth())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
                 GUILayout.Label("Hierarchy too deep, sorry :(");
                 GUILayout.EndHorizontal();
                 return;
@@ -1604,7 +1679,7 @@ namespace ModTools
             if (expandedGameObjects.ContainsKey(refChain))
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
                 if (GUILayout.Button("-", GUILayout.Width(16)))
                 {
@@ -1615,6 +1690,12 @@ namespace ModTools
                 GUILayout.EndHorizontal();
 
                 var components = obj.GetComponents(typeof(Component));
+
+                if (sortAlphabetically)
+                {
+                    Array.Sort(components, (component, component1) => component.GetType().ToString().CompareTo(component1.GetType().ToString()));
+                }
+
                 foreach (var component in components)
                 {
                     OnSceneTreeComponent(refChain.Add(component), component);
@@ -1628,7 +1709,7 @@ namespace ModTools
             else
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
                 if (GUILayout.Button("+", GUILayout.Width(16)))
                 {
@@ -1640,41 +1721,9 @@ namespace ModTools
             }
         }
 
-        public void DrawWindow()
+        public void DrawHeader()
         {
-            bool enterPressed = Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter);
-
-            if (enterPressed)
-            {
-                GUI.FocusControl(null);
-            }
-
-            if (debugMode)
-            {
-                lastCrashReport = debugOutput;
-                debugOutput = "";
-            }
-
-            preventCircularReferences.Clear();
-
-            watches = watches ?? FindObjectOfType<Watches>();
-            if (watches == null)
-            {
-                GUILayout.Label("Required component \"Watches\" is missing.");
-                return;
-            }
-
-            rtLiveView = rtLiveView ?? FindObjectOfType<RTLiveView>();
-            if (rtLiveView == null)
-            {
-                GUILayout.Label("Required component \"RTLiveView\" is missing.");
-                return;
-            }
-
-            if (GUILayout.Button("Refresh", GUILayout.Width(256)))
-            {
-                sceneRoots = FindSceneRoots();
-            }
+            headerArea.Begin();
 
             GUILayout.BeginHorizontal();
 
@@ -1695,81 +1744,136 @@ namespace ModTools
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("GameObject.Find");
-            findGameObjectFilter = GUILayout.TextField(findGameObjectFilter, GUILayout.Width(256));
-
-            if (findGameObjectFilter.Trim().Length == 0)
+            GUI.contentColor = Color.green;
+            GUILayout.Label("Show search options:");
+            GUI.contentColor = Color.white;
+            var showSearchNew = GUILayout.Toggle(showSearchBar, "");
+            if (showSearchNew != showSearchBar)
             {
-                GUI.enabled = false;
-            }
-
-            if (GUILayout.Button("Find"))
-            {
-                ClearExpanded();
-                var go = GameObject.Find(findGameObjectFilter.Trim());
-                if (go != null)
+                if (showSearchNew)
                 {
-                    sceneRoots.Clear();
-                    expandedGameObjects.Add(new ReferenceChain().Add(go), true);
-                    sceneRoots.Add(go, true);
-                    scrollPosition = Vector2.zero;
-                    searchDisplayString = String.Format("Showing results for GameObject.Find(\"{0}\")", findGameObjectFilter);
+                    headerHeight = 200.0f;
                 }
-            }
+                else
+                {
+                    headerHeight = 140.0f;
+                }
 
-            if (GUILayout.Button("Reset"))
+                RecalculateAreas();
+                showSearchBar = showSearchNew;
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            if (showSearchBar)
             {
-                ClearExpanded();
-                sceneRoots = FindSceneRoots();
-                scrollPosition = Vector2.zero;
-                searchDisplayString = "";
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("GameObject.Find");
+                findGameObjectFilter = GUILayout.TextField(findGameObjectFilter, GUILayout.Width(256));
+
+                if (findGameObjectFilter.Trim().Length == 0)
+                {
+                    GUI.enabled = false;
+                }
+
+                if (GUILayout.Button("Find"))
+                {
+                    ClearExpanded();
+                    var go = GameObject.Find(findGameObjectFilter.Trim());
+                    if (go != null)
+                    {
+                        sceneRoots.Clear();
+                        expandedGameObjects.Add(new ReferenceChain().Add(go), true);
+                        sceneRoots.Add(go, true);
+                        sceneTreeScrollPosition = Vector2.zero;
+                        searchDisplayString = String.Format("Showing results for GameObject.Find(\"{0}\")", findGameObjectFilter);
+                    }
+                }
+
+                if (GUILayout.Button("Reset"))
+                {
+                    ClearExpanded();
+                    sceneRoots = FindSceneRoots();
+                    sceneTreeScrollPosition = Vector2.zero;
+                    searchDisplayString = "";
+                }
+
+                GUI.enabled = true;
+
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("GameObject.FindObjectsOfType");
+                findObjectTypeFilter = GUILayout.TextField(findObjectTypeFilter, GUILayout.Width(256));
+
+                if (findObjectTypeFilter.Trim().Length == 0)
+                {
+                    GUI.enabled = false;
+                }
+
+                if (GUILayout.Button("Find"))
+                {
+                    var gameObjects = FindComponentsOfType(findObjectTypeFilter.Trim());
+
+                    sceneRoots.Clear();
+                    foreach (var item in gameObjects)
+                    {
+                        ClearExpanded();
+                        expandedGameObjects.Add(new ReferenceChain().Add(item.Key), true);
+                        if (gameObjects.Count == 1)
+                        {
+                            expandedComponents.Add(new ReferenceChain().Add(item.Key).Add(item.Value), true);
+                        }
+                        sceneRoots.Add(item.Key, true);
+                        sceneTreeScrollPosition = Vector2.zero;
+                        searchDisplayString = String.Format("Showing results for GameObject.FindObjectsOfType({0})", findObjectTypeFilter);
+                    }
+                }
+
+                if (GUILayout.Button("Reset"))
+                {
+                    ClearExpanded();
+                    sceneRoots = FindSceneRoots();
+                    sceneTreeScrollPosition = Vector2.zero;
+                    searchDisplayString = "";
+                }
+
+                GUI.enabled = true;
+
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
             }
 
-            GUI.enabled = true;
-
+            GUILayout.BeginHorizontal();
+            GUI.contentColor = Color.green;
+            GUILayout.Label("Sort alphabetically:");
+            GUI.contentColor = Color.white;
+            sortAlphabetically = GUILayout.Toggle(sortAlphabetically, "");
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("GameObject.FindObjectsOfType");
-            findObjectTypeFilter = GUILayout.TextField(findObjectTypeFilter, GUILayout.Width(256));
 
-            if (findObjectTypeFilter.Trim().Length == 0)
+            if (GUILayout.Button("Refresh", GUILayout.Width(200)))
             {
-                GUI.enabled = false;
-            }
-            
-            if (GUILayout.Button("Find"))
-            {
-                var gameObjects = FindComponentsOfType(findObjectTypeFilter.Trim());
-
-                sceneRoots.Clear();
-                foreach(var item in gameObjects)
-                {
-                    ClearExpanded();
-                    expandedGameObjects.Add(new ReferenceChain().Add(item.Key), true);
-                    if (gameObjects.Count == 1)
-                    {
-                        expandedComponents.Add(new ReferenceChain().Add(item.Key).Add(item.Value), true);
-                    }
-                    sceneRoots.Add(item.Key, true);
-                    scrollPosition = Vector2.zero;
-                    searchDisplayString = String.Format("Showing results for GameObject.FindObjectsOfType({0})", findObjectTypeFilter);
-                }
+                sceneRoots = FindSceneRoots();
             }
 
-            if (GUILayout.Button("Reset"))
+            if (GUILayout.Button("Fold all", GUILayout.Width(200)))
             {
                 ClearExpanded();
-                sceneRoots = FindSceneRoots();
-                scrollPosition = Vector2.zero;
-                searchDisplayString = "";
             }
-
-            GUI.enabled = true;
 
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
+
+            headerArea.End();
+        }
+
+        public void DrawSceneTree()
+        {
+            sceneTreeArea.Begin();
 
             if (searchDisplayString != "")
             {
@@ -1777,22 +1881,62 @@ namespace ModTools
                 GUILayout.Label(searchDisplayString);
                 GUI.contentColor = Color.white;
             }
-            
-            GUILayout.Space(8);
 
-            scrollPosition = GUILayout.BeginScrollView(scrollPosition);
+            sceneTreeScrollPosition = GUILayout.BeginScrollView(sceneTreeScrollPosition);
 
-            foreach (var obj in sceneRoots)
+            var gameObjects = sceneRoots.Keys.ToArray();
+
+            if (sortAlphabetically)
             {
-                OnSceneTreeRecursive(new ReferenceChain().Add(obj.Key), obj.Key);
+                Array.Sort(gameObjects, (o, o1) => o.name.CompareTo(o1.name));
+            }
+
+            foreach (var obj in gameObjects)
+            {
+                OnSceneTreeRecursive(new ReferenceChain().Add(obj), obj);
             }
 
             GUILayout.EndScrollView();
 
-            if (GUILayout.Button("Fold all"))
+            sceneTreeArea.End();
+        }
+
+        public void DrawComponent()
+        {
+            componentArea.Begin();
+
+            componentScrollPosition = GUILayout.BeginScrollView(componentScrollPosition);
+
+            if (currentRefChain != null)
             {
-                ClearExpanded();
+                OnSceneTreeReflect(currentRefChain, currentRefChain.LastItem);
             }
+
+            GUILayout.EndScrollView();
+
+            componentArea.End();
+        }
+
+        public void DrawWindow()
+        {
+            bool enterPressed = Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter);
+
+            if (enterPressed)
+            {
+                GUI.FocusControl(null);
+            }
+
+            if (debugMode)
+            {
+                lastCrashReport = debugOutput;
+                debugOutput = "";
+            }
+
+            preventCircularReferences.Clear();
+
+            DrawHeader();
+            DrawSceneTree();
+            DrawComponent();
         }
 
         private void ClearExpanded()
@@ -1804,7 +1948,7 @@ namespace ModTools
             selectedArrayStartIndices.Clear();
             selectedArrayEndIndices.Clear();
             searchDisplayString = "";
-            scrollPosition = Vector2.zero;
+            sceneTreeScrollPosition = Vector2.zero;
         }
 
         private ReferenceChain BuildRefChain(GameObject go)

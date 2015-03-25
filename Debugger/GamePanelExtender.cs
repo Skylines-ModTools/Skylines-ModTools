@@ -18,9 +18,6 @@ namespace ModTools
 
         private UIView uiView;
 
-        private CitizenWorldInfoPanel citizenInfoPanel;
-        private CitizenVehicleWorldInfoPanel citizenVehicleInfoPanel;
-
         private SceneExplorer sceneExplorer;
 
         private ReferenceChain buildingsBufferRefChain;
@@ -156,9 +153,6 @@ namespace ModTools
                 var building = BuildingManager.instance.m_buildings.m_buffer[instance.Building];
                 zonedBuildingAssetNameLabel.text = "AssetName: " + building.Info.name;
             }
-            /*citizenInfoPanel = FindObjectOfType<CitizenWorldInfoPanel>();
-                citizenVehicleInfoPanel = FindObjectOfType<CitizenVehicleWorldInfoPanel>();
-*/
         }
 
     }
