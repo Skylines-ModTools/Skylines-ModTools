@@ -142,8 +142,6 @@ namespace ModTools
             var expandedRefChain = new ReferenceChain().Add(rootGameObject);
             expandedGameObjects.Add(expandedRefChain, true);
 
-            bool firstComponent = false;
-
             for (int i = 1; i < refChain.Length; i++)
             {
                 switch (refChain.chainTypes[i])
@@ -157,11 +155,6 @@ namespace ModTools
                         var component = (Component) refChain.chainObjects[i];
                         expandedRefChain = expandedRefChain.Add(component);
                         expandedComponents.Add(expandedRefChain, true);
-                        if (!firstComponent)
-                        {
-                            
-                            firstComponent = true;
-                        }
                         break;
                     case ReferenceChain.ReferenceType.Field:
                         var field = (FieldInfo) refChain.chainObjects[i];
@@ -187,6 +180,137 @@ namespace ModTools
 
             currentRefChain = refChain.Copy();
             currentRefChain.identOffset = -currentRefChain.Length;
+        }
+
+        private object EditorValueField(string hash, Type type, object value)
+        {
+            if (type == typeof(System.Single))
+            {
+                var f = (float)value;
+                GUIControls.FloatField(hash, "", ref f, 0.0f, true, true);
+                return f;
+            }
+
+            if (type == typeof(System.Double))
+            {
+                var f = (double)value;
+                GUIControls.DoubleField(hash, "", ref f, 0.0f, true, true);
+                return f;
+            }
+
+            if (type == typeof(System.Byte))
+            {
+                var f = (byte)value;
+                GUIControls.ByteField(hash, "", ref f, 0.0f, true, true);
+                return f;
+            }
+
+            if (type == typeof(System.Int32))
+            {
+                var f = (int)value;
+                GUIControls.IntField(hash, "", ref f, 0.0f, true, true);
+                return f;
+            }
+            
+            if (type == typeof(System.UInt32))
+            {
+                var f = (uint)value;
+                GUIControls.UIntField(hash, "", ref f, 0.0f, true, true);
+                return f;
+            }
+            
+            if (type == typeof(System.Int64))
+            {
+                var f = (Int64)value;
+                GUIControls.Int64Field(hash, "", ref f, 0.0f, true, true);
+                return f;
+            }
+            
+            if (type == typeof(System.UInt64))
+            {
+                var f = (UInt64)value;
+                GUIControls.UInt64Field(hash, "", ref f, 0.0f, true, true);
+                return f;
+            }
+            
+            if (type == typeof(System.Int16))
+            {
+                var f = (Int16)value;
+                GUIControls.Int16Field(hash, "", ref f, 0.0f, true, true);
+                return f;
+            }
+            
+            if (type == typeof(System.UInt16))
+            {
+                var f = (UInt16)value;
+                GUIControls.UInt16Field(hash, "", ref f, 0.0f, true, true);
+                return f;
+            }
+            
+            if (type == typeof(System.Boolean))
+            {
+                var f = (bool)value;
+                GUIControls.BoolField("", ref f, 0.0f, true, true);
+                return f;
+            }
+            
+            if (type == typeof(System.String))
+            {
+                var f = (string)value;
+                GUIControls.StringField(hash, "", ref f, 0.0f, true, true);
+                return f;
+            }
+            
+            if (type == typeof(System.Char))
+            {
+                var f = (char)value;
+                GUIControls.CharField(hash, "", ref f, 0.0f, true, true);
+                return f;
+            }
+            
+            if (type == typeof(UnityEngine.Vector2))
+            {
+                var f = (Vector2)value;
+                GUIControls.Vector2Field(hash, "", ref f, 0.0f, null, true, true);
+                return f;
+            }
+            
+            if (type == typeof(UnityEngine.Vector3))
+            {
+                var f = (Vector3)value;
+                GUIControls.Vector3Field(hash, "", ref f, 0.0f, null, true, true);
+                return f;
+            }
+            
+            if (type == typeof(UnityEngine.Vector4))
+            {
+                var f = (Vector4)value;
+                GUIControls.Vector4Field(hash, "", ref f, 0.0f, null, true, true);
+                return f;
+            }
+            
+            if (type == typeof(UnityEngine.Quaternion))
+            {
+                var f = (Quaternion)value;
+                GUIControls.QuaternionField(hash, "", ref f, 0.0f, null, true, true);
+                return f;
+            }
+            
+            if (type == typeof(UnityEngine.Color))
+            {
+                var f = (Color)value;
+                GUIControls.ColorField(hash, "", ref f, 0.0f, null, true, true);
+                return f;
+            }
+            
+            if (type == typeof(UnityEngine.Color32))
+            {
+                var f = (Color32)value;
+                GUIControls.Color32Field(hash, "", ref f, 0.0f, null, true, true);
+                return f;
+            }
+
+            return value;
         }
 
         private void OnSceneTreeReflectField(ReferenceChain refChain, System.Object obj, FieldInfo field)
@@ -284,167 +408,12 @@ namespace ModTools
             {
                 GUILayout.Label(value == null ? "null" : value.ToString());
             }
-            else if (field.FieldType.ToString() == "System.Single")
+            else
             {
-                var f = (float)value;
-                GUIControls.FloatField(hash, "", ref f, 0.0f, true, true);
-                if (f != (float)value)
+                var newValue = EditorValueField(hash, field.FieldType, value);
+                if (newValue != value)
                 {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.Double")
-            {
-                var f = (double)value;
-                GUIControls.DoubleField(hash, "", ref f, 0.0f, true, true);
-                if (f != (double)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.Byte")
-            {
-                var f = (byte)value;
-                GUIControls.ByteField(hash, "", ref f, 0.0f, true, true);
-                if (f != (byte)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.Int32")
-            {
-                var f = (int)value;
-                GUIControls.IntField(hash, "", ref f, 0.0f, true, true);
-                if (f != (int)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.UInt32")
-            {
-                var f = (uint)value;
-                GUIControls.UIntField(hash, "", ref f, 0.0f, true, true);
-                if (f != (uint)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.Int64")
-            {
-                var f = (Int64)value;
-                GUIControls.Int64Field(hash, "", ref f, 0.0f, true, true);
-                if (f != (Int64)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.UInt64")
-            {
-                var f = (UInt64)value;
-                GUIControls.UInt64Field(hash, "", ref f, 0.0f, true, true);
-                if (f != (UInt64)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.Int16")
-            {
-                var f = (Int16)value;
-                GUIControls.Int16Field(hash, "", ref f, 0.0f, true, true);
-                if (f != (Int16)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.UInt16")
-            {
-                var f = (UInt16)value;
-                GUIControls.UInt16Field(hash, "", ref f, 0.0f, true, true);
-                if (f != (UInt16)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.Boolean")
-            {
-                var f = (bool)value;
-                GUIControls.BoolField("", ref f, 0.0f, true, true);
-                if (f != (bool)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.String")
-            {
-                var f = (string)value;
-                GUIControls.StringField(hash, "", ref f, 0.0f, true, true);
-                if (f != (string)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.Char")
-            {
-                var f = (char)value;
-                GUIControls.CharField(hash, "", ref f, 0.0f, true, true);
-                if (f != (char)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "UnityEngine.Vector2")
-            {
-                var f = (Vector2)value;
-                GUIControls.Vector2Field(hash, "", ref f, 0.0f, null, true, true);
-                if (f != (Vector2)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "UnityEngine.Vector3")
-            {
-                var f = (Vector3)value;
-                GUIControls.Vector3Field(hash, "", ref f, 0.0f, null, true, true);
-                if (f != (Vector3)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "UnityEngine.Vector4")
-            {
-                var f = (Vector4)value;
-                GUIControls.Vector4Field(hash, "", ref f, 0.0f, null, true, true);
-                if (f != (Vector4)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "UnityEngine.Quaternion")
-            {
-                var f = (Quaternion)value;
-                GUIControls.QuaternionField(hash, "", ref f, 0.0f, null, true, true);
-                if (f != (Quaternion)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "UnityEngine.Color")
-            {
-                var f = (Color)value;
-                GUIControls.ColorField(hash, "", ref f, 0.0f, null, true, true);
-                if (f != (Color)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "UnityEngine.Color32")
-            {
-                var f = (Color32)value;
-                GUIControls.Color32Field(hash, "", ref f, 0.0f, null, true, true);
-                var v = (Color32)value;
-                if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
-                {
-                    field.SetValue(obj, f);
+                    field.SetValue(obj, newValue);
                 }
             }
 
@@ -612,7 +581,6 @@ namespace ModTools
                     }
                 }
 
-
                 if (value == null || !TypeUtil.IsBuiltInType(property.PropertyType))
                 {
                     if (property.CanRead)
@@ -626,167 +594,12 @@ namespace ModTools
 
                     GUI.contentColor = Color.white;
                 }
-                else if (property.PropertyType.ToString() == "System.Single")
+                else
                 {
-                    var f = (float)value;
-                    GUIControls.FloatField(hash, "", ref f, 0.0f, true, true);
-                    if (f != (float)value)
+                    var newValue = EditorValueField(hash, property.PropertyType, value);
+                    if (newValue != value)
                     {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.Double")
-                {
-                    var f = (double)value;
-                    GUIControls.DoubleField(hash, "", ref f, 0.0f, true, true);
-                    if (f != (double)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.Byte")
-                {
-                    var f = (byte)value;
-                    GUIControls.ByteField(hash, "", ref f, 0.0f, true, true);
-                    if (f != (byte)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.Int32")
-                {
-                    var f = (int)value;
-                    GUIControls.IntField(hash, "", ref f, 0.0f, true, true);
-                    if (f != (int)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.UInt32")
-                {
-                    var f = (uint)value;
-                    GUIControls.UIntField(hash, "", ref f, 0.0f, true, true);
-                    if (f != (uint)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.Int64")
-                {
-                    var f = (Int64)value;
-                    GUIControls.Int64Field(hash, "", ref f, 0.0f, true, true);
-                    if (f != (Int64)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.UInt64")
-                {
-                    var f = (UInt64)value;
-                    GUIControls.UInt64Field(hash, "", ref f, 0.0f, true, true);
-                    if (f != (UInt64)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.Int16")
-                {
-                    var f = (Int16)value;
-                    GUIControls.Int16Field(hash, "", ref f, 0.0f, true, true);
-                    if (f != (Int16)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.UInt16")
-                {
-                    var f = (UInt16)value;
-                    GUIControls.UInt16Field(hash, "", ref f, 0.0f, true, true);
-                    if (f != (UInt16)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.Boolean")
-                {
-                    var f = (bool)value;
-                    GUIControls.BoolField("", ref f, 0.0f, true, true);
-                    if (f != (bool)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.String")
-                {
-                    var f = (string)value;
-                    GUIControls.StringField(hash, "", ref f, 0.0f, true, true);
-                    if (f != (string)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.Char")
-                {
-                    var f = (char)value;
-                    GUIControls.CharField(hash, "", ref f, 0.0f, true, true);
-                    if (f != (char)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "UnityEngine.Vector2")
-                {
-                    var f = (Vector2)value;
-                    GUIControls.Vector2Field(hash, "", ref f, 0.0f, null, true, true);
-                    if (f != (Vector2)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "UnityEngine.Vector3")
-                {
-                    var f = (Vector3)value;
-                    GUIControls.Vector3Field(hash, "", ref f, 0.0f, null, true, true);
-                    if (f != (Vector3)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "UnityEngine.Vector4")
-                {
-                    var f = (Vector4)value;
-                    GUIControls.Vector4Field(hash, "", ref f, 0.0f, null, true, true);
-                    if (f != (Vector4)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "UnityEngine.Quaternion")
-                {
-                    var f = (Quaternion)value;
-                    GUIControls.QuaternionField(hash, "", ref f, 0.0f, null, true, true);
-                    if (f != (Quaternion)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "UnityEngine.Color")
-                {
-                    var f = (Color)value;
-                    GUIControls.ColorField(hash, "", ref f, 0.0f, null, true, true);
-                    if (f != (Color)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "UnityEngine.Color32")
-                {
-                    var f = (Color32)value;
-                    GUIControls.Color32Field(hash, "", ref f, 0.0f, null, true, true);
-                    var v = (Color32)value;
-                    if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
-                    {
-                        property.SetValue(obj, f, null);
+                        property.SetValue(obj, newValue, null);
                     }
                 }
             }
