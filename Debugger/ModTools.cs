@@ -15,6 +15,7 @@ namespace ModTools
         public Watches watches;
         public TextureViewer textureViewer;
       //  public MeshViewer meshViewer;
+        public ColorPicker colorPicker;
 
         private GamePanelExtender panelExtender;
 
@@ -61,7 +62,6 @@ namespace ModTools
 
             textureViewer.rect = config.textureViewerRect;
             textureViewer.visible = config.textureViewerVisible;
-
 
             //meshViewer.rect = config.meshViewerRect;
             //meshViewer.visible = config.meshViewerVisible;
@@ -137,6 +137,7 @@ namespace ModTools
             watches = gameObject.AddComponent<Watches>();
             textureViewer = gameObject.AddComponent<TextureViewer>();
             //meshViewer = gameObject.AddComponent<MeshViewer>();
+            colorPicker = gameObject.AddComponent<ColorPicker>();
 
             panelExtender = gameObject.AddComponent<GamePanelExtender>();
 
@@ -187,9 +188,6 @@ namespace ModTools
             {
                 SaveConfig();
             }
-
-
-            
 
             GUILayout.BeginHorizontal();
             GUILayout.Label("Game panel extensions");

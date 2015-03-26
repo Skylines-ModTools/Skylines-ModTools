@@ -1,14 +1,11 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 // Taken from the MechJeb2 (https://github.com/MuMech/MechJeb2) source, see MECHJEB-LICENSE for license info
 
 namespace ModTools
 {
-
     public class GUIComboBox
     {
-
         // Easy to use combobox class
         // ***** For users *****
         // Call the Box method with the latest selected item, list of text entries
@@ -19,23 +16,24 @@ namespace ModTools
         // Position of the popuprect
         private static Rect rect;
         // Identifier of the caller of the popup, null if nobody is waiting for a value
-        private static string popupOwner = null;
+        private static string popupOwner;
         private static string[] entries;
         private static bool popupActive;
         // Result to be returned to the owner
         private static int selectedItem;
         // Unity identifier of the window, just needs to be unique
-        private static int id = GUIUtility.GetControlID(FocusType.Passive);
+        private static readonly int id = GUIUtility.GetControlID(FocusType.Passive);
         // ComboBox GUI Style
-        private static GUIStyle style;
+        private static readonly GUIStyle style;
+        private static GUIStyle _yellowOnHover;
 
         static GUIComboBox()
         {
-            Texture2D background = new Texture2D(16, 16, TextureFormat.RGBA32, false);
+            var background = new Texture2D(16, 16, TextureFormat.RGBA32, false);
             background.wrapMode = TextureWrapMode.Clamp;
 
-            for (int x = 0; x < background.width; x++)
-                for (int y = 0; y < background.height; y++)
+            for (var x = 0; x < background.width; x++)
+                for (var y = 0; y < background.height; y++)
                 {
                     if (x == 0 || x == background.width - 1 || y == 0 || y == background.height - 1)
                         background.SetPixel(x, y, new Color(0, 0, 0, 1));
@@ -52,7 +50,6 @@ namespace ModTools
             style.padding.top = style.padding.bottom;
         }
 
-        static GUIStyle _yellowOnHover;
         public static GUIStyle yellowOnHover
         {
             get
@@ -61,7 +58,7 @@ namespace ModTools
                 {
                     _yellowOnHover = new GUIStyle(GUI.skin.label);
                     _yellowOnHover.hover.textColor = Color.yellow;
-                    Texture2D t = new Texture2D(1, 1);
+                    var t = new Texture2D(1, 1);
                     t.SetPixel(0, 0, new Color(0, 0, 0, 0));
                     t.Apply();
                     _yellowOnHover.hover.background = t;
@@ -76,8 +73,8 @@ namespace ModTools
                 return;
 
             // Make sure the rectangle is fully on screen
-          //  rect.x = Math.Max(0, Math.Min(rect.x, rect.width));
-          //  rect.y = Math.Max(0, Math.Min(rect.y, rect.height));
+            //  rect.x = Math.Max(0, Math.Min(rect.x, rect.width));
+            //  rect.y = Math.Max(0, Math.Min(rect.y, rect.height));
 
             rect = GUILayout.Window(id, rect, identifier =>
             {
@@ -103,14 +100,14 @@ namespace ModTools
             }
 
             // A choice has been made, update the return value
-            if (popupOwner == caller && !GUIComboBox.popupActive)
+            if (popupOwner == caller && !popupActive)
             {
                 popupOwner = null;
                 selectedItem = GUIComboBox.selectedItem;
                 GUI.changed = true;
             }
 
-            bool guiChanged = GUI.changed;
+            var guiChanged = GUI.changed;
 
             float width = 0;
             foreach (var entry in entries)
@@ -122,7 +119,7 @@ namespace ModTools
                 }
             }
 
-            if (GUILayout.Button("↓ " + entries[selectedItem] + " ↓", GUILayout.Width(width+24)))
+            if (GUILayout.Button("↓ " + entries[selectedItem] + " ↓", GUILayout.Width(width + 24)))
             {
                 // We will set the changed status when we return from the menu instead
                 GUI.changed = guiChanged;
@@ -134,13 +131,13 @@ namespace ModTools
                 rect = new Rect(0, 0, 0, 0);
             }
             // The GetLastRect method only works during repaint event, but the Button will return false during repaint
-            if (Event.current.type == EventType.Repaint && (string)popupOwner == (string)caller && rect.height == 0)
+            if (Event.current.type == EventType.Repaint && popupOwner == caller && rect.height == 0)
             {
                 rect = GUILayoutUtility.GetLastRect();
                 // But even worse, I can't find a clean way to convert from relative to absolute coordinates
                 Vector2 mousePos = Input.mousePosition;
                 mousePos.y = Screen.height - mousePos.y;
-                Vector2 clippedMousePos = Event.current.mousePosition;
+                var clippedMousePos = Event.current.mousePosition;
                 rect.x = (rect.x + mousePos.x) - clippedMousePos.x;
                 rect.y = (rect.y + mousePos.y) - clippedMousePos.y;
                 rect.height = rect.height*entries.Length;
@@ -148,6 +145,5 @@ namespace ModTools
 
             return selectedItem;
         }
-
     }
 }

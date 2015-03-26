@@ -39,6 +39,7 @@ namespace ModTools
         public static float uiScale = 1.0f;
 
         public bool visible = false;
+        public bool resizable = true;
 
         public string title = "Window";
 
@@ -185,132 +186,14 @@ namespace ModTools
                         var mouse = Input.mousePosition;
                         mouse.y = Screen.height - mouse.y;
 
-                        var moveRect = new Rect(rect.x * uiScale, rect.y * uiScale, rect.width * uiScale, 20.0f);
-                        var moveTex = moveNormalTexture;
+                        DrawTitlebar(mouse);
 
-                        if (movingWindow != null)
+                        if (resizable)
                         {
-                            if (movingWindow == this)
-                            {
-                                moveTex = moveHoverTexture;
-
-                                if (Input.GetMouseButton(0))
-                                {
-                                    var pos = new Vector2(mouse.x, mouse.y) + moveDragHandle;
-                                    rect.x = pos.x;
-                                    rect.y = pos.y;
-                                    if (rect.x < 0.0f)
-                                    {
-                                        rect.x = 0.0f;
-                                    }
-                                    if (rect.x + rect.width > Screen.width)
-                                    {
-                                        rect.x = Screen.width - rect.width;
-                                    }
-
-                                    if (rect.y < 0.0f)
-                                    {
-                                        rect.y = 0.0f;
-                                    }
-                                    if (rect.y + rect.height > Screen.height)
-                                    {
-                                        rect.y = Screen.height - rect.height;
-                                    }
-                                }
-                                else
-                                {
-                                    movingWindow = null;
-                                    ModTools.Instance.SaveConfig();
-                                }
-                            }
-                        }
-                        else if (moveRect.Contains(mouse))
-                        {
-                            moveTex = moveHoverTexture;
-                            if (Input.GetMouseButton(0) && resizingWindow == null)
-                            {
-                                movingWindow = this;
-                                moveDragHandle = new Vector2(rect.x, rect.y) - new Vector2(mouse.x, mouse.y);
-                            }
+                            DrawResizeHandle(mouse);
                         }
 
-                        GUI.DrawTexture(new Rect(0.0f, 0.0f, rect.width * uiScale, 20.0f), moveTex, ScaleMode.StretchToFill);
-                        GUI.contentColor = Color.black;
-                        GUI.Label(new Rect(0.0f, 0.0f, rect.width*uiScale, 20.0f), title);
-                        GUI.contentColor = Color.white;
-
-                        var resizeRect = new Rect(rect.x * uiScale + rect.width * uiScale - 16.0f, rect.y * uiScale + rect.height * uiScale - 8.0f, 16.0f, 8.0f);
-                        var resizeTex = resizeNormalTexture;
-
-                        if (resizingWindow != null)
-                        {
-                            if (resizingWindow == this)
-                            {
-                                resizeTex = resizeHoverTexture;
-
-                                if (Input.GetMouseButton(0))
-                                {
-                                    var size = new Vector2(mouse.x, mouse.y) + resizeDragHandle - new Vector2(rect.x, rect.y);
-
-                                    if (size.x < minSize.x)
-                                    {
-                                        size.x = minSize.x;
-                                    }
-
-                                    if (size.y < minSize.y)
-                                    {
-                                        size.y = minSize.y;
-                                    }
-                                    
-                                    rect.width = size.x;
-                                    rect.height = size.y;
-
-                                    if (rect.x + rect.width >= Screen.width)
-                                    {
-                                        rect.width = Screen.width - rect.x;
-                                    }
-
-                                    if (rect.y + rect.height >= Screen.height)
-                                    {
-                                        rect.height = Screen.height - rect.y;
-                                    }
-                                }
-                                else
-                                {
-                                    resizingWindow = null;
-                                    ModTools.Instance.SaveConfig();
-                                }
-                            }
-                        }
-                        else if (resizeRect.Contains(mouse))
-                        {
-                            resizeTex = resizeHoverTexture;
-                            if (Input.GetMouseButton(0) && movingWindow == null)
-                            {
-                                resizingWindow = this;
-                                resizeDragHandle = new Vector2(rect.x + rect.width, rect.y + rect.height) - new Vector2(mouse.x, mouse.y);
-                            }
-                        }
-
-                        GUI.DrawTexture(new Rect(rect.width - 16.0f, rect.height - 8.0f, 16.0f, 8.0f), resizeTex, ScaleMode.StretchToFill);
-
-                        var closeRect = new Rect(rect.x * uiScale + rect.width * uiScale - 20.0f, rect.y * uiScale, 16.0f, 8.0f);
-                        var closeTex = closeNormalTexture;
-
-                        if (closeRect.Contains(mouse))
-                        {
-                            closeTex = closeHoverTexture;
-
-                            if (Input.GetMouseButton(0))
-                            {
-                                resizingWindow = null;
-                                movingWindow = null;
-                                visible = false;
-                                ModTools.Instance.SaveConfig();
-                            }
-                        }
-
-                        GUI.DrawTexture(new Rect(rect.width - 20.0f, 0.0f, 16.0f, 8.0f), closeTex, ScaleMode.StretchToFill);
+                        DrawCloseButton(mouse);
                     }
                 }, title);
 
@@ -323,6 +206,142 @@ namespace ModTools
 
                 GUI.skin = oldSkin;
             }
+        }
+
+        private void DrawTitlebar(Vector3 mouse)
+        {
+            var moveRect = new Rect(rect.x * uiScale, rect.y * uiScale, rect.width * uiScale, 20.0f);
+            var moveTex = moveNormalTexture;
+
+            if (movingWindow != null)
+            {
+                if (movingWindow == this)
+                {
+                    moveTex = moveHoverTexture;
+
+                    if (Input.GetMouseButton(0))
+                    {
+                        var pos = new Vector2(mouse.x, mouse.y) + moveDragHandle;
+                        rect.x = pos.x;
+                        rect.y = pos.y;
+                        if (rect.x < 0.0f)
+                        {
+                            rect.x = 0.0f;
+                        }
+                        if (rect.x + rect.width > Screen.width)
+                        {
+                            rect.x = Screen.width - rect.width;
+                        }
+
+                        if (rect.y < 0.0f)
+                        {
+                            rect.y = 0.0f;
+                        }
+                        if (rect.y + rect.height > Screen.height)
+                        {
+                            rect.y = Screen.height - rect.height;
+                        }
+                    }
+                    else
+                    {
+                        movingWindow = null;
+                        ModTools.Instance.SaveConfig();
+                    }
+                }
+            }
+            else if (moveRect.Contains(mouse))
+            {
+                moveTex = moveHoverTexture;
+                if (Input.GetMouseButton(0) && resizingWindow == null)
+                {
+                    movingWindow = this;
+                    moveDragHandle = new Vector2(rect.x, rect.y) - new Vector2(mouse.x, mouse.y);
+                }
+            }
+
+            GUI.DrawTexture(new Rect(0.0f, 0.0f, rect.width * uiScale, 20.0f), moveTex, ScaleMode.StretchToFill);
+            GUI.contentColor = Color.black;
+            GUI.Label(new Rect(0.0f, 0.0f, rect.width * uiScale, 20.0f), title);
+            GUI.contentColor = Color.white;
+        }
+
+        private void DrawCloseButton(Vector3 mouse)
+        {
+            var closeRect = new Rect(rect.x * uiScale + rect.width * uiScale - 20.0f, rect.y * uiScale, 16.0f, 8.0f);
+            var closeTex = closeNormalTexture;
+
+            if (closeRect.Contains(mouse))
+            {
+                closeTex = closeHoverTexture;
+
+                if (Input.GetMouseButton(0))
+                {
+                    resizingWindow = null;
+                    movingWindow = null;
+                    visible = false;
+                    ModTools.Instance.SaveConfig();
+                }
+            }
+
+            GUI.DrawTexture(new Rect(rect.width - 20.0f, 0.0f, 16.0f, 8.0f), closeTex, ScaleMode.StretchToFill);
+        }
+
+        private void DrawResizeHandle(Vector3 mouse)
+        {
+            var resizeRect = new Rect(rect.x * uiScale + rect.width * uiScale - 16.0f, rect.y * uiScale + rect.height * uiScale - 8.0f, 16.0f, 8.0f);
+            var resizeTex = resizeNormalTexture;
+
+            if (resizingWindow != null)
+            {
+                if (resizingWindow == this)
+                {
+                    resizeTex = resizeHoverTexture;
+
+                    if (Input.GetMouseButton(0))
+                    {
+                        var size = new Vector2(mouse.x, mouse.y) + resizeDragHandle - new Vector2(rect.x, rect.y);
+
+                        if (size.x < minSize.x)
+                        {
+                            size.x = minSize.x;
+                        }
+
+                        if (size.y < minSize.y)
+                        {
+                            size.y = minSize.y;
+                        }
+
+                        rect.width = size.x;
+                        rect.height = size.y;
+
+                        if (rect.x + rect.width >= Screen.width)
+                        {
+                            rect.width = Screen.width - rect.x;
+                        }
+
+                        if (rect.y + rect.height >= Screen.height)
+                        {
+                            rect.height = Screen.height - rect.y;
+                        }
+                    }
+                    else
+                    {
+                        resizingWindow = null;
+                        ModTools.Instance.SaveConfig();
+                    }
+                }
+            }
+            else if (resizeRect.Contains(mouse))
+            {
+                resizeTex = resizeHoverTexture;
+                if (Input.GetMouseButton(0) && movingWindow == null)
+                {
+                    resizingWindow = this;
+                    resizeDragHandle = new Vector2(rect.x + rect.width, rect.y + rect.height) - new Vector2(mouse.x, mouse.y);
+                }
+            }
+
+            GUI.DrawTexture(new Rect(rect.width - 16.0f, rect.height - 8.0f, 16.0f, 8.0f), resizeTex, ScaleMode.StretchToFill);
         }
 
     }

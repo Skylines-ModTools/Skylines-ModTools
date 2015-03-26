@@ -52,6 +52,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ColorPicker.cs" />
+    <Compile Include="ColorUtil.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="ExtensionMethods\MeshExtension.cs" />
     <Compile Include="ExtensionMethods\StringExtensions.cs" />

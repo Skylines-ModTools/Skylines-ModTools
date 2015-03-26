@@ -58,7 +58,7 @@ namespace ModTools
         private float windowBottomMargin = 8.0f;
 
         private float headerHeightCompact = 60.0f;
-        private float headerHeightExpanded = 200.0f;
+        private float headerHeightExpanded = 220.0f;
         private bool headerExpanded = false;
 
         private float sceneTreeWidth = 300.0f;
@@ -1458,6 +1458,11 @@ namespace ModTools
 
         private void OnSceneTreeRecursive(ReferenceChain refChain, GameObject obj)
         {
+            if (obj == gameObject)
+            {
+                return;
+            }
+
             if (!SceneTreeCheckDepth(refChain)) return;
 
             if (obj == null)
