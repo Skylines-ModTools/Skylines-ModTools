@@ -1,12 +1,6 @@
 ﻿
 using System;
-using System.IO;
-using System.Linq;
 using System.Collections.Generic;
-
-using UnityEngine;
-
-using UnityExtension;
 
 public class OBJFace
 {

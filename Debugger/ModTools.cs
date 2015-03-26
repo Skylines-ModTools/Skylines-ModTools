@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using ColossalFramework;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace ModTools
 {
@@ -16,7 +13,7 @@ namespace ModTools
 
         public Watches watches;
         public TextureViewer textureViewer;
-      //  public MeshViewer meshViewer;
+        public MeshViewer meshViewer;
         public ColorPicker colorPicker;
 
         private GamePanelExtender panelExtender;
@@ -34,7 +31,7 @@ namespace ModTools
             Destroy(sceneExplorer);
             Destroy(watches);
             Destroy(textureViewer);
-        //    Destroy(meshViewer);
+            Destroy(meshViewer);
             Destroy(panelExtender);
         }
 
@@ -65,8 +62,8 @@ namespace ModTools
             textureViewer.rect = config.textureViewerRect;
             textureViewer.visible = config.textureViewerVisible;
 
-            //meshViewer.rect = config.meshViewerRect;
-            //meshViewer.visible = config.meshViewerVisible;
+            meshViewer.rect = config.meshViewerRect;
+            meshViewer.visible = config.meshViewerVisible;
 
             watches.rect = config.watchesRect;
             watches.visible = config.watchesVisible;
@@ -92,8 +89,8 @@ namespace ModTools
                 config.textureViewerRect = textureViewer.rect;
                 config.textureViewerVisible = textureViewer.visible;
 
-               // config.meshViewerRect = meshViewer.rect;
-               // config.meshViewerVisible = meshViewer.visible;
+                config.meshViewerRect = meshViewer.rect;
+                config.meshViewerVisible = meshViewer.visible;
 
                 config.watchesRect = watches.rect;
                 config.watchesVisible = watches.visible;
@@ -140,7 +137,7 @@ namespace ModTools
 
             watches = gameObject.AddComponent<Watches>();
             textureViewer = gameObject.AddComponent<TextureViewer>();
-            //meshViewer = gameObject.AddComponent<MeshViewer>();
+            meshViewer = gameObject.AddComponent<MeshViewer>();
             colorPicker = gameObject.AddComponent<ColorPicker>();
 
             LoadConfig();
@@ -176,7 +173,7 @@ namespace ModTools
 
             if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.R))
             {
-                //meshViewer.visible = !meshViewer.visible;
+                meshViewer.visible = !meshViewer.visible;
             }
 
             if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.T))
@@ -235,10 +232,10 @@ namespace ModTools
                 textureViewer.visible = !textureViewer.visible;
             }
 
-          /*  if (GUILayout.Button("Mesh Viewer (Ctrl+R)"))
+            if (GUILayout.Button("Mesh Viewer (Ctrl+R)"))
             {
                 meshViewer.visible = !meshViewer.visible;
-            }*/
+            }
         }
 
     }

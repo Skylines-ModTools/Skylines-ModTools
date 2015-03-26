@@ -588,12 +588,12 @@ namespace ModTools
             }
             else if (TypeUtil.IsMeshType(field.FieldType) && value != null)
             {
-                /*if (GUILayout.Button("Preview"))
+                if (GUILayout.Button("Preview"))
                 {
                     ModTools.Instance.meshViewer.previewMesh = (Mesh)value;
                     ModTools.Instance.meshViewer.caller = refChain;
                     ModTools.Instance.meshViewer.visible = true;
-                }*/
+                }
 
                 if (GUILayout.Button("Dump .obj"))
                 {
@@ -792,12 +792,12 @@ namespace ModTools
             }
             else if (TypeUtil.IsMeshType(property.PropertyType) && value != null)
             {
-               /* if (GUILayout.Button("Preview"))
+                if (GUILayout.Button("Preview"))
                 {
                     ModTools.Instance.meshViewer.previewMesh = (Mesh)value;
                     ModTools.Instance.meshViewer.caller = refChain;
                     ModTools.Instance.meshViewer.visible = true;
-                }*/
+                }
 
                 if (GUILayout.Button("Dump .obj"))
                 {
