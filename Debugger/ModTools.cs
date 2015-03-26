@@ -139,9 +139,12 @@ namespace ModTools
             //meshViewer = gameObject.AddComponent<MeshViewer>();
             colorPicker = gameObject.AddComponent<ColorPicker>();
 
-            panelExtender = gameObject.AddComponent<GamePanelExtender>();
-
             LoadConfig();
+
+            if (extendGamePanels)
+            {
+                panelExtender = gameObject.AddComponent<GamePanelExtender>();
+            }
         }
 
         void Update()

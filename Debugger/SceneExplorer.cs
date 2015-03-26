@@ -402,7 +402,7 @@ namespace ModTools
             if (type == typeof(UnityEngine.Color32))
             {
                 var f = (Color32)value;
-                GUIControls.Color32Field(hash, "", ref f, 0.0f, null, true, true);
+                GUIControls.Color32Field(hash, "", ref f, 0.0f, null, true, true, color => { refChain.SetValue(color); });
                 var v = (Color32)value;
                 if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
                 {

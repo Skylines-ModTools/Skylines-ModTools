@@ -313,7 +313,7 @@ namespace ModTools
                 else if (type.ToString() == "UnityEngine.Color")
                 {
                     var f = (Color)value;
-                    GUIControls.ColorField("watch." + watch, "", ref f, 0.0f, null, true, true);
+                    GUIControls.ColorField("watch." + watch, "", ref f, 0.0f, null, true, true, color => { watch.SetValue(color); });
                     if (f != (Color)value)
                     {
                         WriteWatch(watch, f);
@@ -322,7 +322,8 @@ namespace ModTools
                 else if (type.ToString() == "UnityEngine.Color32")
                 {
                     var f = (Color32)value;
-                    GUIControls.Color32Field("watch." + watch, "", ref f, 0.0f, null, true, true);
+                    var watchCopy = watch.Copy();
+                    GUIControls.Color32Field("watch." + watch, "", ref f, 0.0f, null, true, true, color => { watchCopy.SetValue(color); });
                     var v = (Color32)value;
                     if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
                     {

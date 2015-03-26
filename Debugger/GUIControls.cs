@@ -806,7 +806,7 @@ namespace ModTools
             GUI.contentColor = Color.white;
         }
 
-        static public void Color32Field(string hash, string name, ref Color32 value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
+        static public void Color32Field(string hash, string name, ref Color32 value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false, ColorPicker.OnColorChanged onColorChanged = null)
         {
             GUILayout.BeginHorizontal();
 
@@ -834,6 +834,28 @@ namespace ModTools
             ByteField(hash+".g", "g", ref value.g, 0.0f, true, true);
             ByteField(hash+".b", "b", ref value.b, 0.0f, true, true);
             ByteField(hash+".a", "a", ref value.a, 0.0f, true, true);
+
+            if (onColorChanged != null)
+            {
+                if (GUILayout.Button("c", GUILayout.Width(72)))
+                {
+                    var picker = ModTools.Instance.colorPicker;
+                    picker.SetColor(value, onColorChanged);
+
+                    Vector2 mouse = Input.mousePosition;
+                    mouse.y = Screen.height - mouse.y;
+
+                    picker.rect.position = mouse;
+                    picker.visible = true;
+                }
+
+                var lastRect = GUILayoutUtility.GetLastRect();
+                lastRect.x += 4.0f;
+                lastRect.y += 4.0f;
+                lastRect.width -= 8.0f;
+                lastRect.height -= 8.0f;
+                GUI.DrawTexture(lastRect, ColorPicker.GetColorTexture(hash, value), ScaleMode.StretchToFill);
+            }
 
             if (watch != null)
             {
