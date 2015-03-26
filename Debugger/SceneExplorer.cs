@@ -427,25 +427,34 @@ namespace ModTools
             return value;
         }
 
-        private void OnSceneTreeReflectField(ReferenceChain refChain, System.Object obj, FieldInfo field)
+        private void OnSceneTreeMessage(ReferenceChain refChain, string message)
         {
-            AddDebugLine("OnSceneTreeReflectField(caller = {0}, obj = {1}, field = {2})",
-                refChain, obj, field);
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(treeIdentSpacing * refChain.Ident);
+            GUILayout.Label(message);
+            GUILayout.EndHorizontal();
+        }
 
-            var hash = refChain.GetHashCode().ToString();
-
+        private bool SceneTreeCheckDepth(ReferenceChain refChain)
+        {
             if (refChain.CheckDepth())
             {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Ident);
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
+                OnSceneTreeMessage(refChain, "Hierarchy too deep, sorry :(");
+                return false;
             }
+
+            return true;
+        }
+
+        private void OnSceneTreeReflectField(ReferenceChain refChain, System.Object obj, FieldInfo field)
+        {
+            var hash = refChain.GetHashCode().ToString();
+
+            if (!SceneTreeCheckDepth(refChain)) return;
 
             if (obj == null || field == null)
             {
-                GUILayout.Label("null");
+                OnSceneTreeMessage(refChain, "null");
                 return;
             }
 
@@ -609,25 +618,15 @@ namespace ModTools
 
         private void OnSceneTreeReflectProperty(ReferenceChain refChain, System.Object obj, PropertyInfo property)
         {
-            AddDebugLine("OnSceneTreeReflectProperty(caller = {0}, obj = {1}, property = {2})",
-                refChain, obj, property);
-
-            var hash = refChain.GetHashCode().ToString();
-
-            if (refChain.CheckDepth())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Ident);
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
+            if (!SceneTreeCheckDepth(refChain)) return;
 
             if (obj == null || property == null)
             {
-                GUILayout.Label("null");
+                OnSceneTreeMessage(refChain, "null");
                 return;
             }
+
+            var hash = refChain.GetHashCode().ToString();
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(treeIdentSpacing * refChain.Ident);
@@ -821,28 +820,22 @@ namespace ModTools
 
         private void OnSceneTreeReflectMethod(ReferenceChain refChain, System.Object obj, MethodInfo method)
         {
-            AddDebugLine("OnSceneTreeReflectMethod(obj = {0}, method = {1})", obj, method);
-
-            if (refChain.CheckDepth())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Ident);
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
+            if (!SceneTreeCheckDepth(refChain)) return;
 
             if (obj == null || method == null)
             {
-                GUILayout.Label("null");
+                OnSceneTreeMessage(refChain, "null");
                 return;
             }
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
+            GUI.contentColor = Color.green;
             GUILayout.Label("method ");
-            string signature = method.ReturnType.ToString() + " " + method.Name + "(";
+            GUI.contentColor = Color.white;
+            GUILayout.Label(method.ReturnType.ToString() + " " + method.Name + "(");
+            GUI.contentColor = Color.blue;
 
             bool first = true;
             var parameters = method.GetParameters();
@@ -850,19 +843,17 @@ namespace ModTools
             {
                 if (!first)
                 {
-                    signature += ", ";
+                    GUILayout.Label(", ");
                 }
                 else
                 {
                     first = false;
                 }
 
-                signature += param.ParameterType.ToString() + " " + param.Name;
+                GUILayout.Label(param.ParameterType.ToString() + " " + param.Name);
             }
-
-            signature += ")";
-
-            GUILayout.Label(signature);
+            GUI.contentColor = Color.white;
+            GUILayout.Label(")");
 
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -870,17 +861,7 @@ namespace ModTools
 
         private void OnSceneTreeReflectUnityEngineVector3<T>(ReferenceChain refChain, T obj, string name, ref UnityEngine.Vector3 vec)
         {
-            AddDebugLine("OnSceneTreeReflectUnityEngineVector3(caller = {0}, obj = {1}, name = {2}, vec = {3})",
-                refChain, obj, name, vec);
-            
-            if (refChain.CheckDepth())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Ident);
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
+            if (!SceneTreeCheckDepth(refChain)) return;
 
             GUIControls.Vector3Field(refChain.ToString(), name, ref vec, treeIdentSpacing * refChain.Ident, () =>
             {
@@ -897,20 +878,11 @@ namespace ModTools
 
         private void OnSceneTreeReflectUnityEngineTransform(ReferenceChain refChain, UnityEngine.Transform transform)
         {
-            AddDebugLine("OnSceneTreeReflectUnityEngineTransform(caller = {0}, transform = {1})", refChain, transform);
-
-            if (refChain.CheckDepth())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Ident);
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
+            if (!SceneTreeCheckDepth(refChain)) return;
 
             if (transform == null)
             {
-                GUILayout.Label("null");
+                OnSceneTreeMessage(refChain, "null");
                 return;
             }
 
@@ -980,22 +952,11 @@ namespace ModTools
 
         private void OnSceneReflectUnityEngineMaterial(ReferenceChain refChain, UnityEngine.Material material)
         {
-            AddDebugLine("OnSceneTreeReflectUnityEngineTransform(caller = {0}, material = {1})", refChain, material);
-
-            var hash = refChain.GetHashCode().ToString();
-
-            if (refChain.CheckDepth())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Ident);
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
-
+            if (!SceneTreeCheckDepth(refChain)) return;
+           
             if(material == null)
             {
-                GUILayout.Label("null");
+                OnSceneTreeMessage(refChain, "null");
                 return;
             }
 
@@ -1079,7 +1040,10 @@ namespace ModTools
             foreach (string prop in colorProps)
             {
                 if (!material.HasProperty(prop))
+                {
                     continue;
+                }
+
                 Color value = material.GetColor(prop);
                 refChain = oldRefChain.Add(prop);
 
@@ -1150,16 +1114,7 @@ namespace ModTools
 
         private void OnSceneTreeReflectIEnumerable(ReferenceChain refChain, System.Object myProperty)
         {
-            AddDebugLine("OnSceneTreeReflectIEnumerable(caller = {0}, obj = {1})", refChain, myProperty);
-
-            if (refChain.CheckDepth())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Ident);
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
+            if (!SceneTreeCheckDepth(refChain)) return;
 
             var enumerable = myProperty as IEnumerable;
             if (enumerable == null)
@@ -1363,10 +1318,7 @@ namespace ModTools
                     count++;
                     if (count >= 1024)
                     {
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Space(treeIdentSpacing * refChain.Ident);
-                        GUILayout.Label("Array too large to display");
-                        GUILayout.EndHorizontal();
+                        OnSceneTreeMessage(refChain, "Array too large to display");
                         break;
                     }
                 }
@@ -1375,18 +1327,11 @@ namespace ModTools
 
         private void OnSceneTreeReflect(ReferenceChain refChain, System.Object obj, bool rawReflection = false)
         {
-            if (refChain.CheckDepth())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Ident);
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
+            if (!SceneTreeCheckDepth(refChain)) return;
 
             if (obj == null)
             {
-                GUILayout.Label("null");
+                OnSceneTreeMessage(refChain, "null");
                 return;
             }
 
@@ -1396,10 +1341,7 @@ namespace ModTools
             {
                 if (preventCircularReferences.ContainsKey(obj.GetHashCode()))
                 {
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(treeIdentSpacing * refChain.Ident);
-                    GUILayout.Label("Circular reference detected");
-                    GUILayout.EndHorizontal();
+                    OnSceneTreeMessage(refChain, "Circular reference detected");
                     return;
                 }
 
@@ -1433,13 +1375,9 @@ namespace ModTools
 
             foreach (MemberInfo member in members)
             {
-                FieldInfo field = null;
-                PropertyInfo property = null;
-                MethodInfo method = null;
-
                 if (member.MemberType == MemberTypes.Field && showFields)
                 {
-                    field = (FieldInfo)member;
+                    var field = (FieldInfo)member;
 
                     try
                     {
@@ -1447,15 +1385,12 @@ namespace ModTools
                     }
                     catch (Exception ex)
                     {
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Space(treeIdentSpacing * refChain.Ident);
-                        GUILayout.Label(String.Format("Exception when fetching field \"{0}\" - {1}", field.Name, ex.Message));
-                        GUILayout.EndHorizontal();
+                        OnSceneTreeMessage(refChain, String.Format("Exception when fetching field \"{0}\" - {1}", field.Name, ex.Message));
                     }
                 }
                 else if (member.MemberType == MemberTypes.Property && showProperties)
                 {
-                    property = (PropertyInfo)member;
+                    var property = (PropertyInfo)member;
 
                     try
                     {
@@ -1463,15 +1398,12 @@ namespace ModTools
                     }
                     catch (Exception ex)
                     {
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Space(treeIdentSpacing * refChain.Ident);
-                        GUILayout.Label(String.Format("Exception when fetching property \"{0}\" - {1}", property.Name, ex.Message));
-                        GUILayout.EndHorizontal();
+                        OnSceneTreeMessage(refChain, String.Format("Exception when fetching property \"{0}\" - {1}", property.Name, ex.Message));
                     }
                 }
                 else if (member.MemberType == MemberTypes.Method && showMethods)
                 {
-                    method = (MethodInfo)member;
+                    var method = (MethodInfo)member;
 
                     try
                     {
@@ -1479,10 +1411,7 @@ namespace ModTools
                     }
                     catch (Exception ex)
                     {
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Space(treeIdentSpacing * refChain.Ident);
-                        GUILayout.Label(String.Format("Exception when fetching method \"{0}\" - {1}", method.Name, ex.Message));
-                        GUILayout.EndHorizontal();
+                        OnSceneTreeMessage(refChain, String.Format("Exception when fetching method \"{0}\" - {1}", method.Name, ex.Message));
                     }
                 }
             }
@@ -1490,12 +1419,11 @@ namespace ModTools
 
         private void OnSceneTreeComponent(ReferenceChain refChain, Component component)
         {
-            if (refChain.CheckDepth())
+            if (!SceneTreeCheckDepth(refChain)) return;
+
+            if (component == null)
             {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Ident);
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
+                OnSceneTreeMessage(refChain, "null");
                 return;
             }
 
@@ -1530,20 +1458,11 @@ namespace ModTools
 
         private void OnSceneTreeRecursive(ReferenceChain refChain, GameObject obj)
         {
-            AddDebugLine("OnSceneTreeRecursive(caller = {0}, obj = {1})", refChain, obj);
-
-            if (refChain.CheckDepth())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Ident);
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
+            if (!SceneTreeCheckDepth(refChain)) return;
 
             if (obj == null)
             {
-                GUILayout.Label("null");
+                OnSceneTreeMessage(refChain, "null");
                 return;
             }
 
