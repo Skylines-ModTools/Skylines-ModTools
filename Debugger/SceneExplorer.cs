@@ -1090,10 +1090,12 @@ namespace ModTools
                     material.SetColor(prop, f);
                 }
 
+                var propertyCopy = prop;
+
                 if (GUILayout.Button("c", GUILayout.Width(72)))
                 {
                     var picker = ModTools.Instance.colorPicker;
-                    picker.SetColor(value);
+                    picker.SetColor(value, color => { material.SetColor(propertyCopy, color); });
 
                     Vector2 mouse = Input.mousePosition;
                     mouse.y = Screen.height - mouse.y;
