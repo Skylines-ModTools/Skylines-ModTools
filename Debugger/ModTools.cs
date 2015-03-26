@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.IO;
+using UnityEngine;
 
 namespace ModTools
 {
@@ -235,6 +236,19 @@ namespace ModTools
             if (GUILayout.Button("Mesh Viewer (Ctrl+R)"))
             {
                 meshViewer.visible = !meshViewer.visible;
+            }
+
+            if (GUILayout.Button("Dump materials"))
+            {
+                var materials = Resources.FindObjectsOfTypeAll<Material>();
+
+                string s = "";
+                foreach (var material in materials)
+                {
+                    s += material.shader.name + '\n';
+                }
+
+                File.WriteAllText("C:\\Users\\nlight\\Desktop\\shaders223.txt", s);
             }
         }
 

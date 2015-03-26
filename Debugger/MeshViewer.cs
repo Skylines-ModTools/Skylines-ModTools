@@ -11,17 +11,42 @@ namespace ModTools
 
         private RenderTexture targetRT;
 
+        private float zoom = 100.0f;
+
         private Quaternion rotation = Quaternion.identity;
         private Vector2 lastMousePos = Vector2.zero;
 
+        private Camera meshViewerCamera;
+
         private Material material;
+        private Light light;
 
         public MeshViewer()
             : base("Mesh Viewer", new Rect(512, 128, 512, 512), skin)
         {
             onDraw = DrawWindow;
 
-            material = new Material(Shader.Find("VertexLit"));
+            material = new Material(Shader.Find("Diffuse"));
+
+            try
+            {
+                light = GameObject.Find("Directional Light").GetComponent<Light>();
+            }
+            catch (Exception)
+            {
+                light = null;
+            }
+
+            meshViewerCamera = gameObject.AddComponent<Camera>();
+            meshViewerCamera.transform.position = new Vector3(-10000.0f, -10000.0f, -10000.0f);
+            meshViewerCamera.fieldOfView = 20.0f;
+            meshViewerCamera.backgroundColor = Color.grey;
+            meshViewerCamera.nearClipPlane = 1.0f;
+            meshViewerCamera.farClipPlane = 1000.0f;
+            meshViewerCamera.enabled = false;
+
+            targetRT = new RenderTexture(512, 512, 24, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear);
+            meshViewerCamera.targetTexture = targetRT;
         }
 
         void Update()
@@ -31,55 +56,60 @@ namespace ModTools
                 return;
             }
 
-            if (targetRT != null)
+            float intensity = 1.0f;
+
+            if (light != null)
             {
-                RenderTexture.ReleaseTemporary(targetRT);
+                intensity = light.intensity;
+                light.intensity = 0.6f;
             }
 
-            targetRT = RenderTexture.GetTemporary((int)rect.width, (int)(rect.height - 38.0f), 24, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear);
-            var oldRT = RenderTexture.active;
+            var pos = meshViewerCamera.transform.position + new Vector3(0.0f, -zoom, -zoom);
+            var trs = Matrix4x4.TRS(pos, rotation, new Vector3(1.0f, 1.0f, 1.0f));
+            meshViewerCamera.transform.LookAt(pos, Vector3.up);
 
-            Matrix4x4 trs = Matrix4x4.TRS(new Vector3(1024.0f, 1024.0f, 0.0f), rotation, new Vector3(32.0f, 32.0f, 32.0f));
-            Matrix4x4 projection = Matrix4x4.Perspective(45.0f, rect.width/rect.height, 1.0f, 100000.0f);
+            Graphics.DrawMesh(previewMesh, trs, material, 0, meshViewerCamera, 0, null, false, false);
+            meshViewerCamera.RenderWithShader(material.shader, "");
 
-            GL.Viewport(new Rect(0.0f, 0.0f, rect.width, rect.height - 38.0f));
-
-            GL.PushMatrix();
-            GL.LoadProjectionMatrix(projection);
-            GL.PopMatrix();
-            
-            RenderTexture.active = targetRT;
-            GL.Clear(true, true, Color.magenta);
-            if (material.SetPass(0))
+            if (light != null)
             {
-                Graphics.DrawMeshNow(previewMesh, trs);
+                light.intensity = intensity;
             }
-            RenderTexture.active = oldRT;
         }
 
         void DrawWindow()
         {
             if (previewMesh != null)
             {
-                title = String.Format("Previewing {0} \"{1}\"", caller, previewMesh.name);
+                title = String.Format("Previewing \"{0}\"", previewMesh.name);
+                
+                GUILayout.BeginHorizontal();
 
                 if (GUILayout.Button("Dump .obj", GUILayout.Width(128)))
                 {
                     Util.DumpMeshOBJ(previewMesh, previewMesh.name + ".obj");
                 }
 
-                if (Event.current.type == EventType.MouseDrag)
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+
+                if (Event.current.type == EventType.MouseDown)
+                {
+                    lastMousePos = Event.current.mousePosition;
+                }
+                else if (Event.current.type == EventType.MouseDrag)
                 {
                     var pos = Event.current.mousePosition;
                     if (lastMousePos != Vector2.zero)
                     {
                         var delta = pos - lastMousePos;
-                        rotation *= Quaternion.Euler(delta.x, delta.y, 0.0f);
+                        zoom += delta.y;
+                        rotation *= Quaternion.Euler(0.0f, -delta.x, 0.0f);
                     }
                     lastMousePos = pos;
                 }
-
-                GUI.DrawTexture(new Rect(0.0f, 38.0f, rect.width, rect.height), targetRT, ScaleMode.ScaleToFit, false);
+            
+                GUI.DrawTexture(new Rect(0.0f, 64.0f, rect.width, rect.height - 64.0f), targetRT, ScaleMode.StretchToFill, false);
             }
             else
             {
