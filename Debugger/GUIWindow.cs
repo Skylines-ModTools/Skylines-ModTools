@@ -13,9 +13,18 @@ namespace ModTools
 
         public delegate void OnUnityGUI();
 
+        public delegate void OnClose();
+
+        public delegate void OnResize(Vector2 size);
+
+        public delegate void OnMove(Vector2 position);
+
         public OnDraw onDraw = null;
         public OnException onException = null;
         public OnUnityGUI onUnityGUI = null;
+        public OnClose onClose = null;
+        public OnResize onResize = null;
+        public OnMove onMove = null;
 
         public Rect rect = new Rect(0, 0, 64, 64);
 
@@ -254,6 +263,11 @@ namespace ModTools
                     {
                         movingWindow = null;
                         ModTools.Instance.SaveConfig();
+
+                        if (onMove != null)
+                        {
+                            onMove(rect.position);
+                        }
                     }
                 }
             }
@@ -288,6 +302,11 @@ namespace ModTools
                     movingWindow = null;
                     visible = false;
                     ModTools.Instance.SaveConfig();
+
+                    if (onClose != null)
+                    {
+                        onClose();
+                    }
                 }
             }
 
@@ -336,6 +355,11 @@ namespace ModTools
                     {
                         resizingWindow = null;
                         ModTools.Instance.SaveConfig();
+
+                        if (onResize != null)
+                        {
+                            onResize(rect.size);
+                        }
                     }
                 }
             }

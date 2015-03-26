@@ -12,6 +12,12 @@ namespace ModTools
         public TextureViewer() : base("Texture Viewer", new Rect(512, 128, 512, 512), skin)
         {
             onDraw = DrawWindow;
+            onClose = HandleClose;
+        }
+
+        void HandleClose()
+        {
+            Destroy(this);
         }
 
         void DrawWindow()
@@ -25,9 +31,9 @@ namespace ModTools
                     Util.DumpTextureToPNG(previewTexture);
                 }
 
-                float aspect = (float)previewTexture.width / ((float)previewTexture.height + 38.0f);
+                float aspect = (float)previewTexture.width / ((float)previewTexture.height + 60.0f);
                 rect.width = rect.height * aspect;
-                GUI.DrawTexture(new Rect(0.0f, 38.0f, rect.width, rect.height), previewTexture, ScaleMode.ScaleToFit, false);
+                GUI.DrawTexture(new Rect(0.0f, 60.0f, rect.width, rect.height - 60.0f), previewTexture, ScaleMode.ScaleToFit, false);
             }
             else
             {
@@ -35,8 +41,6 @@ namespace ModTools
                 GUILayout.Label("Use the Scene Explorer to select a Texture for preview");
             }
         }
-
-        
 
     }
 }

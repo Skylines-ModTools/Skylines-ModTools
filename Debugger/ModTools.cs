@@ -13,8 +13,6 @@ namespace ModTools
         public SceneExplorerColorConfig sceneExplorerColorConfig;
 
         public Watches watches;
-        public TextureViewer textureViewer;
-        public MeshViewer meshViewer;
         public ColorPicker colorPicker;
 
         private GamePanelExtender panelExtender;
@@ -31,8 +29,6 @@ namespace ModTools
         {
             Destroy(sceneExplorer);
             Destroy(watches);
-            Destroy(textureViewer);
-            Destroy(meshViewer);
             Destroy(panelExtender);
         }
 
@@ -60,12 +56,6 @@ namespace ModTools
             rect = config.mainWindowRect;
             visible = config.mainWindowVisible;
 
-            textureViewer.rect = config.textureViewerRect;
-            textureViewer.visible = config.textureViewerVisible;
-
-            meshViewer.rect = config.meshViewerRect;
-            meshViewer.visible = config.meshViewerVisible;
-
             watches.rect = config.watchesRect;
             watches.visible = config.watchesVisible;
 
@@ -86,12 +76,6 @@ namespace ModTools
 
                 config.mainWindowRect = rect;
                 config.mainWindowVisible = visible;
-
-                config.textureViewerRect = textureViewer.rect;
-                config.textureViewerVisible = textureViewer.visible;
-
-                config.meshViewerRect = meshViewer.rect;
-                config.meshViewerVisible = meshViewer.visible;
 
                 config.watchesRect = watches.rect;
                 config.watchesVisible = watches.visible;
@@ -137,8 +121,6 @@ namespace ModTools
             sceneExplorerColorConfig = gameObject.AddComponent<SceneExplorerColorConfig>();
 
             watches = gameObject.AddComponent<Watches>();
-            textureViewer = gameObject.AddComponent<TextureViewer>();
-            meshViewer = gameObject.AddComponent<MeshViewer>();
             colorPicker = gameObject.AddComponent<ColorPicker>();
 
             LoadConfig();
@@ -170,16 +152,6 @@ namespace ModTools
             if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.W))
             {
                 watches.visible = !watches.visible;
-            }
-
-            if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.R))
-            {
-                meshViewer.visible = !meshViewer.visible;
-            }
-
-            if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.T))
-            {
-                textureViewer.visible = !textureViewer.visible;
             }
         }
 
@@ -226,29 +198,6 @@ namespace ModTools
                 {
                     sceneExplorer.Refresh();
                 }
-            }
-
-            if (GUILayout.Button("Texture Viewer (Ctrl+T)"))
-            {
-                textureViewer.visible = !textureViewer.visible;
-            }
-
-            if (GUILayout.Button("Mesh Viewer (Ctrl+R)"))
-            {
-                meshViewer.visible = !meshViewer.visible;
-            }
-
-            if (GUILayout.Button("Dump materials"))
-            {
-                var materials = Resources.FindObjectsOfTypeAll<Material>();
-
-                string s = "";
-                foreach (var material in materials)
-                {
-                    s += material.shader.name + '\n';
-                }
-
-                File.WriteAllText("C:\\Users\\nlight\\Desktop\\shaders223.txt", s);
             }
         }
 
