@@ -6,11 +6,12 @@ namespace ModTools
     public class SceneExplorerColorConfig : GUIWindow
     {
 
-        public SceneExplorerColorConfig() : base("Color configuration", new Rect(16.0f, 16.0f, 500.0f, 400.0f), skin)
+        public SceneExplorerColorConfig() : base("Color configuration", new Rect(16.0f, 16.0f, 500.0f, 310.0f), skin)
         {
             onDraw = DrawWindow;
             onException = HandleException;
             visible = false;
+            resizable = false;
         }
 
         void DrawColorControl(string name, ref Color value, ColorPicker.OnColorChanged onColorChanged)
