@@ -45,9 +45,7 @@
     <Reference Include="ICities">
       <HintPath>E:\Games\SteamLibrary\SteamApps\common\Cities_Skylines\Cities_Data\Managed\ICities.dll</HintPath>
     </Reference>
-    <Reference Include="System">
-      <HintPath>E:\Games\SteamLibrary\SteamApps\common\Cities_Skylines\Cities_Data\Managed\System.dll</HintPath>
-    </Reference>
+    <Reference Include="System" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
       <HintPath>E:\Games\SteamLibrary\SteamApps\common\Cities_Skylines\Cities_Data\Managed\UnityEngine.dll</HintPath>
