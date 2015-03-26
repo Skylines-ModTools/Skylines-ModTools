@@ -7,6 +7,11 @@ namespace ModTools
     public class GUIWindow : MonoBehaviour
     {
 
+        private Configuration config
+        {
+            get { return ModTools.Instance.config; }
+        }
+
         public delegate void OnDraw();
 
         public delegate void OnException(Exception ex);
@@ -99,7 +104,7 @@ namespace ModTools
             if (skin == null)
             {
                 bgTexture = new Texture2D(1, 1);
-                bgTexture.SetPixel(0, 0, Color.grey);
+                bgTexture.SetPixel(0, 0, config.backgroundColor);
                 bgTexture.Apply();
 
                 resizeNormalTexture = new Texture2D(1, 1);

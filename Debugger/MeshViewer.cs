@@ -21,7 +21,7 @@ namespace ModTools
         private Material material;
         private Light light;
 
-        public MeshViewer()
+        private MeshViewer()
             : base("Mesh Viewer", new Rect(512, 128, 512, 512), skin)
         {
             onDraw = DrawWindow;
@@ -47,6 +47,17 @@ namespace ModTools
 
             targetRT = new RenderTexture(512, 512, 24, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear);
             meshViewerCamera.targetTexture = targetRT;
+        }
+
+        public static MeshViewer CreateMeshViewer(ReferenceChain refChain, Mesh mesh)
+        {
+            var go = new GameObject("MeshViewer");
+            go.transform.parent = ModTools.Instance.transform;
+            var meshViewer = go.AddComponent<MeshViewer>();
+            meshViewer.caller = refChain;
+            meshViewer.previewMesh = mesh;
+            meshViewer.visible = true;
+            return meshViewer;
         }
 
         void Update()

@@ -21,6 +21,7 @@ namespace ModTools
         public bool evaluatePropertiesAutomatically = true;
         public bool extendGamePanels = true;
 
+        public Color backgroundColor = Color.grey;
         public Color gameObjectColor = new Color(165.0f / 255.0f, 186.0f / 255.0f, 229.0f / 255.0f, 1.0f);
         public Color enabledComponentColor = Color.white;
         public Color disabledComponentColor = new Color(127.0f / 255.0f, 127.0f / 255.0f, 127.0f / 255.0f, 1.0f);

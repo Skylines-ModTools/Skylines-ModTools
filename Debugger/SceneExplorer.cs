@@ -576,10 +576,7 @@ namespace ModTools
             {
                 if (GUILayout.Button("Preview"))
                 {
-                    var textureViewer = gameObject.AddComponent<TextureViewer>();
-                    textureViewer.previewTexture = (Texture)value;
-                    textureViewer.caller = refChain;
-                    textureViewer.visible = true;
+                    TextureViewer.CreateTextureViewer(refChain, (Texture)value);
                 }
 
                 if (GUILayout.Button("Dump .png"))
@@ -591,10 +588,7 @@ namespace ModTools
             {
                 if (GUILayout.Button("Preview"))
                 {
-                    var meshViewer = gameObject.AddComponent<MeshViewer>();
-                    meshViewer.previewMesh = (Mesh)value;
-                    meshViewer.caller = refChain;
-                    meshViewer.visible = true;
+                    MeshViewer.CreateMeshViewer(refChain, (Mesh) value);
                 }
 
                 if (GUILayout.Button("Dump .obj"))
@@ -782,10 +776,7 @@ namespace ModTools
             {
                 if (GUILayout.Button("Preview"))
                 {
-                    var textureViewer = gameObject.AddComponent<TextureViewer>();
-                    textureViewer.previewTexture = (Texture)value;
-                    textureViewer.caller = refChain;
-                    textureViewer.visible = true;
+                    TextureViewer.CreateTextureViewer(refChain, (Texture) value);
                 }
 
                 if (GUILayout.Button("Dump .png"))
@@ -797,10 +788,7 @@ namespace ModTools
             {
                 if (GUILayout.Button("Preview"))
                 {
-                    var meshViewer = gameObject.AddComponent<MeshViewer>();
-                    meshViewer.previewMesh = (Mesh)value;
-                    meshViewer.caller = refChain;
-                    meshViewer.visible = true;
+                    MeshViewer.CreateMeshViewer(refChain, (Mesh)value);
                 }
 
                 if (GUILayout.Button("Dump .obj"))
@@ -1038,10 +1026,7 @@ namespace ModTools
 
                 if (GUILayout.Button("Preview"))
                 {
-                    var textureViewer = gameObject.AddComponent<TextureViewer>();
-                    textureViewer.previewTexture = (Texture)value;
-                    textureViewer.caller = refChain;
-                    textureViewer.visible = true;
+                    TextureViewer.CreateTextureViewer(refChain, value);
                 }
 
                 if (GUILayout.Button("Dump .png"))

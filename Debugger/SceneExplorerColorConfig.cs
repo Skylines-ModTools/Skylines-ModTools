@@ -6,7 +6,7 @@ namespace ModTools
     public class SceneExplorerColorConfig : GUIWindow
     {
 
-        public SceneExplorerColorConfig() : base("Color configuration", new Rect(16.0f, 16.0f, 500.0f, 310.0f), skin)
+        public SceneExplorerColorConfig() : base("Color configuration", new Rect(16.0f, 16.0f, 500.0f, 324.0f), skin)
         {
             onDraw = DrawWindow;
             onException = HandleException;
@@ -26,6 +26,13 @@ namespace ModTools
         void DrawWindow()
         {
             var config = ModTools.Instance.config;
+            DrawColorControl("Background", ref config.backgroundColor, color =>
+            {
+                config.gameObjectColor = color;
+                bgTexture.SetPixel(0, 0, config.gameObjectColor);
+                bgTexture.Apply();
+            });
+
             DrawColorControl("GameObject", ref config.gameObjectColor, color => config.gameObjectColor = color);
             DrawColorControl("Component (enabled)", ref config.enabledComponentColor, color => config.enabledComponentColor = color);
             DrawColorControl("Component (disabled)", ref config.disabledComponentColor, color => config.disabledComponentColor = color);
@@ -48,6 +55,7 @@ namespace ModTools
             {
                 var template = new Configuration();
 
+                config.backgroundColor = template.backgroundColor;
                 config.gameObjectColor = template.gameObjectColor;
                 config.enabledComponentColor = template.enabledComponentColor;
                 config.disabledComponentColor = template.disabledComponentColor;

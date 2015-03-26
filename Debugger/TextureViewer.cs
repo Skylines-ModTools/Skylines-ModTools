@@ -9,10 +9,21 @@ namespace ModTools
         public Texture previewTexture = null;
         public ReferenceChain caller = null;
 
-        public TextureViewer() : base("Texture Viewer", new Rect(512, 128, 512, 512), skin)
+        private TextureViewer() : base("Texture Viewer", new Rect(512, 128, 512, 512), skin)
         {
             onDraw = DrawWindow;
             onClose = HandleClose;
+        }
+
+        public static TextureViewer CreateTextureViewer(ReferenceChain refChain, Texture texture)
+        {
+            var go = new GameObject("TextureViewer");
+            go.transform.parent = ModTools.Instance.transform;
+            var textureViewer = go.AddComponent<TextureViewer>();
+            textureViewer.caller = refChain;
+            textureViewer.previewTexture = texture;
+            textureViewer.visible = true;
+            return textureViewer;
         }
 
         void HandleClose()
