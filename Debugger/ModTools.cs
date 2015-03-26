@@ -19,7 +19,6 @@ namespace ModTools
         private GamePanelExtender panelExtender;
 
         public static bool logExceptionsToConsole = true;
-        public static bool evaluatePropertiesAutomatically = true;
         public static bool extendGamePanels = true;
 
         public Configuration config = new Configuration();
@@ -55,7 +54,6 @@ namespace ModTools
             }
 
             logExceptionsToConsole = config.logExceptionsToConsole;
-            evaluatePropertiesAutomatically = config.evaluatePropertiesAutomatically;
             extendGamePanels = config.extendGamePanels;
 
             rect = config.mainWindowRect;
@@ -84,7 +82,6 @@ namespace ModTools
             if (config != null)
             {
                 config.logExceptionsToConsole = logExceptionsToConsole;
-                config.evaluatePropertiesAutomatically = evaluatePropertiesAutomatically;
                 config.extendGamePanels = extendGamePanels;
 
                 config.mainWindowRect = rect;
@@ -191,19 +188,8 @@ namespace ModTools
                 SaveConfig();
             }
 
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Evaluate properties automatically");
-            evaluatePropertiesAutomatically = GUILayout.Toggle(evaluatePropertiesAutomatically, "");
-            GUILayout.EndHorizontal();
-            if (evaluatePropertiesAutomatically != config.evaluatePropertiesAutomatically)
-            {
-                SaveConfig();
-            }
 
-            /*GUILayout.BeginHorizontal();
-            GUILayout.Label("SceneExplorer debug mode");
-            SceneExplorer.debugMode = GUILayout.Toggle(SceneExplorer.debugMode, "");
-            GUILayout.EndHorizontal();*/
+            
 
             GUILayout.BeginHorizontal();
             GUILayout.Label("Game panel extensions");
@@ -248,47 +234,6 @@ namespace ModTools
             {
                 meshViewer.visible = !meshViewer.visible;
             }*/
-
-            mainScroll = GUILayout.BeginScrollView(mainScroll);
-
-            if (GUILayout.Button("Throw exception!"))
-            {
-                throw new Exception("Hello world!");
-            }
-
-            var subscribers = FindObjectsOfType<MonoBehaviour>();
-            Dictionary<string, bool> set = new Dictionary<string, bool>();
-
-            foreach (var subscriber in subscribers)
-            {
-                if (set.ContainsKey(subscriber.name))
-                {
-                    continue;
-                }
-                else
-                {
-                    set.Add(subscriber.name, true);
-                }
-
-                if (subscriber.name.StartsWith("debug:"))
-                {
-                    var tmp = subscriber.name.Split(':');
-                    if (tmp.Length != 3)
-                    {
-                        continue;
-                    }
-
-                    var method = tmp[1];
-                    var label = tmp[2];
-
-                    if (GUILayout.Button(label))
-                    {
-                        subscriber.SendMessage(method);
-                    }
-                }
-            }
-
-            GUILayout.EndScrollView();
         }
 
     }

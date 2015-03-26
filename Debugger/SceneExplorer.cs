@@ -30,7 +30,10 @@ namespace ModTools
         private bool showFields = true;
         private bool showProperties = true;
         private bool showMethods = false;
+
         private bool showModifiers = false;
+
+        private bool evaluatePropertiesAutomatically = true;
 
         private string findGameObjectFilter = "";
         private string findObjectTypeFilter = "";
@@ -49,12 +52,15 @@ namespace ModTools
 
         private ReferenceChain currentRefChain = null;
 
-        private bool showSearchBar = false;
         private bool sortAlphabetically = true;
 
         private float windowTopMargin = 16.0f;
         private float windowBottomMargin = 8.0f;
-        private float headerHeight = 160.0f;
+
+        private float headerHeightCompact = 60.0f;
+        private float headerHeightExpanded = 200.0f;
+        private bool headerExpanded = false;
+
         private float sceneTreeWidth = 300.0f;
 
         private void AddDebugLine(string line, params System.Object[] arg)
@@ -80,23 +86,25 @@ namespace ModTools
             headerArea = new GUIArea(this);
             headerArea.absolutePosition.y = windowTopMargin;
             headerArea.relativeSize.x = 1.0f;
-            headerArea.absoluteSize.y = headerHeight - windowTopMargin;
 
             sceneTreeArea = new GUIArea(this);
-            sceneTreeArea.absolutePosition.y = headerHeight - windowTopMargin;
             sceneTreeArea.relativeSize.y = 1.0f;
             sceneTreeArea.absoluteSize.x = sceneTreeWidth;
-            sceneTreeArea.absoluteSize.y = -(headerHeight - windowTopMargin) - windowBottomMargin;
 
             componentArea = new GUIArea(this);
             componentArea.absolutePosition.x = sceneTreeWidth;
-            componentArea.absolutePosition.y = headerHeight - windowTopMargin;
             componentArea.relativeSize.x = 1.0f;
             componentArea.relativeSize.y = 1.0f;
             componentArea.absoluteSize.x = -sceneTreeWidth;
+
+            float headerHeight = headerExpanded ? headerHeightExpanded : headerHeightCompact;
+
+            headerArea.absoluteSize.y = headerHeight - windowTopMargin;
+            sceneTreeArea.absolutePosition.y = headerHeight - windowTopMargin;
+            sceneTreeArea.absoluteSize.y = -(headerHeight - windowTopMargin) - windowBottomMargin;
+            componentArea.absolutePosition.y = headerHeight - windowTopMargin;
             componentArea.absoluteSize.y = -(headerHeight - windowTopMargin) - windowBottomMargin;
         }
-
         void ExceptionHandler(Exception ex)
         {
             Log.Error("Exception in Scene Explorer - " + ex.Message);
@@ -627,7 +635,7 @@ namespace ModTools
             bool propertyWasEvaluated = false;
             object value = null;
 
-            if (property.CanRead && ModTools.evaluatePropertiesAutomatically || evaluatedProperties.ContainsKey(refChain))
+            if (property.CanRead && evaluatePropertiesAutomatically || evaluatedProperties.ContainsKey(refChain))
             {
                 try
                 {
@@ -686,7 +694,7 @@ namespace ModTools
             GUI.contentColor = Color.white;
             GUILayout.Label(" = ");
 
-            if (!ModTools.evaluatePropertiesAutomatically && !evaluatedProperties.ContainsKey(refChain))
+            if (!evaluatePropertiesAutomatically && !evaluatedProperties.ContainsKey(refChain))
             {
                 GUI.enabled = true;
 
@@ -1588,6 +1596,45 @@ namespace ModTools
         {
             headerArea.Begin();
 
+            if (headerExpanded)
+            {
+                DrawExpandedHeader();
+            }
+            else
+            {
+                DrawCompactHeader();
+            }
+
+            headerArea.End();            
+        }
+
+        public void DrawCompactHeader()
+        {
+            GUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("▼"))
+            {
+                headerExpanded = true;
+                RecalculateAreas();
+            }
+
+            if (GUILayout.Button("Refresh", GUILayout.Width(200)))
+            {
+                Refresh();
+            }
+
+            if (GUILayout.Button("Fold all/ Clear", GUILayout.Width(200)))
+            {
+                ClearExpanded();
+                Refresh();
+            }
+
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+        }
+
+        public void DrawExpandedHeader()
+        {
             GUILayout.BeginHorizontal();
 
             GUI.contentColor = Color.green;
@@ -1607,112 +1654,20 @@ namespace ModTools
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Show field/ property modifiers");
+            GUI.contentColor = Color.green;
+            GUILayout.Label("Show field/ property modifiers:");
             showModifiers = GUILayout.Toggle(showModifiers, "");
+            GUI.contentColor = Color.white;
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUI.contentColor = Color.green;
-            GUILayout.Label("Show search options:");
+            GUILayout.Label("Evaluate properties automatically");
+            evaluatePropertiesAutomatically = GUILayout.Toggle(evaluatePropertiesAutomatically, "");
             GUI.contentColor = Color.white;
-            var showSearchNew = GUILayout.Toggle(showSearchBar, "");
-            if (showSearchNew != showSearchBar)
-            {
-                if (showSearchNew)
-                {
-                    headerHeight = 220.0f;
-                }
-                else
-                {
-                    headerHeight = 160.0f;
-                }
-
-                RecalculateAreas();
-                showSearchBar = showSearchNew;
-            }
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
-
-            if (showSearchBar)
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("GameObject.Find");
-                findGameObjectFilter = GUILayout.TextField(findGameObjectFilter, GUILayout.Width(256));
-
-                if (findGameObjectFilter.Trim().Length == 0)
-                {
-                    GUI.enabled = false;
-                }
-
-                if (GUILayout.Button("Find"))
-                {
-                    ClearExpanded();
-                    var go = GameObject.Find(findGameObjectFilter.Trim());
-                    if (go != null)
-                    {
-                        sceneRoots.Clear();
-                        expandedGameObjects.Add(new ReferenceChain().Add(go), true);
-                        sceneRoots.Add(go, true);
-                        sceneTreeScrollPosition = Vector2.zero;
-                        searchDisplayString = String.Format("Showing results for GameObject.Find(\"{0}\")", findGameObjectFilter);
-                    }
-                }
-
-                if (GUILayout.Button("Reset"))
-                {
-                    ClearExpanded();
-                    sceneRoots = GameObjectUtil.FindSceneRoots();
-                    sceneTreeScrollPosition = Vector2.zero;
-                    searchDisplayString = "";
-                }
-
-                GUI.enabled = true;
-
-                GUILayout.FlexibleSpace();
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("GameObject.FindObjectsOfType");
-                findObjectTypeFilter = GUILayout.TextField(findObjectTypeFilter, GUILayout.Width(256));
-
-                if (findObjectTypeFilter.Trim().Length == 0)
-                {
-                    GUI.enabled = false;
-                }
-
-                if (GUILayout.Button("Find"))
-                {
-                    var gameObjects = GameObjectUtil.FindComponentsOfType(findObjectTypeFilter.Trim());
-
-                    sceneRoots.Clear();
-                    foreach (var item in gameObjects)
-                    {
-                        ClearExpanded();
-                        expandedGameObjects.Add(new ReferenceChain().Add(item.Key), true);
-                        if (gameObjects.Count == 1)
-                        {
-                            expandedComponents.Add(new ReferenceChain().Add(item.Key).Add(item.Value), true);
-                        }
-                        sceneRoots.Add(item.Key, true);
-                        sceneTreeScrollPosition = Vector2.zero;
-                        searchDisplayString = String.Format("Showing results for GameObject.FindObjectsOfType({0})", findObjectTypeFilter);
-                    }
-                }
-
-                if (GUILayout.Button("Reset"))
-                {
-                    ClearExpanded();
-                    sceneRoots = GameObjectUtil.FindSceneRoots();
-                    sceneTreeScrollPosition = Vector2.zero;
-                    searchDisplayString = "";
-                }
-
-                GUI.enabled = true;
-
-                GUILayout.FlexibleSpace();
-                GUILayout.EndHorizontal();
-            }
 
             GUILayout.BeginHorizontal();
             GUI.contentColor = Color.green;
@@ -1722,7 +1677,15 @@ namespace ModTools
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
 
+            DrawFindGameObjectPanel();
+
             GUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("▲"))
+            {
+                headerExpanded = false;
+                RecalculateAreas();
+            }
 
             if (GUILayout.Button("Refresh", GUILayout.Width(200)))
             {
@@ -1737,8 +1700,86 @@ namespace ModTools
 
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
+        }
 
-            headerArea.End();
+        void DrawFindGameObjectPanel()
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("GameObject.Find");
+            findGameObjectFilter = GUILayout.TextField(findGameObjectFilter, GUILayout.Width(256));
+
+            if (findGameObjectFilter.Trim().Length == 0)
+            {
+                GUI.enabled = false;
+            }
+
+            if (GUILayout.Button("Find"))
+            {
+                ClearExpanded();
+                var go = GameObject.Find(findGameObjectFilter.Trim());
+                if (go != null)
+                {
+                    sceneRoots.Clear();
+                    expandedGameObjects.Add(new ReferenceChain().Add(go), true);
+                    sceneRoots.Add(go, true);
+                    sceneTreeScrollPosition = Vector2.zero;
+                    searchDisplayString = String.Format("Showing results for GameObject.Find(\"{0}\")", findGameObjectFilter);
+                }
+            }
+
+            if (GUILayout.Button("Reset"))
+            {
+                ClearExpanded();
+                sceneRoots = GameObjectUtil.FindSceneRoots();
+                sceneTreeScrollPosition = Vector2.zero;
+                searchDisplayString = "";
+            }
+
+            GUI.enabled = true;
+
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("GameObject.FindObjectsOfType");
+            findObjectTypeFilter = GUILayout.TextField(findObjectTypeFilter, GUILayout.Width(256));
+
+            if (findObjectTypeFilter.Trim().Length == 0)
+            {
+                GUI.enabled = false;
+            }
+
+            if (GUILayout.Button("Find"))
+            {
+                var gameObjects = GameObjectUtil.FindComponentsOfType(findObjectTypeFilter.Trim());
+
+                sceneRoots.Clear();
+                foreach (var item in gameObjects)
+                {
+                    ClearExpanded();
+                    expandedGameObjects.Add(new ReferenceChain().Add(item.Key), true);
+                    if (gameObjects.Count == 1)
+                    {
+                        expandedComponents.Add(new ReferenceChain().Add(item.Key).Add(item.Value), true);
+                    }
+                    sceneRoots.Add(item.Key, true);
+                    sceneTreeScrollPosition = Vector2.zero;
+                    searchDisplayString = String.Format("Showing results for GameObject.FindObjectsOfType({0})", findObjectTypeFilter);
+                }
+            }
+
+            if (GUILayout.Button("Reset"))
+            {
+                ClearExpanded();
+                sceneRoots = GameObjectUtil.FindSceneRoots();
+                sceneTreeScrollPosition = Vector2.zero;
+                searchDisplayString = "";
+            }
+
+            GUI.enabled = true;
+
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
         }
 
         public void DrawSceneTree()
