@@ -28,7 +28,7 @@ namespace ModTools
             var config = ModTools.Instance.config;
             DrawColorControl("Background", ref config.backgroundColor, color =>
             {
-                config.gameObjectColor = color;
+                config.backgroundColor = color;
                 bgTexture.SetPixel(0, 0, config.backgroundColor);
                 bgTexture.Apply();
             });
