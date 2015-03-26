@@ -12,6 +12,8 @@ namespace ModTools
         private Vector2 mainScroll = Vector2.zero;
 
         public SceneExplorer sceneExplorer;
+        public SceneExplorerColorConfig sceneExplorerColorConfig;
+
         public Watches watches;
         public TextureViewer textureViewer;
       //  public MeshViewer meshViewer;
@@ -134,6 +136,8 @@ namespace ModTools
             };
 
             sceneExplorer = gameObject.AddComponent<SceneExplorer>();
+            sceneExplorerColorConfig = gameObject.AddComponent<SceneExplorerColorConfig>();
+
             watches = gameObject.AddComponent<Watches>();
             textureViewer = gameObject.AddComponent<TextureViewer>();
             //meshViewer = gameObject.AddComponent<MeshViewer>();

@@ -7,6 +7,11 @@ namespace ModTools
     class GUIControls
     {
 
+        private static Configuration config
+        {
+            get { return ModTools.Instance.config; }
+        }
+
         public static float numberFieldSize = 100;
         public static float stringFieldSize = 200;
         public static float byteFieldSize = 40;
@@ -75,11 +80,11 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label("float");
             }
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
             GUILayout.Label(name);
 
             if (!noSpace)
@@ -87,7 +92,7 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            GUI.contentColor = Color.white;
+            GUI.contentColor = config.valueColor;
 
             string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
@@ -98,6 +103,8 @@ namespace ModTools
                     value = newValue;
                 }
             }
+
+            GUI.contentColor = Color.white;
 
             GUILayout.EndHorizontal();
         }
@@ -113,11 +120,11 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label("double");
             }
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
             GUILayout.Label(name);
 
             if (!noSpace)
@@ -125,7 +132,7 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            GUI.contentColor = Color.white;
+            GUI.contentColor = config.valueColor;
 
             string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
@@ -136,6 +143,8 @@ namespace ModTools
                     value = newValue;
                 }
             }
+
+            GUI.contentColor = Color.white;
 
             GUILayout.EndHorizontal();
         }
@@ -151,11 +160,11 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label("int");
             }
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
 
             GUILayout.Label(name);
 
@@ -166,7 +175,7 @@ namespace ModTools
 
             byte oldValue = value;
 
-            GUI.contentColor = Color.white;
+            GUI.contentColor = config.valueColor;
             string result = BufferedTextField(hash, value.ToString(), byteFieldSize);
             if (result != null)
             {
@@ -176,6 +185,8 @@ namespace ModTools
                     value = newValue;
                 }
             }
+
+            GUI.contentColor = Color.white;
 
             GUILayout.EndHorizontal();
         }
@@ -191,11 +202,11 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label("int");
             }
            
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
 
             GUILayout.Label(name);
 
@@ -204,7 +215,7 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            GUI.contentColor = Color.white;
+            GUI.contentColor = config.valueColor;
 
             string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
@@ -216,8 +227,8 @@ namespace ModTools
                 }
             }
 
-            GUILayout.EndHorizontal();
             GUI.contentColor = Color.white;
+            GUILayout.EndHorizontal();
         }
 
         static public void UIntField(string hash, string name, ref uint value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
@@ -231,11 +242,11 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label("uint");
             }
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
 
             GUILayout.Label(name);
 
@@ -244,7 +255,7 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            GUI.contentColor = Color.white;
+            GUI.contentColor = config.valueColor;
 
             string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
@@ -256,8 +267,9 @@ namespace ModTools
                 }
             }
 
-            GUILayout.EndHorizontal();
             GUI.contentColor = Color.white;
+
+            GUILayout.EndHorizontal();
         }
 
         static public void Int64Field(string hash, string name, ref Int64 value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
@@ -271,11 +283,11 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label("Int64");
             }
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
 
             GUILayout.Label(name);
 
@@ -284,7 +296,7 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            GUI.contentColor = Color.white;
+            GUI.contentColor = config.valueColor;
 
             string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
@@ -295,6 +307,8 @@ namespace ModTools
                     value = newValue;
                 }
             }
+
+            GUI.contentColor = Color.white;
 
             GUILayout.EndHorizontal();
         }
@@ -310,11 +324,11 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label("UInt64");
             }
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
 
             GUILayout.Label(name);
 
@@ -323,7 +337,7 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            GUI.contentColor = Color.white;
+            GUI.contentColor = config.valueColor;
 
             string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
@@ -334,6 +348,8 @@ namespace ModTools
                     value = newValue;
                 }
             }
+
+            GUI.contentColor = Color.white;
 
             GUILayout.EndHorizontal();
         }
@@ -349,11 +365,11 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label("Int16");
             }
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
 
             GUILayout.Label(name);
 
@@ -364,7 +380,7 @@ namespace ModTools
 
             Int16 oldValue = value;
 
-            GUI.contentColor = Color.white;
+            GUI.contentColor = config.valueColor;
 
             string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
@@ -376,8 +392,9 @@ namespace ModTools
                 }
             }
 
-            GUILayout.EndHorizontal();
             GUI.contentColor = Color.white;
+
+            GUILayout.EndHorizontal();
         }
 
         static public void UInt16Field(string hash, string name, ref UInt16 value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
@@ -391,11 +408,11 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label("UInt16");
             }
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
 
             GUILayout.Label(name);
 
@@ -404,9 +421,7 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            UInt16 oldValue = value;
-
-            GUI.contentColor = Color.white;
+            GUI.contentColor = config.valueColor;
 
             string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
@@ -417,6 +432,8 @@ namespace ModTools
                     value = newValue;
                 }
             }
+
+            GUI.contentColor = Color.white;
 
             GUILayout.EndHorizontal();
         }
@@ -432,17 +449,18 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label("string");
             }
            
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
             GUILayout.Label(name);
             if (!noSpace)
             {
                 GUILayout.FlexibleSpace();
             }
-            GUI.contentColor = Color.white;
+
+            GUI.contentColor = config.valueColor;
 
             string result = BufferedTextField(hash, value.ToString(), stringFieldSize);
             if (result != null)
@@ -450,8 +468,9 @@ namespace ModTools
                 value = result;
             }
 
-            GUILayout.EndHorizontal();
             GUI.contentColor = Color.white;
+
+            GUILayout.EndHorizontal();
         }
 
         static public void CharField(string hash, string name, ref char value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
@@ -465,23 +484,26 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label("string");
             }
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
             GUILayout.Label(name);
             if (!noSpace)
             {
                 GUILayout.FlexibleSpace();
             }
-            GUI.contentColor = Color.white;
+
+            GUI.contentColor = config.valueColor;
 
             string result = BufferedTextField(hash, value.ToString(), charFieldSize);
             if (result != null)
             {
                 value = result[0];
             }
+
+            GUI.contentColor = Color.white;
 
             GUILayout.EndHorizontal();
         }
@@ -497,22 +519,25 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label("bool");
             }
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
             GUILayout.Label(name);
-            GUI.contentColor = Color.white;
 
+            GUI.contentColor = config.valueColor;
+           
             if (!noSpace)
             {
                 GUILayout.FlexibleSpace();
             }
 
             value = GUILayout.Toggle(value, "");
-            GUILayout.EndHorizontal();
+
             GUI.contentColor = Color.white;
+
+            GUILayout.EndHorizontal();
         }
 
         static public void EnumField(string hash, string name, ref object value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
@@ -528,13 +553,13 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label(enumType.FullName);
             }
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
             GUILayout.Label(name);
-            GUI.contentColor = Color.white;
+            GUI.contentColor = config.valueColor;
 
             if (!noSpace)
             {
@@ -562,8 +587,9 @@ namespace ModTools
                 value = Enum.Parse(enumType, enumNames[newIndex]);
             }
 
-            GUILayout.EndHorizontal();
             GUI.contentColor = Color.white;
+
+            GUILayout.EndHorizontal();
         }
 
         static public void Vector2Field(string hash, string name, ref Vector2 value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
@@ -577,13 +603,14 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label("Vector2");
             }
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
             GUILayout.Label(name);
-            GUI.contentColor = Color.white;
+
+            GUI.contentColor = config.valueColor;
 
             if (!noSpace)
             {
@@ -601,8 +628,9 @@ namespace ModTools
                 }
             }
 
-            GUILayout.EndHorizontal();
             GUI.contentColor = Color.white;
+
+            GUILayout.EndHorizontal();
         }
 
         static public void Vector3Field(string hash, string name, ref Vector3 value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
@@ -616,13 +644,14 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label("Vector3"); 
             }
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
             GUILayout.Label(name);
-            GUI.contentColor = Color.white;
+
+            GUI.contentColor = config.valueColor;
 
             if (!noSpace)
             {
@@ -641,8 +670,9 @@ namespace ModTools
                 }
             }
 
-            GUILayout.EndHorizontal();
             GUI.contentColor = Color.white;
+
+            GUILayout.EndHorizontal();
         }
 
         static public void Vector4Field(string hash, string name, ref Vector4 value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
@@ -656,13 +686,14 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label("Vector4");
             }
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
             GUILayout.Label(name);
-            GUI.contentColor = Color.white;
+
+            GUI.contentColor = config.valueColor;
 
             if (!noSpace)
             {
@@ -682,8 +713,9 @@ namespace ModTools
                 }
             }
 
-            GUILayout.EndHorizontal();
             GUI.contentColor = Color.white;
+
+            GUILayout.EndHorizontal();
         }
 
         static public void QuaternionField(string hash, string name, ref Quaternion value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
@@ -697,13 +729,14 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label("Vector4");
             }
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
             GUILayout.Label(name);
-            GUI.contentColor = Color.white;
+
+            GUI.contentColor = config.valueColor;
 
             if (!noSpace)
             {
@@ -729,8 +762,9 @@ namespace ModTools
                 }
             }
 
-            GUILayout.EndHorizontal();
             GUI.contentColor = Color.white;
+
+            GUILayout.EndHorizontal();
         }
 
         static public void ColorField(string hash, string name, ref Color value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false, ColorPicker.OnColorChanged onColorChanged = null)
@@ -744,13 +778,14 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label("Color");
             }
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
             GUILayout.Label(name);
-            GUI.contentColor = Color.white;
+
+            GUI.contentColor = config.valueColor;
 
             if (!noSpace)
             {
@@ -802,8 +837,9 @@ namespace ModTools
                 }
             }
 
-            GUILayout.EndHorizontal();
             GUI.contentColor = Color.white;
+
+            GUILayout.EndHorizontal();
         }
 
         static public void Color32Field(string hash, string name, ref Color32 value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false, ColorPicker.OnColorChanged onColorChanged = null)
@@ -817,13 +853,14 @@ namespace ModTools
 
             if (!noTypeLabel)
             {
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label("Color");
             }
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
             GUILayout.Label(name);
-            GUI.contentColor = Color.white;
+
+            GUI.contentColor = config.valueColor;
 
             if (!noSpace)
             {
@@ -865,8 +902,9 @@ namespace ModTools
                 }
             }
 
-            GUILayout.EndHorizontal();
             GUI.contentColor = Color.white;
+
+            GUILayout.EndHorizontal();
         }
 
     }

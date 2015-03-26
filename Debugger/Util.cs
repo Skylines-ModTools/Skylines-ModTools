@@ -204,6 +204,17 @@ namespace ModTools
             WritePrivate<SavedBool, bool>(mouseWheelZoom, "m_Value", isEnabled);
         }
 
+        public static bool ComponentIsEnabled(Component component)
+        {
+            var prop = component.GetType().GetProperty("enabled");
+            if (prop == null)
+            {
+                return true;
+            }
+
+            return (bool)prop.GetValue(component, null);
+        }
+
     }
 
 }

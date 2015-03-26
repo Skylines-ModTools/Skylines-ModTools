@@ -27,6 +27,19 @@ namespace ModTools
         public bool evaluatePropertiesAutomatically = true;
         public bool extendGamePanels = true;
 
+        public Color gameObjectColor = Color.white;
+        public Color enabledComponentColor = Color.white;
+        public Color disabledComponentColor = Color.grey;
+        public Color selectedComponentColor = Color.green;
+
+        public Color nameColor = Color.red;
+        public Color typeColor = Color.green;
+        public Color keywordColor = Color.blue;
+        public Color modifierColor = Color.white;
+        public Color memberTypeColor = Color.white;
+        public Color valueColor = Color.white;
+
+
         public void OnPreSerialize()
         {
 

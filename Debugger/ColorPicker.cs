@@ -63,7 +63,6 @@ namespace ModTools
         {
             currentHSV = ColorUtil.HSV.RGB2HSV(color);
             currentHSV.h = 360.0f - currentHSV.h;
-            Log.Message(currentHSV.ToString());
             onColorChanged = _onColorChanged;
             RedrawPicker();
         }
