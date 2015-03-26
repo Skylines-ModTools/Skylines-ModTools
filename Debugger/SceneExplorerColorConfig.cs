@@ -29,7 +29,7 @@ namespace ModTools
             DrawColorControl("Background", ref config.backgroundColor, color =>
             {
                 config.gameObjectColor = color;
-                bgTexture.SetPixel(0, 0, config.gameObjectColor);
+                bgTexture.SetPixel(0, 0, config.backgroundColor);
                 bgTexture.Apply();
             });
 
