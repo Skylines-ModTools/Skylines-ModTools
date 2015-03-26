@@ -1,6 +1,5 @@
 ﻿// Copyright 2009 The Noda Time Authors. All rights reserved.
-// Use of this source code is governed by the Apache License 2.0,
-// as found in the LICENSE.txt file.
+// Use of this source code is governed by the Apache License 2.0
 
 using System.Diagnostics.CodeAnalysis;
 
@@ -26,7 +25,7 @@ namespace ModTools
     /// </code>
     /// </example>
     /// </remarks>
-    internal static class HashCodeHelper
+    internal static class HashCodeUtil
     {
         /// <summary>
         /// The multiplier for each value.

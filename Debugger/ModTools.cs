@@ -11,17 +11,30 @@ namespace ModTools
 
         private Vector2 mainScroll = Vector2.zero;
 
-        private SceneExplorer sceneExplorer;
-        private Watches watches;
-        private RTLiveView rtLiveView;
+        public SceneExplorer sceneExplorer;
+        public Watches watches;
+        public TextureViewer textureViewer;
+      //  public MeshViewer meshViewer;
+        public ColorPicker colorPicker;
+
+        private GamePanelExtender panelExtender;
 
         public static bool logExceptionsToConsole = true;
-        public static bool evaluatePropertiesAutomatically = true;
+        public static bool extendGamePanels = true;
 
         public Configuration config = new Configuration();
         public static readonly string configPath = "ModToolsConfig.xml";
 
         private static ModTools instance = null;
+
+        public void OnDestroy()
+        {
+            Destroy(sceneExplorer);
+            Destroy(watches);
+            Destroy(textureViewer);
+        //    Destroy(meshViewer);
+            Destroy(panelExtender);
+        }
 
         public static ModTools Instance
         {
@@ -41,11 +54,17 @@ namespace ModTools
                 SaveConfig();
             }
 
+            logExceptionsToConsole = config.logExceptionsToConsole;
+            extendGamePanels = config.extendGamePanels;
+
             rect = config.mainWindowRect;
             visible = config.mainWindowVisible;
 
-            rtLiveView.rect = config.rtLiveViewRect ;
-            rtLiveView.visible = config.rtLiveViewVisible;
+            textureViewer.rect = config.textureViewerRect;
+            textureViewer.visible = config.textureViewerVisible;
+
+            //meshViewer.rect = config.meshViewerRect;
+            //meshViewer.visible = config.meshViewerVisible;
 
             watches.rect = config.watchesRect;
             watches.visible = config.watchesVisible;
@@ -62,11 +81,17 @@ namespace ModTools
         {
             if (config != null)
             {
+                config.logExceptionsToConsole = logExceptionsToConsole;
+                config.extendGamePanels = extendGamePanels;
+
                 config.mainWindowRect = rect;
                 config.mainWindowVisible = visible;
 
-                config.rtLiveViewRect = rtLiveView.rect;
-                config.rtLiveViewVisible = rtLiveView.visible;
+                config.textureViewerRect = textureViewer.rect;
+                config.textureViewerVisible = textureViewer.visible;
+
+               // config.meshViewerRect = meshViewer.rect;
+               // config.meshViewerVisible = meshViewer.visible;
 
                 config.watchesRect = watches.rect;
                 config.watchesVisible = watches.visible;
@@ -110,7 +135,11 @@ namespace ModTools
 
             sceneExplorer = gameObject.AddComponent<SceneExplorer>();
             watches = gameObject.AddComponent<Watches>();
-            rtLiveView = gameObject.AddComponent<RTLiveView>();
+            textureViewer = gameObject.AddComponent<TextureViewer>();
+            //meshViewer = gameObject.AddComponent<MeshViewer>();
+            colorPicker = gameObject.AddComponent<ColorPicker>();
+
+            panelExtender = gameObject.AddComponent<GamePanelExtender>();
 
             LoadConfig();
         }
@@ -140,7 +169,12 @@ namespace ModTools
 
             if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.R))
             {
-                rtLiveView.visible = !rtLiveView.visible;
+                //meshViewer.visible = !meshViewer.visible;
+            }
+
+            if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.T))
+            {
+                textureViewer.visible = !textureViewer.visible;
             }
         }
 
@@ -150,16 +184,30 @@ namespace ModTools
             GUILayout.Label("Log exceptions to console");
             logExceptionsToConsole = GUILayout.Toggle(logExceptionsToConsole, "");
             GUILayout.EndHorizontal();
+            if (logExceptionsToConsole != config.logExceptionsToConsole)
+            {
+                SaveConfig();
+            }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Evaluate properties automatically");
-            evaluatePropertiesAutomatically = GUILayout.Toggle(evaluatePropertiesAutomatically, "");
+            GUILayout.Label("Game panel extensions");
+            var newExtendGamePanels = GUILayout.Toggle(extendGamePanels, "");
             GUILayout.EndHorizontal();
 
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("SceneExplorer debug mode");
-            SceneExplorer.debugMode = GUILayout.Toggle(SceneExplorer.debugMode, "");
-            GUILayout.EndHorizontal();
+            if (newExtendGamePanels != extendGamePanels)
+            {
+                extendGamePanels = newExtendGamePanels;
+                SaveConfig();
+
+                if (extendGamePanels)
+                {
+                    gameObject.AddComponent<GamePanelExtender>();
+                }
+                else
+                {
+                    Destroy(gameObject.GetComponent<GamePanelExtender>());
+                }
+            }
 
             if (GUILayout.Button("Watches (Ctrl+W)"))
             {
@@ -175,51 +223,15 @@ namespace ModTools
                 }
             }
 
-            if (GUILayout.Button("RenderTexture LiveView (Ctrl+R)"))
+            if (GUILayout.Button("Texture Viewer (Ctrl+T)"))
             {
-                rtLiveView.visible = !rtLiveView.visible;
+                textureViewer.visible = !textureViewer.visible;
             }
 
-            mainScroll = GUILayout.BeginScrollView(mainScroll);
-
-            if (GUILayout.Button("Throw exception!"))
+          /*  if (GUILayout.Button("Mesh Viewer (Ctrl+R)"))
             {
-                throw new Exception("Hello world!");
-            }
-
-            var subscribers = FindObjectsOfType<MonoBehaviour>();
-            Dictionary<string, bool> set = new Dictionary<string, bool>();
-
-            foreach (var subscriber in subscribers)
-            {
-                if (set.ContainsKey(subscriber.name))
-                {
-                    continue;
-                }
-                else
-                {
-                    set.Add(subscriber.name, true);
-                }
-
-                if (subscriber.name.StartsWith("debug:"))
-                {
-                    var tmp = subscriber.name.Split(':');
-                    if (tmp.Length != 3)
-                    {
-                        continue;
-                    }
-
-                    var method = tmp[1];
-                    var label = tmp[2];
-
-                    if (GUILayout.Button(label))
-                    {
-                        subscriber.SendMessage(method);
-                    }
-                }
-            }
-
-            GUILayout.EndScrollView();
+                meshViewer.visible = !meshViewer.visible;
+            }*/
         }
 
     }

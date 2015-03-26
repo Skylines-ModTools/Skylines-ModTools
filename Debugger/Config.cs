@@ -17,8 +17,15 @@ namespace ModTools
         public Rect watchesRect = new Rect(504, 128, 800, 300);
         public bool watchesVisible = false;
 
-        public Rect rtLiveViewRect = new Rect(512, 128, 512, 512);
-        public bool rtLiveViewVisible = false;
+        public Rect textureViewerRect = new Rect(512, 128, 512, 512);
+        public bool textureViewerVisible = false;
+
+        public Rect meshViewerRect = new Rect(512, 128, 512, 512);
+        public bool meshViewerVisible = false;
+
+        public bool logExceptionsToConsole = true;
+        public bool evaluatePropertiesAutomatically = true;
+        public bool extendGamePanels = true;
 
         public void OnPreSerialize()
         {

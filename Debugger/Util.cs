@@ -11,11 +11,6 @@ namespace ModTools
     public static class Util
     {
 
-        public static bool IsLayout()
-        {
-            return Event.current.type == EventType.Layout;
-        }
-
         public static void DumpRenderTexture(RenderTexture rt, string pngOutPath)
         {
             var oldRT = RenderTexture.active;
@@ -29,6 +24,79 @@ namespace ModTools
             RenderTexture.active = oldRT;
         }
 
+        public static void DumpTextureToPNG(Texture previewTexture, string filename = null)
+        {
+            if (filename == null)
+            {
+                filename = "";
+                var filenamePrefix = String.Format("rt_dump_{0}", previewTexture.name);
+                if (!File.Exists(filenamePrefix + ".png"))
+                {
+                    filename = filenamePrefix + ".png";
+                }
+                else
+                {
+                    int i = 1;
+                    while (File.Exists(String.Format("{0}_{1}.png", filenamePrefix, i)))
+                    {
+                        i++;
+                    }
+
+                    filename = String.Format("{0}_{1}.png", filenamePrefix, i);
+                }
+            }
+
+            if (File.Exists(filename))
+            {
+                File.Delete(filename);
+            }
+
+            if (previewTexture is RenderTexture)
+            {
+                Util.DumpRenderTexture((RenderTexture)previewTexture, filename);
+                Log.Warning(String.Format("Texture dumped to \"{0}\"", filename));
+            }
+            else if (previewTexture is Texture2D)
+            {
+                var texture = previewTexture as Texture2D;
+                byte[] bytes = null;
+
+                try
+                {
+                    bytes = texture.EncodeToPNG();
+                }
+                catch (UnityException)
+                {
+                    Log.Warning(String.Format("Texture \"{0}\" is marked as read-only, running workaround..", texture.name));
+                }
+
+                if (bytes == null)
+                {
+                    try
+                    {
+                        var rt = RenderTexture.GetTemporary(texture.width, texture.height, 0);
+                        Graphics.Blit(texture, rt);
+                        Util.DumpRenderTexture(rt, filename);
+                        RenderTexture.ReleaseTemporary(rt);
+                        Log.Warning(String.Format("Texture dumped to \"{0}\"", filename));
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error("There was an error while dumping the texture - " + ex.Message);
+                    }
+
+                    return;
+                }
+
+                File.WriteAllBytes(filename, bytes);
+                Log.Warning(String.Format("Texture dumped to \"{0}\"", filename));
+            }
+            else
+            {
+                Log.Error(String.Format("Don't know how to dump type \"{0}\"", previewTexture.GetType()));
+            }
+        }
+
         public static void DumpMeshOBJ(Mesh mesh, string outputPath)
         {
             if (File.Exists(outputPath))
@@ -36,11 +104,42 @@ namespace ModTools
                 File.Delete(outputPath);
             }
 
-            using (var stream = new FileStream(outputPath, FileMode.Create))
+            Mesh meshToDump = mesh;
+
+            if (!mesh.isReadable)
             {
-                OBJLoader.ExportOBJ(mesh.EncodeOBJ(), stream);
-                stream.Close();
-                Log.Warning(String.Format("Dumped mesh \"{0}\" to \"{1}\"", ((Mesh)mesh).name, outputPath));
+                Log.Warning(String.Format("Mesh \"{0}\" is marked as non-readable, running workaround..", mesh.name));
+
+                try
+                {
+                    meshToDump = new Mesh();
+
+                    // copy the relevant data to the temporary mesh 
+                    meshToDump.vertices = mesh.vertices;
+                    meshToDump.colors = mesh.colors;
+                    meshToDump.triangles = mesh.triangles;
+                    meshToDump.RecalculateBounds();
+                    meshToDump.Optimize();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(String.Format("Workaround failed with error - {0}", ex.Message));
+                    return;
+                }
+            }
+
+            try
+            {
+                using (var stream = new FileStream(outputPath, FileMode.Create))
+                {
+                    OBJLoader.ExportOBJ(meshToDump.EncodeOBJ(), stream);
+                    stream.Close();
+                    Log.Warning(String.Format("Dumped mesh \"{0}\" to \"{1}\"", ((Mesh)mesh).name, outputPath));
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(String.Format("There was an error while trying to dump mesh \"{0}\" - {1}", mesh.name, ex.Message));
             }
         }
 

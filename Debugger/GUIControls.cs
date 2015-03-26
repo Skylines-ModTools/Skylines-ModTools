@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using UnityEngine;
 
 namespace ModTools
@@ -6,7 +7,10 @@ namespace ModTools
     class GUIControls
     {
 
-        static float fieldSize = 200;
+        public static float numberFieldSize = 100;
+        public static float stringFieldSize = 200;
+        public static float byteFieldSize = 40;
+        public static float charFieldSize = 25;
 
         public delegate void WatchButtonCallback();
 
@@ -23,7 +27,7 @@ namespace ModTools
         public static string currentHotControl = null;
         public static string hotControlBuffer = "";
 
-        public static string BufferedTextField(string hash, string value)
+        public static string BufferedTextField(string hash, string value, float fieldSize)
         {
             GUI.SetNextControlName(hash);
             bool isHot = IsHot(hash);
@@ -85,7 +89,7 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
             {
                 float newValue;
@@ -123,7 +127,7 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
             {
                 double newValue;
@@ -163,7 +167,7 @@ namespace ModTools
             byte oldValue = value;
 
             GUI.contentColor = Color.white;
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), byteFieldSize);
             if (result != null)
             {
                 byte newValue;
@@ -202,7 +206,7 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
             {
                 int newValue;
@@ -242,7 +246,7 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
             {
                 uint newValue;
@@ -282,7 +286,7 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
             {
                 Int64 newValue;
@@ -321,7 +325,7 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
             {
                 UInt64 newValue;
@@ -362,7 +366,7 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
             {
                 Int16 newValue;
@@ -404,7 +408,7 @@ namespace ModTools
 
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), numberFieldSize);
             if (result != null)
             {
                 UInt16 newValue;
@@ -440,7 +444,7 @@ namespace ModTools
             }
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), stringFieldSize);
             if (result != null)
             {
                 value = result;
@@ -473,7 +477,7 @@ namespace ModTools
             }
             GUI.contentColor = Color.white;
 
-            string result = BufferedTextField(hash, value.ToString());
+            string result = BufferedTextField(hash, value.ToString(), charFieldSize);
             if (result != null)
             {
                 value = result[0];
@@ -507,6 +511,57 @@ namespace ModTools
             }
 
             value = GUILayout.Toggle(value, "");
+            GUILayout.EndHorizontal();
+            GUI.contentColor = Color.white;
+        }
+
+        static public void EnumField(string hash, string name, ref object value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
+        {
+            GUILayout.BeginHorizontal();
+
+            if (ident != 0.0f)
+            {
+                GUILayout.Space(ident);
+            }
+
+            var enumType = value.GetType();
+
+            if (!noTypeLabel)
+            {
+                GUI.contentColor = Color.green;
+                GUILayout.Label(enumType.FullName);
+            }
+
+            GUI.contentColor = Color.red;
+            GUILayout.Label(name);
+            GUI.contentColor = Color.white;
+
+            if (!noSpace)
+            {
+                GUILayout.FlexibleSpace();
+            }
+
+            var enumNames = Enum.GetNames(enumType).ToArray();
+
+            if (TypeUtil.IsBitmaskEnum(enumType))
+            {
+                GUILayout.Label(value.ToString());
+            }
+            else
+            {
+                int i = 0;
+                for (; i < enumNames.Length; i++)
+                {
+                    if (value.ToString() == enumNames[i])
+                    {
+                        break;
+                    }
+                }
+
+                int newIndex = GUIComboBox.Box(i, enumNames, hash);
+                value = Enum.Parse(enumType, enumNames[newIndex]);
+            }
+
             GUILayout.EndHorizontal();
             GUI.contentColor = Color.white;
         }
@@ -702,10 +757,20 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            FloatField(hash+".r", "r", ref value.r, 0.0f, true, true);
-            FloatField(hash + ".g", "g", ref value.g, 0.0f, true, true);
-            FloatField(hash + ".b", "b", ref value.b, 0.0f, true, true);
-            FloatField(hash + ".a", "a", ref value.a, 0.0f, true, true);
+            var r = (byte)(Mathf.Clamp(value.r * 255.0f, byte.MinValue, byte.MaxValue));
+            var g = (byte)(Mathf.Clamp(value.g * 255.0f, byte.MinValue, byte.MaxValue));
+            var b = (byte)(Mathf.Clamp(value.b * 255.0f, byte.MinValue, byte.MaxValue));
+            var a = (byte)(Mathf.Clamp(value.a * 255.0f, byte.MinValue, byte.MaxValue));
+
+            ByteField(hash + ".r", "r", ref r, 0.0f, true, true);
+            ByteField(hash + ".g", "g", ref g, 0.0f, true, true);
+            ByteField(hash + ".b", "b", ref b, 0.0f, true, true);
+            ByteField(hash + ".a", "a", ref a, 0.0f, true, true);
+
+            value.r = Mathf.Clamp01((float)r / 255.0f);
+            value.g = Mathf.Clamp01((float)g / 255.0f);
+            value.b = Mathf.Clamp01((float)b / 255.0f);
+            value.a = Mathf.Clamp01((float)a / 255.0f);
 
             if (watch != null)
             {

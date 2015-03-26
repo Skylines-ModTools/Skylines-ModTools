@@ -3,252 +3,65 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
-
+using System.Linq;
 using UnityEngine;
-using UnityExtension;
 
 namespace ModTools
 {
 
-    public class ReferenceChain
-    {
-        private enum ReferenceType
-        {
-            GameObject = 0,
-            Component = 1,
-            Field = 2,
-            Property = 3,
-            Method = 4,
-            EnumerableItem = 5,
-            SpecialNamedProperty = 6
-        }
-
-        private readonly object[] chainObjects = new object[SceneExplorer.maxHierarchyDepth];
-        private readonly ReferenceType[] chainTypes = new ReferenceType[SceneExplorer.maxHierarchyDepth];
-        private int count = 0;
-
-        public int Length
-        {
-            get { return count; }
-        }
-
-        public string LastItemName
-        {
-            get
-            {
-                return ItemToString(count - 1);
-            }
-        }
-
-        public bool CheckDepth()
-        {
-            if (count >= SceneExplorer.maxHierarchyDepth)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        public ReferenceChain Copy()
-        {
-            ReferenceChain copy = new ReferenceChain();
-            copy.count = count;
-            for (int i = 0; i < count; i++)
-            {
-                copy.chainObjects[i] = chainObjects[i];
-                copy.chainTypes[i] = chainTypes[i];
-            }
-
-            return copy;
-        }
-        
-        public ReferenceChain Add(GameObject go)
-        {
-            ReferenceChain copy = Copy();
-            copy.chainObjects[count] = go;
-            copy.chainTypes[count] = ReferenceType.GameObject;
-            copy.count++;
-            return copy;
-        }
-
-        public ReferenceChain Add(Component component)
-        {
-            ReferenceChain copy = Copy();
-            copy.chainObjects[count] = component;
-            copy.chainTypes[count] = ReferenceType.Component;
-            copy.count++;
-            return copy;
-        }
-
-        public ReferenceChain Add(FieldInfo fieldInfo)
-        {
-            ReferenceChain copy = Copy();
-            copy.chainObjects[count] = fieldInfo;
-            copy.chainTypes[count] = ReferenceType.Field;
-            copy.count++;
-            return copy;
-        }
-
-        public ReferenceChain Add(PropertyInfo propertyInfo)
-        {
-            ReferenceChain copy = Copy();
-            copy.chainObjects[count] = propertyInfo;
-            copy.chainTypes[count] = ReferenceType.Property;
-            copy.count++;
-            return copy;
-        }
-
-        public ReferenceChain Add(MethodInfo methodInfo)
-        {
-            ReferenceChain copy = Copy();
-            copy.chainObjects[count] = methodInfo;
-            copy.chainTypes[count] = ReferenceType.Method;
-            copy.count++;
-            return copy;
-        }
-
-        public ReferenceChain Add(int index)
-        {
-            ReferenceChain copy = Copy();
-            copy.chainObjects[count] = index;
-            copy.chainTypes[count] = ReferenceType.EnumerableItem;
-            copy.count++;
-            return copy;
-        }
-
-        public ReferenceChain Add(string namedProperty)
-        {
-            ReferenceChain copy = Copy();
-            copy.chainObjects[count] = namedProperty;
-            copy.chainTypes[count] = ReferenceType.SpecialNamedProperty;
-            copy.count++;
-            return copy;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (!(obj is ReferenceChain))
-            {
-                return false;
-            }
-
-            var other = (ReferenceChain) obj;
-
-            if (other.count != count)
-            {
-                return false;
-            }
-
-            for (int i = count - 1; i >= 0; i--)
-            {
-                if (chainTypes[i] != other.chainTypes[i])
-                {
-                    return false;
-                }
-
-                if (chainObjects[i].GetHashCode() != other.chainObjects[i].GetHashCode())
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        public override int GetHashCode()
-        {
-            int hash = HashCodeHelper.Initialize();
-
-            for(int i = 0; i < count; i++)
-            {
-                hash = HashCodeHelper.Hash(hash, chainTypes[i]);
-                hash = HashCodeHelper.Hash(hash, chainObjects[i]);
-            }
-
-            return hash;
-        }
-
-        private string ItemToString(int i)
-        {
-            switch (chainTypes[i])
-            {
-                case ReferenceType.GameObject:
-                    return ((GameObject)chainObjects[i]).name;
-                case ReferenceType.Component:
-                    return ((Component)chainObjects[i]).name;
-                case ReferenceType.Field:
-                    return ((FieldInfo)chainObjects[i]).Name;
-                case ReferenceType.Property:
-                    return ((PropertyInfo)chainObjects[i]).Name;
-                case ReferenceType.Method:
-                    return ((MethodInfo)chainObjects[i]).Name;
-                case ReferenceType.EnumerableItem:
-                    return String.Format("[{0}]", (int)chainObjects[i]);
-                case ReferenceType.SpecialNamedProperty:
-                    return (string)chainObjects[i];
-            }
-
-            return "";
-        }
-
-        public override string ToString()
-        {
-            string result = "";
-
-            for (int i = 0; i < count; i++)
-            {
-                result += ItemToString(i);
-
-                if (i != count - 1)
-                {
-                    result += '.';
-                }
-            }
-
-            return result;
-        }
-
-    }
-
     public class SceneExplorer : GUIWindow
     {
-
-        public enum FilterType
-        {
-            FieldsAndProps,
-            GameObjects,
-            Components
-        }
-
-        private float treeIdentSpacing = 16.0f;
+        private const float treeIdentSpacing = 16.0f;
         public static int maxHierarchyDepth = 20;
 
-        private Dictionary<ReferenceChain, bool> expanded = new Dictionary<ReferenceChain, bool>();
-        private Dictionary<ReferenceChain, bool> expandedComponents = new Dictionary<ReferenceChain, bool>();
-        private Dictionary<ReferenceChain, bool> expandedObjects = new Dictionary<ReferenceChain, bool>();
+        private readonly Dictionary<ReferenceChain, bool> expandedGameObjects = new Dictionary<ReferenceChain, bool>();
+        private readonly Dictionary<ReferenceChain, bool> expandedComponents = new Dictionary<ReferenceChain, bool>();
+        private readonly Dictionary<ReferenceChain, bool> expandedObjects = new Dictionary<ReferenceChain, bool>();
 
-        private Dictionary<ReferenceChain, bool> evaluatedProperties = new Dictionary<ReferenceChain, bool>();
+        private readonly Dictionary<ReferenceChain, bool> evaluatedProperties = new Dictionary<ReferenceChain, bool>();
 
-        private Dictionary<int, bool> preventCircularReferences = new Dictionary<int, bool>(); 
+        private readonly Dictionary<ReferenceChain, int> selectedArrayStartIndices = new Dictionary<ReferenceChain, int>();
+        private readonly Dictionary<ReferenceChain, int> selectedArrayEndIndices = new Dictionary<ReferenceChain, int>();
+
+        private readonly Dictionary<int, bool> preventCircularReferences = new Dictionary<int, bool>();
 
         private Dictionary<GameObject, bool> sceneRoots = new Dictionary<GameObject, bool>();
-
-        private Vector2 scrollPosition = Vector2.zero;
 
         private bool showFields = true;
         private bool showProperties = true;
         private bool showMethods = false;
 
-        private string nameFilter = "";
-        private FilterType filterType = FilterType.GameObjects;
+        private bool showModifiers = false;
 
-        private Watches watches;
-        private RTLiveView rtLiveView;
+        private bool evaluatePropertiesAutomatically = true;
+
+        private string findGameObjectFilter = "";
+        private string findObjectTypeFilter = "";
+        private string searchDisplayString = "";
 
         public static bool debugMode = false;
         public static string debugOutput = "";
         public static string lastCrashReport = "";
+
+        private GUIArea headerArea;
+        private GUIArea sceneTreeArea;
+        private GUIArea componentArea;
+
+        private Vector2 sceneTreeScrollPosition = Vector2.zero;
+        private Vector2 componentScrollPosition = Vector2.zero;
+
+        private ReferenceChain currentRefChain = null;
+
+        private bool sortAlphabetically = true;
+
+        private float windowTopMargin = 16.0f;
+        private float windowBottomMargin = 8.0f;
+
+        private float headerHeightCompact = 60.0f;
+        private float headerHeightExpanded = 220.0f;
+        private bool headerExpanded = false;
+
+        private float sceneTreeWidth = 300.0f;
 
         private void AddDebugLine(string line, params System.Object[] arg)
         {
@@ -263,8 +76,35 @@ namespace ModTools
         {
             onDraw = DrawWindow;
             onException = ExceptionHandler;
+            onUnityGUI = () => GUIComboBox.DrawGUI();
+
+            RecalculateAreas();
         }
 
+        void RecalculateAreas()
+        {
+            headerArea = new GUIArea(this);
+            headerArea.absolutePosition.y = windowTopMargin;
+            headerArea.relativeSize.x = 1.0f;
+
+            sceneTreeArea = new GUIArea(this);
+            sceneTreeArea.relativeSize.y = 1.0f;
+            sceneTreeArea.absoluteSize.x = sceneTreeWidth;
+
+            componentArea = new GUIArea(this);
+            componentArea.absolutePosition.x = sceneTreeWidth;
+            componentArea.relativeSize.x = 1.0f;
+            componentArea.relativeSize.y = 1.0f;
+            componentArea.absoluteSize.x = -sceneTreeWidth;
+
+            float headerHeight = headerExpanded ? headerHeightExpanded : headerHeightCompact;
+
+            headerArea.absoluteSize.y = headerHeight - windowTopMargin;
+            sceneTreeArea.absolutePosition.y = headerHeight - windowTopMargin;
+            sceneTreeArea.absoluteSize.y = -(headerHeight - windowTopMargin) - windowBottomMargin;
+            componentArea.absolutePosition.y = headerHeight - windowTopMargin;
+            componentArea.absoluteSize.y = -(headerHeight - windowTopMargin) - windowBottomMargin;
+        }
         void ExceptionHandler(Exception ex)
         {
             Log.Error("Exception in Scene Explorer - " + ex.Message);
@@ -276,112 +116,350 @@ namespace ModTools
                 Log.Warning(String.Format("ModTools - crash log dumped to \"{0}\"", filename));
             }
 
-            expanded.Clear();
+            expandedGameObjects.Clear();
             expandedComponents.Clear();
             expandedObjects.Clear();
             evaluatedProperties.Clear();
+            currentRefChain = null;
         }
 
         public void Refresh()
         {
-            sceneRoots = FindSceneRoots();
+            sceneRoots = GameObjectUtil.FindSceneRoots();
         }
 
-        private Dictionary<GameObject, bool> FindSceneRoots()
+        public void ExpandFromRefChain(ReferenceChain refChain)
         {
-            Dictionary<GameObject, bool> roots = new Dictionary<GameObject, bool>();
-
-            GameObject[] objects = GameObject.FindObjectsOfType<GameObject>();
-            foreach (var obj in objects)
+            if (refChain.Length == 0)
             {
-                if (!roots.ContainsKey(obj.transform.root.gameObject))
+                Log.Error("SceneExplorer: ExpandFromRefChain(): Invalid refChain, expected Length >= 0");
+                return;
+            }
+
+            if (refChain.chainTypes[0] != ReferenceChain.ReferenceType.GameObject)
+            {
+                Log.Error(String.Format("SceneExplorer: ExpandFromRefChain(): invalid chain type for element [0] - expected {0}, got {1}",
+                    ReferenceChain.ReferenceType.GameObject, refChain.chainTypes[0]));
+                return;
+            }
+
+            sceneRoots.Clear();
+            ClearExpanded();
+            searchDisplayString = String.Format("Showing results for \"{0}\"", refChain.ToString());
+
+            var rootGameObject = (GameObject) refChain.chainObjects[0];
+            sceneRoots.Add(rootGameObject, true);
+
+            var expandedRefChain = new ReferenceChain().Add(rootGameObject);
+            expandedGameObjects.Add(expandedRefChain, true);
+
+            for (int i = 1; i < refChain.Length; i++)
+            {
+                switch (refChain.chainTypes[i])
                 {
-                    roots.Add(obj.transform.root.gameObject, true);
+                    case ReferenceChain.ReferenceType.GameObject:
+                        var go = (GameObject) refChain.chainObjects[i];
+                        expandedRefChain = expandedRefChain.Add(go);
+                        expandedGameObjects.Add(expandedRefChain, true);
+                        break;
+                    case ReferenceChain.ReferenceType.Component:
+                        var component = (Component) refChain.chainObjects[i];
+                        expandedRefChain = expandedRefChain.Add(component);
+                        expandedComponents.Add(expandedRefChain, true);
+                        break;
+                    case ReferenceChain.ReferenceType.Field:
+                        var field = (FieldInfo) refChain.chainObjects[i];
+                        expandedRefChain = expandedRefChain.Add(field);
+                        expandedObjects.Add(expandedRefChain, true);
+                        break;
+                    case ReferenceChain.ReferenceType.Property:
+                        var property = (PropertyInfo) refChain.chainObjects[i];
+                        expandedRefChain = expandedRefChain.Add(property);
+                        expandedObjects.Add(expandedRefChain, true);
+                        break;
+                    case ReferenceChain.ReferenceType.Method:
+                        break;
+                    case ReferenceChain.ReferenceType.EnumerableItem:
+                        var index = (int) refChain.chainObjects[i];
+                        selectedArrayStartIndices[expandedRefChain] = index;
+                        selectedArrayEndIndices[expandedRefChain] = index;
+                        expandedRefChain = expandedRefChain.Add(index);
+                        expandedObjects.Add(expandedRefChain, true);
+                        break;
                 }
             }
 
-            return roots;
+            currentRefChain = refChain.Copy();
+            currentRefChain.identOffset = -currentRefChain.Length;
         }
 
-        private bool IsBuiltInType(Type t)
+        private object EditorValueField(string hash, Type type, object value)
         {
-            switch (t.ToString())
+            if (type == typeof(System.Single))
             {
-                case "System.Char":
-                case "System.String":
-                case "System.Boolean":
-                case "System.Single":
-                case "System.Double":
-                case "System.Byte":
-                case "System.Int32":
-                case "System.UInt32":
-                case "System.Int64":
-                case "System.UInt64":
-                case "System.Int16":
-                case "System.UInt16":
-                case "UnityEngine.Vector2":
-                case "UnityEngine.Vector3":
-                case "UnityEngine.Vector4":
-                case "UnityEngine.Quaternion":
-                case "UnityEngine.Color":
-                case "UnityEngine.Color32":
-                    return true;
+                var f = (float)value;
+                GUIControls.FloatField(hash, "", ref f, 0.0f, true, true);
+                if (f != (float)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+            
+            if (type == typeof(System.Double))
+            {
+                var f = (double)value;
+                GUIControls.DoubleField(hash, "", ref f, 0.0f, true, true);
+                if (f != (double)value)
+                {
+                    return f;
+                }
+
+                return value;
             }
 
-            return false;
+            if (type == typeof(System.Byte))
+            {
+                var f = (byte)value;
+                GUIControls.ByteField(hash, "", ref f, 0.0f, true, true);
+                if (f != (byte)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type == typeof(System.Int32))
+            {
+                var f = (int)value;
+                GUIControls.IntField(hash, "", ref f, 0.0f, true, true);
+                if (f != (int)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+            
+            if (type == typeof(System.UInt32))
+            {
+                var f = (uint)value;
+                GUIControls.UIntField(hash, "", ref f, 0.0f, true, true);
+                if (f != (uint)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+            
+            if (type == typeof(System.Int64))
+            {
+                var f = (Int64)value;
+                GUIControls.Int64Field(hash, "", ref f, 0.0f, true, true);
+                if (f != (Int64)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+            
+            if (type == typeof(System.UInt64))
+            {
+                var f = (UInt64)value;
+                GUIControls.UInt64Field(hash, "", ref f, 0.0f, true, true);
+                if (f != (UInt64)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+            
+            if (type == typeof(System.Int16))
+            {
+                var f = (Int16)value;
+                GUIControls.Int16Field(hash, "", ref f, 0.0f, true, true);
+                if (f != (Int16)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+            
+            if (type == typeof(System.UInt16))
+            {
+                var f = (UInt16)value;
+                GUIControls.UInt16Field(hash, "", ref f, 0.0f, true, true);
+                if (f != (UInt16)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+            
+            if (type == typeof(System.Boolean))
+            {
+                var f = (bool)value;
+                GUIControls.BoolField("", ref f, 0.0f, true, true);
+                if (f != (bool)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+            
+            if (type == typeof(System.String))
+            {
+                var f = (string)value;
+                GUIControls.StringField(hash, "", ref f, 0.0f, true, true);
+                if (f != (string)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+            
+            if (type == typeof(System.Char))
+            {
+                var f = (char)value;
+                GUIControls.CharField(hash, "", ref f, 0.0f, true, true);
+                if (f != (char)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+            
+            if (type == typeof(UnityEngine.Vector2))
+            {
+                var f = (Vector2)value;
+                GUIControls.Vector2Field(hash, "", ref f, 0.0f, null, true, true);
+                if (f != (Vector2)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+            
+            if (type == typeof(UnityEngine.Vector3))
+            {
+                var f = (Vector3)value;
+                GUIControls.Vector3Field(hash, "", ref f, 0.0f, null, true, true);
+                if (f != (Vector3)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+            
+            if (type == typeof(UnityEngine.Vector4))
+            {
+                var f = (Vector4)value;
+                GUIControls.Vector4Field(hash, "", ref f, 0.0f, null, true, true);
+                if (f != (Vector4)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+            
+            if (type == typeof(UnityEngine.Quaternion))
+            {
+                var f = (Quaternion)value;
+                GUIControls.QuaternionField(hash, "", ref f, 0.0f, null, true, true);
+                if (f != (Quaternion)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+            
+            if (type == typeof(UnityEngine.Color))
+            {
+                var f = (Color)value;
+                GUIControls.ColorField(hash, "", ref f, 0.0f, null, true, true);
+                if (f != (Color)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+            
+            if (type == typeof(UnityEngine.Color32))
+            {
+                var f = (Color32)value;
+                GUIControls.Color32Field(hash, "", ref f, 0.0f, null, true, true);
+                var v = (Color32)value;
+                if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type.IsEnum)
+            {
+                var f = value;
+                GUIControls.EnumField(hash, "", ref f, 0.0f, true, true);
+                if (f != value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            return value;
         }
 
-        private bool IsReflectableType(Type t)
+        private void OnSceneTreeMessage(ReferenceChain refChain, string message)
         {
-            if (IsBuiltInType(t))
-            {
-                return false;
-            }
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(treeIdentSpacing * refChain.Ident);
+            GUILayout.Label(message);
+            GUILayout.EndHorizontal();
+        }
 
-            if (t.IsEnum)
+        private bool SceneTreeCheckDepth(ReferenceChain refChain)
+        {
+            if (refChain.CheckDepth())
             {
+                OnSceneTreeMessage(refChain, "Hierarchy too deep, sorry :(");
                 return false;
             }
 
             return true;
         }
 
-        private bool IsTextureType(Type t)
-        {
-            if (t == typeof (UnityEngine.Texture) || t == typeof (UnityEngine.Texture2D) ||
-                t == typeof (UnityEngine.RenderTexture))
-
-            {
-                return true;
-            }
-
-            return false;
-        }
-
         private void OnSceneTreeReflectField(ReferenceChain refChain, System.Object obj, FieldInfo field)
         {
-            AddDebugLine("OnSceneTreeReflectField(caller = {0}, obj = {1}, field = {2})",
-                refChain, obj, field);
-
             var hash = refChain.GetHashCode().ToString();
 
-            if (refChain.CheckDepth())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
+            if (!SceneTreeCheckDepth(refChain)) return;
 
             if (obj == null || field == null)
             {
-                GUILayout.Label("null");
+                OnSceneTreeMessage(refChain, "null");
                 return;
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+            GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
             GUI.contentColor = Color.white;
 
@@ -395,7 +473,7 @@ namespace ModTools
             {
             }
 
-            if (value != null && IsReflectableType(field.FieldType) && !IsEnumerable(obj))
+            if (value != null && TypeUtil.IsReflectableType(field.FieldType) && !IsEnumerable(obj))
             {
                 if (expandedObjects.ContainsKey(refChain))
                 {
@@ -413,30 +491,37 @@ namespace ModTools
                 }
             }
 
-            if (field.IsPublic)
-            {
-                GUILayout.Label("public ");
-            }
-            else if (field.IsPrivate)
-            {
-                GUILayout.Label("private ");
-            }
-
-            GUI.contentColor = Color.white;
-
-            GUILayout.Label("field ");
-
-            if (field.IsStatic)
-            {
-                GUI.contentColor = Color.blue;
-                GUILayout.Label("static ");
-            }
-
             if (field.IsInitOnly)
             {
-                GUI.contentColor = Color.blue;
                 GUI.enabled = false;
-                GUILayout.Label("const ");
+            }
+
+            if (showModifiers)
+            {
+                if (field.IsPublic)
+                {
+                    GUILayout.Label("public ");
+                }
+                else if (field.IsPrivate)
+                {
+                    GUILayout.Label("private ");
+                }
+
+                GUI.contentColor = Color.white;
+
+                GUILayout.Label("field ");
+
+                if (field.IsStatic)
+                {
+                    GUI.contentColor = Color.blue;
+                    GUILayout.Label("static ");
+                }
+
+                if (field.IsInitOnly)
+                {
+                    GUI.contentColor = Color.blue;
+                    GUILayout.Label("const ");
+                }
             }
 
             GUI.contentColor = Color.green;
@@ -447,176 +532,25 @@ namespace ModTools
             GUILayout.Label(field.Name);
 
             GUI.contentColor = Color.white;
+            GUILayout.Label(" = ");
 
-            if (value == null || !IsBuiltInType(field.FieldType))
+            if (value == null || !TypeUtil.IsBuiltInType(field.FieldType))
             {
-                GUI.contentColor = Color.white;
-                GUILayout.Label(" = ");
-                GUI.contentColor = Color.white;
                 GUILayout.Label(value == null ? "null" : value.ToString());
-                GUI.contentColor = Color.white;
             }
-            else if (field.FieldType.ToString() == "System.Single")
+            else
             {
-                var f = (float)value;
-                GUIControls.FloatField(hash, "", ref f, 0.0f, true, true);
-                if (f != (float)value)
+                try
                 {
-                    field.SetValue(obj, f);
+                    var newValue = EditorValueField(hash, field.FieldType, value);
+                    if (newValue != value)
+                    {
+                        field.SetValue(obj, newValue);
+                    }
                 }
-            }
-            else if (field.FieldType.ToString() == "System.Double")
-            {
-                var f = (double)value;
-                GUIControls.DoubleField(hash, "", ref f, 0.0f, true, true);
-                if (f != (double)value)
+                catch (Exception)
                 {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.Byte")
-            {
-                var f = (byte)value;
-                GUIControls.ByteField(hash, "", ref f, 0.0f, true, true);
-                if (f != (byte)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.Int32")
-            {
-                var f = (int)value;
-                GUIControls.IntField(hash, "", ref f, 0.0f, true, true);
-                if (f != (int)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.UInt32")
-            {
-                var f = (uint)value;
-                GUIControls.UIntField(hash, "", ref f, 0.0f, true, true);
-                if (f != (uint)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.Int64")
-            {
-                var f = (Int64)value;
-                GUIControls.Int64Field(hash, "", ref f, 0.0f, true, true);
-                if (f != (Int64)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.UInt64")
-            {
-                var f = (UInt64)value;
-                GUIControls.UInt64Field(hash, "", ref f, 0.0f, true, true);
-                if (f != (UInt64)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.Int16")
-            {
-                var f = (Int16)value;
-                GUIControls.Int16Field(hash, "", ref f, 0.0f, true, true);
-                if (f != (Int16)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.UInt16")
-            {
-                var f = (UInt16)value;
-                GUIControls.UInt16Field(hash, "", ref f, 0.0f, true, true);
-                if (f != (UInt16)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.Boolean")
-            {
-                var f = (bool)value;
-                GUIControls.BoolField("", ref f, 0.0f, true, true);
-                if (f != (bool)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.String")
-            {
-                var f = (string)value;
-                GUIControls.StringField(hash, "", ref f, 0.0f, true, true);
-                if (f != (string)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "System.Char")
-            {
-                var f = (char)value;
-                GUIControls.CharField(hash, "", ref f, 0.0f, true, true);
-                if (f != (char)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "UnityEngine.Vector2")
-            {
-                var f = (Vector2)value;
-                GUIControls.Vector2Field(hash, "", ref f, 0.0f, null, true, true);
-                if (f != (Vector2)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "UnityEngine.Vector3")
-            {
-                var f = (Vector3)value;
-                GUIControls.Vector3Field(hash, "", ref f, 0.0f, null, true, true);
-                if (f != (Vector3)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "UnityEngine.Vector4")
-            {
-                var f = (Vector4)value;
-                GUIControls.Vector4Field(hash, "", ref f, 0.0f, null, true, true);
-                if (f != (Vector4)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "UnityEngine.Quaternion")
-            {
-                var f = (Quaternion)value;
-                GUIControls.QuaternionField(hash, "", ref f, 0.0f, null, true, true);
-                if (f != (Quaternion)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "UnityEngine.Color")
-            {
-                var f = (Color)value;
-                GUIControls.ColorField(hash, "", ref f, 0.0f, null, true, true);
-                if (f != (Color)value)
-                {
-                    field.SetValue(obj, f);
-                }
-            }
-            else if (field.FieldType.ToString() == "UnityEngine.Color32")
-            {
-                var f = (Color32)value;
-                GUIControls.Color32Field(hash, "", ref f, 0.0f, null, true, true);
-                var v = (Color32)value;
-                if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
-                {
-                    field.SetValue(obj, f);
+                    GUILayout.Label(value == null ? "null" : value.ToString());
                 }
             }
 
@@ -626,38 +560,42 @@ namespace ModTools
 
             if (GUILayout.Button("Watch"))
             {
-                watches.AddWatch(refChain, field, obj);
+                ModTools.Instance.watches.AddWatch(refChain, field, obj);
             }
 
-            if (IsTextureType(field.FieldType) && value != null)
+            if (TypeUtil.IsTextureType(field.FieldType) && value != null)
             {
-                if (GUILayout.Button("LiveView"))
+                if (GUILayout.Button("Preview"))
                 {
-                    rtLiveView.previewTexture = (Texture)value;
-                    rtLiveView.caller = refChain;
-                    rtLiveView.visible = true;
+                    ModTools.Instance.textureViewer.previewTexture = (Texture)value;
+                    ModTools.Instance.textureViewer.caller = refChain;
+                    ModTools.Instance.textureViewer.visible = true;
                 }
 
                 if (GUILayout.Button("Dump .png"))
                 {
-                    RTLiveView.DumpTextureToPNG((Texture)value);
+                    Util.DumpTextureToPNG((Texture)value);
                 }
             }
-            else if (field.FieldType.ToString() == "UnityEngine.Mesh" && value != null)
+            else if (TypeUtil.IsMeshType(field.FieldType) && value != null)
             {
-                if (((Mesh)value).isReadable)
+                /*if (GUILayout.Button("Preview"))
                 {
-                    if (GUILayout.Button("Dump .obj"))
-                    {
-                        var outPath = refChain.ToString() + ".obj";
-                        outPath = outPath.Replace(' ', '_');
-                        Util.DumpMeshOBJ(value as Mesh, outPath);
-                    }
+                    ModTools.Instance.meshViewer.previewMesh = (Mesh)value;
+                    ModTools.Instance.meshViewer.caller = refChain;
+                    ModTools.Instance.meshViewer.visible = true;
+                }*/
+
+                if (GUILayout.Button("Dump .obj"))
+                {
+                    var outPath = refChain.ToString() + ".obj";
+                    outPath = outPath.Replace(' ', '_');
+                    Util.DumpMeshOBJ(value as Mesh, outPath);
                 }
             }
 
             GUILayout.EndHorizontal();
-            if (value != null && IsReflectableType(field.FieldType) && expandedObjects.ContainsKey(refChain))
+            if (value != null && TypeUtil.IsReflectableType(field.FieldType) && expandedObjects.ContainsKey(refChain))
             {
                 if (value is GameObject)
                 {
@@ -680,33 +618,23 @@ namespace ModTools
 
         private void OnSceneTreeReflectProperty(ReferenceChain refChain, System.Object obj, PropertyInfo property)
         {
-            AddDebugLine("OnSceneTreeReflectProperty(caller = {0}, obj = {1}, property = {2})",
-                refChain, obj, property);
-
-            var hash = refChain.GetHashCode().ToString();
-
-            if (refChain.CheckDepth())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
+            if (!SceneTreeCheckDepth(refChain)) return;
 
             if (obj == null || property == null)
             {
-                GUILayout.Label("null");
+                OnSceneTreeMessage(refChain, "null");
                 return;
             }
 
+            var hash = refChain.GetHashCode().ToString();
+
             GUILayout.BeginHorizontal();
-            GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+            GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
             bool propertyWasEvaluated = false;
             object value = null;
 
-            if (property.CanRead && ModTools.evaluatePropertiesAutomatically || evaluatedProperties.ContainsKey(refChain))
+            if (property.CanRead && evaluatePropertiesAutomatically || evaluatedProperties.ContainsKey(refChain))
             {
                 try
                 {
@@ -717,7 +645,7 @@ namespace ModTools
                 {
                 }
 
-                if (value != null && IsReflectableType(property.PropertyType) && !IsEnumerable(obj))
+                if (value != null && TypeUtil.IsReflectableType(property.PropertyType) && !IsEnumerable(obj))
                 {
                     if (expandedObjects.ContainsKey(refChain))
                     {
@@ -738,14 +666,22 @@ namespace ModTools
             
             GUI.contentColor = Color.white;
 
-            GUILayout.Label("property ");
-            
             if (!property.CanWrite)
             {
-                GUI.contentColor = Color.blue;
                 GUI.enabled = false;
-                GUILayout.Label("const ");
             }
+
+            if (showModifiers)
+            {
+                GUILayout.Label("property ");
+
+                if (!property.CanWrite)
+                {
+                    GUI.contentColor = Color.blue;
+                    GUILayout.Label("const ");
+                }
+            }
+
             GUI.contentColor = Color.green;
 
             GUILayout.Label(property.PropertyType.ToString() + " ");
@@ -755,8 +691,9 @@ namespace ModTools
             GUILayout.Label(property.Name);
 
             GUI.contentColor = Color.white;
+            GUILayout.Label(" = ");
 
-            if (!ModTools.evaluatePropertiesAutomatically && !evaluatedProperties.ContainsKey(refChain))
+            if (!evaluatePropertiesAutomatically && !evaluatedProperties.ContainsKey(refChain))
             {
                 GUI.enabled = true;
 
@@ -779,13 +716,8 @@ namespace ModTools
                     }
                 }
 
-
-                if (value == null || !IsBuiltInType(property.PropertyType))
+                if (value == null || !TypeUtil.IsBuiltInType(property.PropertyType))
                 {
-                    GUI.contentColor = Color.white;
-                    GUILayout.Label(" = ");
-                    GUI.contentColor = Color.white;
-
                     if (property.CanRead)
                     {
                         GUILayout.Label(value == null ? "null" : value.ToString());
@@ -797,167 +729,28 @@ namespace ModTools
 
                     GUI.contentColor = Color.white;
                 }
-                else if (property.PropertyType.ToString() == "System.Single")
+                else
                 {
-                    var f = (float)value;
-                    GUIControls.FloatField(hash, "", ref f, 0.0f, true, true);
-                    if (f != (float)value)
+                    try
                     {
-                        property.SetValue(obj, f, null);
+                        var newValue = EditorValueField(hash, property.PropertyType, value);
+                        if (newValue != value)
+                        {
+                            property.SetValue(obj, newValue, null);
+                        }
                     }
-                }
-                else if (property.PropertyType.ToString() == "System.Double")
-                {
-                    var f = (double)value;
-                    GUIControls.DoubleField(hash, "", ref f, 0.0f, true, true);
-                    if (f != (double)value)
+                    catch (Exception)
                     {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.Byte")
-                {
-                    var f = (byte)value;
-                    GUIControls.ByteField(hash, "", ref f, 0.0f, true, true);
-                    if (f != (byte)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.Int32")
-                {
-                    var f = (int)value;
-                    GUIControls.IntField(hash, "", ref f, 0.0f, true, true);
-                    if (f != (int)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.UInt32")
-                {
-                    var f = (uint)value;
-                    GUIControls.UIntField(hash, "", ref f, 0.0f, true, true);
-                    if (f != (uint)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.Int64")
-                {
-                    var f = (Int64)value;
-                    GUIControls.Int64Field(hash, "", ref f, 0.0f, true, true);
-                    if (f != (Int64)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.UInt64")
-                {
-                    var f = (UInt64)value;
-                    GUIControls.UInt64Field(hash, "", ref f, 0.0f, true, true);
-                    if (f != (UInt64)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.Int16")
-                {
-                    var f = (Int16)value;
-                    GUIControls.Int16Field(hash, "", ref f, 0.0f, true, true);
-                    if (f != (Int16)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.UInt16")
-                {
-                    var f = (UInt16)value;
-                    GUIControls.UInt16Field(hash, "", ref f, 0.0f, true, true);
-                    if (f != (UInt16)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.Boolean")
-                {
-                    var f = (bool)value;
-                    GUIControls.BoolField("", ref f, 0.0f, true, true);
-                    if (f != (bool)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.String")
-                {
-                    var f = (string)value;
-                    GUIControls.StringField(hash, "", ref f, 0.0f, true, true);
-                    if (f != (string)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "System.Char")
-                {
-                    var f = (char)value;
-                    GUIControls.CharField(hash, "", ref f, 0.0f, true, true);
-                    if (f != (char)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "UnityEngine.Vector2")
-                {
-                    var f = (Vector2)value;
-                    GUIControls.Vector2Field(hash, "", ref f, 0.0f, null, true, true);
-                    if (f != (Vector2)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "UnityEngine.Vector3")
-                {
-                    var f = (Vector3)value;
-                    GUIControls.Vector3Field(hash, "", ref f, 0.0f, null, true, true);
-                    if (f != (Vector3)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "UnityEngine.Vector4")
-                {
-                    var f = (Vector4)value;
-                    GUIControls.Vector4Field(hash, "", ref f, 0.0f, null, true, true);
-                    if (f != (Vector4)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "UnityEngine.Quaternion")
-                {
-                    var f = (Quaternion)value;
-                    GUIControls.QuaternionField(hash, "", ref f, 0.0f, null, true, true);
-                    if (f != (Quaternion)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "UnityEngine.Color")
-                {
-                    var f = (Color)value;
-                    GUIControls.ColorField(hash, "", ref f, 0.0f, null, true, true);
-                    if (f != (Color)value)
-                    {
-                        property.SetValue(obj, f, null);
-                    }
-                }
-                else if (property.PropertyType.ToString() == "UnityEngine.Color32")
-                {
-                    var f = (Color32)value;
-                    GUIControls.Color32Field(hash, "", ref f, 0.0f, null, true, true);
-                    var v = (Color32)value;
-                    if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
-                    {
-                        property.SetValue(obj, f, null);
+                        if (property.CanRead)
+                        {
+                            GUILayout.Label(value == null ? "null" : value.ToString());
+                        }
+                        else
+                        {
+                            GUILayout.Label("(no get method)");
+                        }
+
+                        GUI.contentColor = Color.white;
                     }
                 }
             }
@@ -968,33 +761,37 @@ namespace ModTools
 
             if (GUILayout.Button("Watch"))
             {
-                watches.AddWatch(refChain, property, obj);
+                ModTools.Instance.watches.AddWatch(refChain, property, obj);
             }
 
-            if (IsTextureType(property.PropertyType) && value != null)
+            if (TypeUtil.IsTextureType(property.PropertyType) && value != null)
             {
-                if (GUILayout.Button("LiveView"))
+                if (GUILayout.Button("Preview"))
                 {
-                    rtLiveView.previewTexture = (Texture)value;
-                    rtLiveView.caller = refChain;
-                    rtLiveView.visible = true;
+                    ModTools.Instance.textureViewer.previewTexture = (Texture)value;
+                    ModTools.Instance.textureViewer.caller = refChain;
+                    ModTools.Instance.textureViewer.visible = true;
                 }
 
                 if (GUILayout.Button("Dump .png"))
                 {
-                    RTLiveView.DumpTextureToPNG((Texture)value);
+                    Util.DumpTextureToPNG((Texture)value);
                 }
             }
-            else if (property.PropertyType.ToString() == "UnityEngine.Mesh" && value != null)
+            else if (TypeUtil.IsMeshType(property.PropertyType) && value != null)
             {
-                if (((Mesh) value).isReadable)
+               /* if (GUILayout.Button("Preview"))
                 {
-                    if (GUILayout.Button("Dump .obj"))
-                    {
-                        var outPath = refChain.ToString() + ".obj";
-                        outPath = outPath.Replace(' ', '_');
-                        Util.DumpMeshOBJ(value as Mesh, outPath);
-                    }
+                    ModTools.Instance.meshViewer.previewMesh = (Mesh)value;
+                    ModTools.Instance.meshViewer.caller = refChain;
+                    ModTools.Instance.meshViewer.visible = true;
+                }*/
+
+                if (GUILayout.Button("Dump .obj"))
+                {
+                    var outPath = refChain.ToString() + ".obj";
+                    outPath = outPath.Replace(' ', '_');
+                    Util.DumpMeshOBJ(value as Mesh, outPath);
                 }
             }
             
@@ -1023,28 +820,22 @@ namespace ModTools
 
         private void OnSceneTreeReflectMethod(ReferenceChain refChain, System.Object obj, MethodInfo method)
         {
-            AddDebugLine("OnSceneTreeReflectMethod(obj = {0}, method = {1})", obj, method);
-
-            if (refChain.CheckDepth())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
+            if (!SceneTreeCheckDepth(refChain)) return;
 
             if (obj == null || method == null)
             {
-                GUILayout.Label("null");
+                OnSceneTreeMessage(refChain, "null");
                 return;
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+            GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
+            GUI.contentColor = Color.green;
             GUILayout.Label("method ");
-            string signature = method.ReturnType.ToString() + " " + method.Name + "(";
+            GUI.contentColor = Color.white;
+            GUILayout.Label(method.ReturnType.ToString() + " " + method.Name + "(");
+            GUI.contentColor = Color.blue;
 
             bool first = true;
             var parameters = method.GetParameters();
@@ -1052,19 +843,17 @@ namespace ModTools
             {
                 if (!first)
                 {
-                    signature += ", ";
+                    GUILayout.Label(", ");
                 }
                 else
                 {
                     first = false;
                 }
 
-                signature += param.ParameterType.ToString() + " " + param.Name;
+                GUILayout.Label(param.ParameterType.ToString() + " " + param.Name);
             }
-
-            signature += ")";
-
-            GUILayout.Label(signature);
+            GUI.contentColor = Color.white;
+            GUILayout.Label(")");
 
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -1072,23 +861,13 @@ namespace ModTools
 
         private void OnSceneTreeReflectUnityEngineVector3<T>(ReferenceChain refChain, T obj, string name, ref UnityEngine.Vector3 vec)
         {
-            AddDebugLine("OnSceneTreeReflectUnityEngineVector3(caller = {0}, obj = {1}, name = {2}, vec = {3})",
-                refChain, obj, name, vec);
-            
-            if (refChain.CheckDepth())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
+            if (!SceneTreeCheckDepth(refChain)) return;
 
-            GUIControls.Vector3Field(refChain.ToString(), name, ref vec, treeIdentSpacing * (refChain.Length - 1), () =>
+            GUIControls.Vector3Field(refChain.ToString(), name, ref vec, treeIdentSpacing * refChain.Ident, () =>
             {
                 try
                 {
-                    watches.AddWatch(refChain, typeof(T).GetProperty(name), obj);
+                    ModTools.Instance.watches.AddWatch(refChain, typeof(T).GetProperty(name), obj);
                 }
                 catch (Exception ex)
                 {
@@ -1099,20 +878,11 @@ namespace ModTools
 
         private void OnSceneTreeReflectUnityEngineTransform(ReferenceChain refChain, UnityEngine.Transform transform)
         {
-            AddDebugLine("OnSceneTreeReflectUnityEngineTransform(caller = {0}, transform = {1})", refChain, transform);
-
-            if (refChain.CheckDepth())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
+            if (!SceneTreeCheckDepth(refChain)) return;
 
             if (transform == null)
             {
-                GUILayout.Label("null");
+                OnSceneTreeMessage(refChain, "null");
                 return;
             }
 
@@ -1182,22 +952,11 @@ namespace ModTools
 
         private void OnSceneReflectUnityEngineMaterial(ReferenceChain refChain, UnityEngine.Material material)
         {
-            AddDebugLine("OnSceneTreeReflectUnityEngineTransform(caller = {0}, material = {1})", refChain, material);
-
-            var hash = refChain.GetHashCode().ToString();
-
-            if (refChain.CheckDepth())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
-
+            if (!SceneTreeCheckDepth(refChain)) return;
+           
             if(material == null)
             {
-                GUILayout.Label("null");
+                OnSceneTreeMessage(refChain, "null");
                 return;
             }
 
@@ -1206,21 +965,26 @@ namespace ModTools
             foreach (string prop in textureProps)
             {
                 if (!material.HasProperty(prop))
+                {
                     continue;
+                }
+
                 Texture value = material.GetTexture(prop);
                 if (value == null)
+                {
                     continue;
+                }
 
                 refChain = oldRefChain.Add(prop);
 
                 var type = value.GetType();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Length);
+                GUILayout.Space(treeIdentSpacing * (refChain.Ident+1));
 
                 GUI.contentColor = Color.white;
 
-                if (IsReflectableType(type) && !IsEnumerable(type))
+                if (TypeUtil.IsReflectableType(type) && !IsEnumerable(type))
                 {
                     if (expandedObjects.ContainsKey(refChain))
                     {
@@ -1249,44 +1013,48 @@ namespace ModTools
                 GUI.contentColor = Color.white;
 
                 GUILayout.Label(" = ");
-                GUILayout.Label(value == null ? "null" : value.ToString());
+                GUILayout.Label(value.ToString());
 
                 GUILayout.FlexibleSpace();
 
-                if (GUILayout.Button("LiveView"))
+                if (GUILayout.Button("Preview"))
                 {
-                    rtLiveView.previewTexture = (Texture)value;
-                    rtLiveView.caller = refChain;
-                    rtLiveView.visible = true;
+                    ModTools.Instance.textureViewer.previewTexture = (Texture)value;
+                    ModTools.Instance.textureViewer.caller = refChain;
+                    ModTools.Instance.textureViewer.visible = true;
                 }
 
                 if (GUILayout.Button("Dump .png"))
                 {
-                    RTLiveView.DumpTextureToPNG((Texture)value);
+                    Util.DumpTextureToPNG((Texture)value);
                 }
                 GUILayout.EndHorizontal();
 
-                if (IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
+                if (TypeUtil.IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
                 {
                     OnSceneTreeReflect(refChain, value);
                 }
 
             }
+
             foreach (string prop in colorProps)
             {
                 if (!material.HasProperty(prop))
+                {
                     continue;
+                }
+
                 Color value = material.GetColor(prop);
                 refChain = oldRefChain.Add(prop);
 
                 var type = value.GetType();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Length);
+                GUILayout.Space(treeIdentSpacing * (refChain.Ident+1));
 
                 GUI.contentColor = Color.white;
 
-                if (IsReflectableType(type) && !IsEnumerable(type))
+                if (TypeUtil.IsReflectableType(type) && !IsEnumerable(type))
                 {
                     if (expandedObjects.ContainsKey(refChain))
                     {
@@ -1322,22 +1090,42 @@ namespace ModTools
                     material.SetColor(prop, f);
                 }
 
+                if (GUILayout.Button("c", GUILayout.Width(72)))
+                {
+                    var picker = ModTools.Instance.colorPicker;
+                    picker.SetColor(value);
+
+                    Vector2 mouse = Input.mousePosition;
+                    mouse.y = Screen.height - mouse.y;
+
+                    picker.rect.position = mouse;
+                    picker.visible = true;
+                }
+
+                var lastRect = GUILayoutUtility.GetLastRect();
+                lastRect.x += 4.0f;
+                lastRect.y += 4.0f;
+                lastRect.width -= 8.0f;
+                lastRect.height -= 8.0f;
+                GUI.DrawTexture(lastRect, ColorPicker.GetColorTexture(refChain.ToString(), value), ScaleMode.StretchToFill);
+
                 GUILayout.FlexibleSpace();
 
                 GUILayout.EndHorizontal();
 
-                if (IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
+                if (TypeUtil.IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
                 {
                     OnSceneTreeReflect(refChain, value);
                 }
             }
 
+            OnSceneTreeReflect(refChain, material, true);
         }
 
         private bool IsEnumerable(object myProperty)
         {
-            if (typeof(IEnumerable).IsAssignableFrom(myProperty.GetType())
-                || typeof(IEnumerable<>).IsAssignableFrom(myProperty.GetType()))
+            if (typeof (IEnumerable).IsAssignableFrom(myProperty.GetType())
+                || typeof (IEnumerable<>).IsAssignableFrom(myProperty.GetType()))
                 return true;
 
             return false;
@@ -1345,16 +1133,7 @@ namespace ModTools
 
         private void OnSceneTreeReflectIEnumerable(ReferenceChain refChain, System.Object myProperty)
         {
-            AddDebugLine("OnSceneTreeReflectIEnumerable(caller = {0}, obj = {1})", refChain, myProperty);
-
-            if (refChain.CheckDepth())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
+            if (!SceneTreeCheckDepth(refChain)) return;
 
             var enumerable = myProperty as IEnumerable;
             if (enumerable == null)
@@ -1365,147 +1144,259 @@ namespace ModTools
             int count = 0;
             var oldRefChain = refChain;
 
-            foreach (var value in enumerable)
-            {
-                refChain = oldRefChain.Add(count);
+            var collection = enumerable as ICollection;
 
-                var type = value.GetType();
+            if (collection != null)
+            {
+                var collectionSize = collection.Count;
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
+                GUILayout.Label("Collection size: " + collectionSize);
 
-                GUI.contentColor = Color.white;
-
-                if (IsReflectableType(type) && !IsEnumerable(type))
+                if (!selectedArrayStartIndices.ContainsKey(refChain))
                 {
-                    if (expandedObjects.ContainsKey(refChain))
-                    {
-                        if (GUILayout.Button("-", GUILayout.Width(16)))
-                        {
-                            expandedObjects.Remove(refChain);
-                        }
-                    }
-                    else
-                    {
-                        if (GUILayout.Button("+", GUILayout.Width(16)))
-                        {
-                            expandedObjects.Add(refChain, true);
-                        }
-                    }
+                    selectedArrayStartIndices.Add(refChain, 0);
                 }
 
-                GUI.contentColor = Color.green;
+                if (!selectedArrayEndIndices.ContainsKey(refChain))
+                {
+                    selectedArrayEndIndices.Add(refChain, 32);
+                }
 
-                GUILayout.Label(type.ToString() + " ");
+                var arrayStart = selectedArrayStartIndices[refChain];
+                var arrayEnd = selectedArrayEndIndices[refChain];
 
-                GUI.contentColor = Color.red;
-
-                GUILayout.Label(String.Format("{0}.[{1}]", oldRefChain.LastItemName, count));
-
-                GUI.contentColor = Color.white;
-
-                GUILayout.Label(" = ");
-                GUILayout.Label(value == null ? "null" : value.ToString());
-
+                GUIControls.IntField(oldRefChain.ToString() + ".arrayStart", "Start index", ref arrayStart, 0.0f, true, true);
+                GUIControls.IntField(oldRefChain.ToString() + ".arrayEnd", "End index", ref arrayEnd, 0.0f, true, true);
+                GUILayout.Label("(32 items max)");
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
 
-                if (IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
+                arrayStart = Mathf.Clamp(arrayStart, 0, collectionSize - 1);
+                arrayEnd = Mathf.Clamp(arrayEnd, 0, collectionSize - 1);
+                if (arrayStart > arrayEnd)
                 {
-                    if (value is GameObject)
-                    {
-                        var go = value as GameObject;
-                        foreach (var component in go.GetComponents<Component>())
-                        {
-                            OnSceneTreeComponent(refChain, component);
-                        }
-                    }
-                    else if (value is Transform)
-                    {
-                        OnSceneTreeReflectUnityEngineTransform(refChain, (Transform)value);
-                    }
-                    else
-                    {
-                        OnSceneTreeReflect(refChain, value);
-                    }
+                    arrayEnd = arrayStart;
                 }
 
-                count++;
-                if (count >= 128)
+                if (arrayEnd - arrayStart > 32)
                 {
+                    arrayEnd = arrayStart + 32;
+                    arrayEnd = Mathf.Clamp(arrayEnd, 0, collectionSize - 1);
+                }
+
+                selectedArrayStartIndices[refChain] = arrayStart;
+                selectedArrayEndIndices[refChain] = arrayEnd;
+
+                foreach (var value in enumerable)
+                {
+                    if (count < arrayStart)
+                    {
+                        count++;
+                        continue;
+                    }
+                    
+                    refChain = oldRefChain.Add(count);
+
+                    var type = value.GetType();
+
                     GUILayout.BeginHorizontal();
-                    GUILayout.Space(treeIdentSpacing * refChain.Length);
-                    GUILayout.Label("Array too large to display");
+                    GUILayout.Space(treeIdentSpacing * refChain.Ident);
+
+                    GUI.contentColor = Color.white;
+
+                    if (TypeUtil.IsReflectableType(type) && !IsEnumerable(type))
+                    {
+                        if (expandedObjects.ContainsKey(refChain))
+                        {
+                            if (GUILayout.Button("-", GUILayout.Width(16)))
+                            {
+                                expandedObjects.Remove(refChain);
+                            }
+                        }
+                        else
+                        {
+                            if (GUILayout.Button("+", GUILayout.Width(16)))
+                            {
+                                expandedObjects.Add(refChain, true);
+                            }
+                        }
+                    }
+
+                    GUI.contentColor = Color.green;
+
+                    GUILayout.Label(type.ToString() + " ");
+
+                    GUI.contentColor = Color.red;
+
+                    GUILayout.Label(String.Format("{0}.[{1}]", oldRefChain.LastItemName, count));
+
+                    GUI.contentColor = Color.white;
+
+                    GUILayout.Label(" = ");
+                    GUILayout.Label(value == null ? "null" : value.ToString());
+
+                    GUILayout.FlexibleSpace();
                     GUILayout.EndHorizontal();
-                    break;
+
+                    if (TypeUtil.IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
+                    {
+                        if (value is GameObject)
+                        {
+                            var go = value as GameObject;
+                            foreach (var component in go.GetComponents<Component>())
+                            {
+                                OnSceneTreeComponent(refChain, component);
+                            }
+                        }
+                        else if (value is Transform)
+                        {
+                            OnSceneTreeReflectUnityEngineTransform(refChain, (Transform)value);
+                        }
+                        else
+                        {
+                            OnSceneTreeReflect(refChain, value);
+                        }
+                    }
+
+                    count++;
+                    if (count > arrayEnd)
+                    {
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                foreach (var value in enumerable)
+                {
+                    refChain = oldRefChain.Add(count);
+
+                    var type = value.GetType();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(treeIdentSpacing * refChain.Ident);
+
+                    GUI.contentColor = Color.white;
+
+                    if (TypeUtil.IsReflectableType(type) && !IsEnumerable(type))
+                    {
+                        if (expandedObjects.ContainsKey(refChain))
+                        {
+                            if (GUILayout.Button("-", GUILayout.Width(16)))
+                            {
+                                expandedObjects.Remove(refChain);
+                            }
+                        }
+                        else
+                        {
+                            if (GUILayout.Button("+", GUILayout.Width(16)))
+                            {
+                                expandedObjects.Add(refChain, true);
+                            }
+                        }
+                    }
+
+                    GUI.contentColor = Color.green;
+
+                    GUILayout.Label(type.ToString() + " ");
+
+                    GUI.contentColor = Color.red;
+
+                    GUILayout.Label(String.Format("{0}.[{1}]", oldRefChain.LastItemName, count));
+
+                    GUI.contentColor = Color.white;
+
+                    GUILayout.Label(" = ");
+                    GUILayout.Label(value == null ? "null" : value.ToString());
+
+                    GUILayout.FlexibleSpace();
+                    GUILayout.EndHorizontal();
+
+                    if (TypeUtil.IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
+                    {
+                        if (value is GameObject)
+                        {
+                            var go = value as GameObject;
+                            foreach (var component in go.GetComponents<Component>())
+                            {
+                                OnSceneTreeComponent(refChain, component);
+                            }
+                        }
+                        else if (value is Transform)
+                        {
+                            OnSceneTreeReflectUnityEngineTransform(refChain, (Transform)value);
+                        }
+                        else
+                        {
+                            OnSceneTreeReflect(refChain, value);
+                        }
+                    }
+
+                    count++;
+                    if (count >= 1024)
+                    {
+                        OnSceneTreeMessage(refChain, "Array too large to display");
+                        break;
+                    }
                 }
             }
         }
 
-        private void OnSceneTreeReflect(ReferenceChain refChain, System.Object obj)
+        private void OnSceneTreeReflect(ReferenceChain refChain, System.Object obj, bool rawReflection = false)
         {
-            if (refChain.CheckDepth())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
+            if (!SceneTreeCheckDepth(refChain)) return;
 
             if (obj == null)
             {
-                GUILayout.Label("null");
+                OnSceneTreeMessage(refChain, "null");
                 return;
             }
-
-            if (preventCircularReferences.ContainsKey(obj.GetHashCode()))
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
-                GUILayout.Label("Circular reference detected");
-                GUILayout.EndHorizontal();
-                return;
-            }
-
-            preventCircularReferences.Add(obj.GetHashCode(), true);
 
             Type type = obj.GetType();
 
-            if (type == typeof(UnityEngine.Transform))
+            if (!rawReflection)
             {
-                OnSceneTreeReflectUnityEngineTransform(refChain, (UnityEngine.Transform)obj);
-                return;
-            }
-            
-            if (IsEnumerable(obj))
-            {
-                OnSceneTreeReflectIEnumerable(refChain, obj);
-                return;
-            }
-
-            if(type == typeof(Material))
-            {
-                OnSceneReflectUnityEngineMaterial(refChain, (UnityEngine.Material)obj);
-                return;
-            }
-
-            MemberInfo[] fields = type.GetMembers(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
-
-            foreach (MemberInfo member in fields)
-            {
-                if (filterType == FilterType.FieldsAndProps && !member.Name.ToLower().Contains(nameFilter))
+                if (preventCircularReferences.ContainsKey(obj.GetHashCode()))
                 {
-                    continue;
+                    OnSceneTreeMessage(refChain, "Circular reference detected");
+                    return;
                 }
 
-                FieldInfo field = null;
-                PropertyInfo property = null;
-                MethodInfo method = null;
+                preventCircularReferences.Add(obj.GetHashCode(), true);
 
+                if (type == typeof(UnityEngine.Transform))
+                {
+                    OnSceneTreeReflectUnityEngineTransform(refChain, (UnityEngine.Transform)obj);
+                    return;
+                }
+
+                if (IsEnumerable(obj))
+                {
+                    OnSceneTreeReflectIEnumerable(refChain, obj);
+                    return;
+                }
+
+                if (type == typeof(Material))
+                {
+                    OnSceneReflectUnityEngineMaterial(refChain, (UnityEngine.Material)obj);
+                    return;
+                }
+            }
+
+            MemberInfo[] members = type.GetMembers(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
+
+            if (sortAlphabetically)
+            {
+                Array.Sort(members, (info, info1) => info.Name.CompareTo(info1.Name));
+            }
+
+            foreach (MemberInfo member in members)
+            {
                 if (member.MemberType == MemberTypes.Field && showFields)
                 {
-                    field = (FieldInfo)member;
+                    var field = (FieldInfo)member;
 
                     try
                     {
@@ -1513,15 +1404,12 @@ namespace ModTools
                     }
                     catch (Exception ex)
                     {
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
-                        GUILayout.Label(String.Format("Exception when fetching field \"{0}\" - {1}", field.Name, ex.Message));
-                        GUILayout.EndHorizontal();
+                        OnSceneTreeMessage(refChain, String.Format("Exception when fetching field \"{0}\" - {1}", field.Name, ex.Message));
                     }
                 }
                 else if (member.MemberType == MemberTypes.Property && showProperties)
                 {
-                    property = (PropertyInfo)member;
+                    var property = (PropertyInfo)member;
 
                     try
                     {
@@ -1529,15 +1417,12 @@ namespace ModTools
                     }
                     catch (Exception ex)
                     {
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
-                        GUILayout.Label(String.Format("Exception when fetching property \"{0}\" - {1}", property.Name, ex.Message));
-                        GUILayout.EndHorizontal();
+                        OnSceneTreeMessage(refChain, String.Format("Exception when fetching property \"{0}\" - {1}", property.Name, ex.Message));
                     }
                 }
                 else if (member.MemberType == MemberTypes.Method && showMethods)
                 {
-                    method = (MethodInfo)member;
+                    var method = (MethodInfo)member;
 
                     try
                     {
@@ -1545,103 +1430,86 @@ namespace ModTools
                     }
                     catch (Exception ex)
                     {
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
-                        GUILayout.Label(String.Format("Exception when fetching method \"{0}\" - {1}", method.Name, ex.Message));
-                        GUILayout.EndHorizontal();
+                        OnSceneTreeMessage(refChain, String.Format("Exception when fetching method \"{0}\" - {1}", method.Name, ex.Message));
                     }
-                }
-
-                if (field == null)
-                {
-                    continue;
                 }
             }
         }
 
         private void OnSceneTreeComponent(ReferenceChain refChain, Component component)
         {
-            if (refChain.CheckDepth())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
-                return;
-            }
+            if (!SceneTreeCheckDepth(refChain)) return;
 
-          
-            if (filterType == FilterType.Components && !component.name.ToLower().Contains(nameFilter))
+            if (component == null)
             {
+                OnSceneTreeMessage(refChain, "null");
                 return;
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+            GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
-            if (expandedComponents.ContainsKey(refChain))
+            if (currentRefChain == null || !currentRefChain.Equals(refChain.Add(component)))
             {
-                if (GUILayout.Button("-", GUILayout.Width(16)))
+                if (GUILayout.Button(">", GUILayout.Width(16)))
                 {
-                    expandedComponents.Remove(refChain);
+                    currentRefChain = refChain.Add(component);
+                    currentRefChain.identOffset = -(refChain.Length + 1);
                 }
-
-                GUILayout.Label(component.name + " (" + component.GetType().ToString() + ")");
-
-                GUILayout.EndHorizontal();
-
-                OnSceneTreeReflect(refChain, component);
             }
             else
             {
-                if (GUILayout.Button("+", GUILayout.Width(16)))
+                if (GUILayout.Button("<", GUILayout.Width(16)))
                 {
-                    expandedComponents.Add(refChain, true);
+                    currentRefChain = null;
                 }
 
-                GUILayout.Label(component.name + " (" + component.GetType().ToString() + ")");
-                GUILayout.EndHorizontal();
+                GUI.contentColor = Color.green;
             }
+            
+       
+            GUILayout.Label(component.GetType().ToString());
+
+            GUI.contentColor = Color.white;
+
+            GUILayout.EndHorizontal();
         }
 
         private void OnSceneTreeRecursive(ReferenceChain refChain, GameObject obj)
         {
-            AddDebugLine("OnSceneTreeRecursive(caller = {0}, obj = {1})", refChain, obj);
-
-            if (refChain.CheckDepth())
+            if (obj == gameObject)
             {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
-                GUILayout.Label("Hierarchy too deep, sorry :(");
-                GUILayout.EndHorizontal();
                 return;
             }
+
+            if (!SceneTreeCheckDepth(refChain)) return;
 
             if (obj == null)
             {
-                GUILayout.Label("null");
+                OnSceneTreeMessage(refChain, "null");
                 return;
             }
 
-            if (filterType == FilterType.GameObjects && !obj.name.ToLower().Contains(nameFilter))
-            {
-                return;
-            }
-
-            if (expanded.ContainsKey(refChain))
+            if (expandedGameObjects.ContainsKey(refChain))
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
                 if (GUILayout.Button("-", GUILayout.Width(16)))
                 {
-                    expanded.Remove(refChain);
+                    expandedGameObjects.Remove(refChain);
                 }
 
                 GUILayout.Label(obj.name);
                 GUILayout.EndHorizontal();
 
                 var components = obj.GetComponents(typeof(Component));
+
+                if (sortAlphabetically)
+                {
+                    Array.Sort(components, (component, component1) => component.GetType().ToString().CompareTo(component1.GetType().ToString()));
+                }
+
                 foreach (var component in components)
                 {
                     OnSceneTreeComponent(refChain.Add(component), component);
@@ -1655,11 +1523,11 @@ namespace ModTools
             else
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * (refChain.Length - 1));
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
                 if (GUILayout.Button("+", GUILayout.Width(16)))
                 {
-                    expanded.Add(refChain, true);
+                    expandedGameObjects.Add(refChain, true);
                 }
 
                 GUILayout.Label(obj.name);
@@ -1667,47 +1535,60 @@ namespace ModTools
             }
         }
 
-        public void DrawWindow()
+        public void DrawHeader()
         {
-            if (debugMode)
+            headerArea.Begin();
+
+            if (headerExpanded)
             {
-                lastCrashReport = debugOutput;
-                debugOutput = "";
+                DrawExpandedHeader();
+            }
+            else
+            {
+                DrawCompactHeader();
             }
 
-            preventCircularReferences.Clear();
+            headerArea.End();            
+        }
 
-            watches = watches ?? FindObjectOfType<Watches>();
-            if (watches == null)
-            {
-                GUILayout.Label("Required component \"Watches\" is missing.");
-                return;
-            }
-
-            rtLiveView = rtLiveView ?? FindObjectOfType<RTLiveView>();
-            if (rtLiveView == null)
-            {
-                GUILayout.Label("Required component \"RTLiveView\" is missing.");
-                return;
-            }
-
-            if (GUILayout.Button("Refresh", GUILayout.Width(256)))
-            {
-                sceneRoots = FindSceneRoots();
-            }
-
+        public void DrawCompactHeader()
+        {
             GUILayout.BeginHorizontal();
 
-            GUILayout.Label("Show: ");
+            if (GUILayout.Button("▼"))
+            {
+                headerExpanded = true;
+                RecalculateAreas();
+            }
+
+            if (GUILayout.Button("Refresh", GUILayout.Width(200)))
+            {
+                Refresh();
+            }
+
+            if (GUILayout.Button("Fold all/ Clear", GUILayout.Width(200)))
+            {
+                ClearExpanded();
+                Refresh();
+            }
+
             GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+        }
+
+        public void DrawExpandedHeader()
+        {
+            GUILayout.BeginHorizontal();
+
+            GUI.contentColor = Color.green;
+            GUILayout.Label("Show: ");
+            GUI.contentColor = Color.white;
 
             GUILayout.Label("Fields");
             showFields = GUILayout.Toggle(showFields, "");
-            GUILayout.FlexibleSpace();
 
             GUILayout.Label("Properties");
             showProperties = GUILayout.Toggle(showProperties, "");
-            GUILayout.FlexibleSpace();
 
             GUILayout.Label("Methods");
             showMethods = GUILayout.Toggle(showMethods, "");
@@ -1716,72 +1597,213 @@ namespace ModTools
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUIControls.StringField("ModTools.NameFilter", "Filter", ref nameFilter, 0.0f, true, true);
-            nameFilter = nameFilter.Trim().ToLower();
+            GUI.contentColor = Color.green;
+            GUILayout.Label("Show field/ property modifiers:");
+            showModifiers = GUILayout.Toggle(showModifiers, "");
+            GUI.contentColor = Color.white;
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
-
-            bool filterGameObject = filterType == FilterType.GameObjects;
-            bool filterComponent = filterType == FilterType.Components;
-            bool filterFields = filterType == FilterType.FieldsAndProps;
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Filter type:");
-
+            GUI.contentColor = Color.green;
+            GUILayout.Label("Evaluate properties automatically");
+            evaluatePropertiesAutomatically = GUILayout.Toggle(evaluatePropertiesAutomatically, "");
+            GUI.contentColor = Color.white;
             GUILayout.FlexibleSpace();
-
-            GUILayout.Label("GameObject");
-            filterGameObject = GUILayout.Toggle(filterGameObject, "");
-            if (filterGameObject)
-            {
-                filterComponent = false;
-                filterFields = false;
-            }
-
-            GUILayout.FlexibleSpace();
-
-            GUILayout.Label("Component");
-            filterComponent = GUILayout.Toggle(filterComponent, "");
-            if (filterComponent)
-            {
-                filterFields = false;
-            }
-
-            GUILayout.FlexibleSpace();
-
-            GUILayout.Label("Fields and properties");
-            filterFields = GUILayout.Toggle(filterFields, "");
-            if (filterFields)
-            {
-                filterType = FilterType.FieldsAndProps;
-            }
-            else if (filterComponent)
-            {
-                filterType = FilterType.Components;
-            }
-            else
-            {
-                filterType = FilterType.GameObjects;
-            }
-
             GUILayout.EndHorizontal();
 
-            scrollPosition = GUILayout.BeginScrollView(scrollPosition);
+            GUILayout.BeginHorizontal();
+            GUI.contentColor = Color.green;
+            GUILayout.Label("Sort alphabetically:");
+            GUI.contentColor = Color.white;
+            sortAlphabetically = GUILayout.Toggle(sortAlphabetically, "");
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
 
-            foreach (var obj in sceneRoots)
+            DrawFindGameObjectPanel();
+
+            GUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("▲"))
             {
-                OnSceneTreeRecursive(new ReferenceChain().Add(obj.Key), obj.Key);
+                headerExpanded = false;
+                RecalculateAreas();
+            }
+
+            if (GUILayout.Button("Refresh", GUILayout.Width(200)))
+            {
+                Refresh();
+            }
+
+            if (GUILayout.Button("Fold all/ Clear", GUILayout.Width(200)))
+            {
+                ClearExpanded();
+                Refresh();
+            }
+
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+        }
+
+        void DrawFindGameObjectPanel()
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("GameObject.Find");
+            findGameObjectFilter = GUILayout.TextField(findGameObjectFilter, GUILayout.Width(256));
+
+            if (findGameObjectFilter.Trim().Length == 0)
+            {
+                GUI.enabled = false;
+            }
+
+            if (GUILayout.Button("Find"))
+            {
+                ClearExpanded();
+                var go = GameObject.Find(findGameObjectFilter.Trim());
+                if (go != null)
+                {
+                    sceneRoots.Clear();
+                    expandedGameObjects.Add(new ReferenceChain().Add(go), true);
+                    sceneRoots.Add(go, true);
+                    sceneTreeScrollPosition = Vector2.zero;
+                    searchDisplayString = String.Format("Showing results for GameObject.Find(\"{0}\")", findGameObjectFilter);
+                }
+            }
+
+            if (GUILayout.Button("Reset"))
+            {
+                ClearExpanded();
+                sceneRoots = GameObjectUtil.FindSceneRoots();
+                sceneTreeScrollPosition = Vector2.zero;
+                searchDisplayString = "";
+            }
+
+            GUI.enabled = true;
+
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("GameObject.FindObjectsOfType");
+            findObjectTypeFilter = GUILayout.TextField(findObjectTypeFilter, GUILayout.Width(256));
+
+            if (findObjectTypeFilter.Trim().Length == 0)
+            {
+                GUI.enabled = false;
+            }
+
+            if (GUILayout.Button("Find"))
+            {
+                var gameObjects = GameObjectUtil.FindComponentsOfType(findObjectTypeFilter.Trim());
+
+                sceneRoots.Clear();
+                foreach (var item in gameObjects)
+                {
+                    ClearExpanded();
+                    expandedGameObjects.Add(new ReferenceChain().Add(item.Key), true);
+                    if (gameObjects.Count == 1)
+                    {
+                        expandedComponents.Add(new ReferenceChain().Add(item.Key).Add(item.Value), true);
+                    }
+                    sceneRoots.Add(item.Key, true);
+                    sceneTreeScrollPosition = Vector2.zero;
+                    searchDisplayString = String.Format("Showing results for GameObject.FindObjectsOfType({0})", findObjectTypeFilter);
+                }
+            }
+
+            if (GUILayout.Button("Reset"))
+            {
+                ClearExpanded();
+                sceneRoots = GameObjectUtil.FindSceneRoots();
+                sceneTreeScrollPosition = Vector2.zero;
+                searchDisplayString = "";
+            }
+
+            GUI.enabled = true;
+
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+        }
+
+        public void DrawSceneTree()
+        {
+            sceneTreeArea.Begin();
+
+            if (searchDisplayString != "")
+            {
+                GUI.contentColor = Color.green;
+                GUILayout.Label(searchDisplayString);
+                GUI.contentColor = Color.white;
+            }
+
+            sceneTreeScrollPosition = GUILayout.BeginScrollView(sceneTreeScrollPosition);
+
+            var gameObjects = sceneRoots.Keys.ToArray();
+
+            if (sortAlphabetically)
+            {
+                Array.Sort(gameObjects, (o, o1) => o.name.CompareTo(o1.name));
+            }
+
+            foreach (var obj in gameObjects)
+            {
+                OnSceneTreeRecursive(new ReferenceChain().Add(obj), obj);
             }
 
             GUILayout.EndScrollView();
 
-            if (GUILayout.Button("Fold all"))
+            sceneTreeArea.End();
+        }
+
+        public void DrawComponent()
+        {
+            componentArea.Begin();
+
+            componentScrollPosition = GUILayout.BeginScrollView(componentScrollPosition);
+
+            if (currentRefChain != null)
             {
-                expanded.Clear();
-                expandedComponents.Clear();
-                expandedObjects.Clear();
-                evaluatedProperties.Clear();
+                OnSceneTreeReflect(currentRefChain, currentRefChain.Evaluate());
             }
+
+            GUILayout.EndScrollView();
+
+            componentArea.End();
+        }
+
+        public void DrawWindow()
+        {
+            bool enterPressed = Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter);
+
+            if (enterPressed)
+            {
+                GUI.FocusControl(null);
+            }
+
+            if (debugMode)
+            {
+                lastCrashReport = debugOutput;
+                debugOutput = "";
+            }
+
+            preventCircularReferences.Clear();
+
+            DrawHeader();
+            DrawSceneTree();
+            DrawComponent();
+        }
+
+        private void ClearExpanded()
+        {
+            expandedGameObjects.Clear();
+            expandedComponents.Clear();
+            expandedObjects.Clear();
+            evaluatedProperties.Clear();
+            selectedArrayStartIndices.Clear();
+            selectedArrayEndIndices.Clear();
+            searchDisplayString = "";
+            sceneTreeScrollPosition = Vector2.zero;
+            currentRefChain = null;
         }
 
     }
