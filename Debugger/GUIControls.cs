@@ -19,18 +19,18 @@ namespace ModTools
 
         public delegate void WatchButtonCallback();
 
-        public static bool IsHot(string hash)
+        private static bool IsHot(string hash)
         {
             return hash == GUI.GetNameOfFocusedControl();
         }
 
-        public static string HotControl()
+        private static string HotControl()
         {
             return GUI.GetNameOfFocusedControl();
         }
 
-        public static string currentHotControl = null;
-        public static string hotControlBuffer = "";
+        private static string currentHotControl = null;
+        private static string hotControlBuffer = "";
 
         public static string BufferedTextField(string hash, string value, float fieldSize)
         {
@@ -47,19 +47,12 @@ namespace ModTools
                     currentHotControl = hash;
                     hotControlBuffer = value;
                 }
-                else
+                else if(currentHotControl == hash)
                 {
                     hotControlBuffer = newBuffer;
                 }
             }
             else if (currentHotControl == hash)
-            {
-                res = hotControlBuffer;
-                currentHotControl = null;
-                hotControlBuffer = "";
-            }
-
-            if (currentHotControl == hash && (HotControl() == null || HotControl() == ""))
             {
                 res = hotControlBuffer;
                 currentHotControl = null;
