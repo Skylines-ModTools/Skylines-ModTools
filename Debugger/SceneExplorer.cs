@@ -193,7 +193,7 @@ namespace ModTools
             currentRefChain.identOffset = -currentRefChain.Length;
         }
 
-        private object EditorValueField(string hash, Type type, object value)
+        private object EditorValueField(ReferenceChain refChain, string hash, Type type, object value)
         {
             if (type == typeof(System.Single))
             {
@@ -390,7 +390,7 @@ namespace ModTools
             if (type == typeof(UnityEngine.Color))
             {
                 var f = (Color)value;
-                GUIControls.ColorField(hash, "", ref f, 0.0f, null, true, true);
+                GUIControls.ColorField(hash, "", ref f, 0.0f, null, true, true, color => { refChain.SetValue(color); });
                 if (f != (Color)value)
                 {
                     return f;
@@ -542,7 +542,7 @@ namespace ModTools
             {
                 try
                 {
-                    var newValue = EditorValueField(hash, field.FieldType, value);
+                    var newValue = EditorValueField(refChain, hash, field.FieldType, value);
                     if (newValue != value)
                     {
                         field.SetValue(obj, newValue);
@@ -733,7 +733,7 @@ namespace ModTools
                 {
                     try
                     {
-                        var newValue = EditorValueField(hash, property.PropertyType, value);
+                        var newValue = EditorValueField(refChain, hash, property.PropertyType, value);
                         if (newValue != value)
                         {
                             property.SetValue(obj, newValue, null);
@@ -1084,32 +1084,13 @@ namespace ModTools
 
                 GUILayout.Label(" = ");
                 var f = value;
-                GUIControls.ColorField(refChain.ToString(), "", ref f, 0.0f, null, true, true);
+
+                var propertyCopy = prop;
+                GUIControls.ColorField(refChain.ToString(), "", ref f, 0.0f, null, true, true, color => { material.SetColor(propertyCopy, color); });
                 if (f != value)
                 {
                     material.SetColor(prop, f);
                 }
-
-                var propertyCopy = prop;
-
-                if (GUILayout.Button("c", GUILayout.Width(72)))
-                {
-                    var picker = ModTools.Instance.colorPicker;
-                    picker.SetColor(value, color => { material.SetColor(propertyCopy, color); });
-
-                    Vector2 mouse = Input.mousePosition;
-                    mouse.y = Screen.height - mouse.y;
-
-                    picker.rect.position = mouse;
-                    picker.visible = true;
-                }
-
-                var lastRect = GUILayoutUtility.GetLastRect();
-                lastRect.x += 4.0f;
-                lastRect.y += 4.0f;
-                lastRect.width -= 8.0f;
-                lastRect.height -= 8.0f;
-                GUI.DrawTexture(lastRect, ColorPicker.GetColorTexture(refChain.ToString(), value), ScaleMode.StretchToFill);
 
                 GUILayout.FlexibleSpace();
 

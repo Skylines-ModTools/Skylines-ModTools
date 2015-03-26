@@ -733,7 +733,7 @@ namespace ModTools
             GUI.contentColor = Color.white;
         }
 
-        static public void ColorField(string hash, string name, ref Color value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false)
+        static public void ColorField(string hash, string name, ref Color value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false, ColorPicker.OnColorChanged onColorChanged = null)
         {
             GUILayout.BeginHorizontal();
 
@@ -771,7 +771,29 @@ namespace ModTools
             value.g = Mathf.Clamp01((float)g / 255.0f);
             value.b = Mathf.Clamp01((float)b / 255.0f);
             value.a = Mathf.Clamp01((float)a / 255.0f);
+            
+            if (onColorChanged != null)
+            {
+                if (GUILayout.Button("c", GUILayout.Width(72)))
+                {
+                    var picker = ModTools.Instance.colorPicker;
+                    picker.SetColor(value, onColorChanged);
 
+                    Vector2 mouse = Input.mousePosition;
+                    mouse.y = Screen.height - mouse.y;
+
+                    picker.rect.position = mouse;
+                    picker.visible = true;
+                }
+
+                var lastRect = GUILayoutUtility.GetLastRect();
+                lastRect.x += 4.0f;
+                lastRect.y += 4.0f;
+                lastRect.width -= 8.0f;
+                lastRect.height -= 8.0f;
+                GUI.DrawTexture(lastRect, ColorPicker.GetColorTexture(hash, value), ScaleMode.StretchToFill);
+            }
+            
             if (watch != null)
             {
                 if (GUILayout.Button("Watch"))
