@@ -8,6 +8,11 @@ namespace ModTools
     public class Watches : GUIWindow
     {
 
+        private Configuration config
+        {
+            get { return ModTools.Instance.config; }
+        }
+
         private Vector2 watchesScroll = Vector2.zero;
 
         public Watches()
@@ -161,9 +166,9 @@ namespace ModTools
 
                 var type = GetWatchType(watch);
 
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label(type.ToString());
-                GUI.contentColor = Color.red;
+                GUI.contentColor = config.nameColor;
                 GUILayout.Label(watch.ToString());
                 GUI.contentColor = Color.white;
                 GUILayout.Label(" = ");
@@ -174,6 +179,7 @@ namespace ModTools
                 }
 
                 var value = ReadWatch(watch);
+                GUI.contentColor = config.valueColor;
 
                 if (type.ToString() == "System.Single")
                 {
@@ -334,6 +340,8 @@ namespace ModTools
                 {
                     GUILayout.Label(value.ToString());
                 }
+
+                GUI.contentColor = Color.white;
 
                 GUI.enabled = true;
 
