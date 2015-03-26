@@ -40,6 +40,8 @@ namespace ModTools
 
         public bool visible = false;
         public bool resizable = true;
+        public bool hasCloseButton = true;
+        public bool hasTitlebar = true;
 
         public string title = "Window";
 
@@ -186,16 +188,22 @@ namespace ModTools
                         var mouse = Input.mousePosition;
                         mouse.y = Screen.height - mouse.y;
 
-                        DrawTitlebar(mouse);
+                        if (hasTitlebar)
+                        {
+                            DrawTitlebar(mouse);
+                        }
+
+                        if (hasCloseButton)
+                        {
+                            DrawCloseButton(mouse);
+                        }
 
                         if (resizable)
                         {
                             DrawResizeHandle(mouse);
                         }
-
-                        DrawCloseButton(mouse);
                     }
-                }, title);
+                }, "");
 
                 if (onUnityGUI != null)
                 {

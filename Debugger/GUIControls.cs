@@ -757,10 +757,20 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            FloatField(hash+".r", "r", ref value.r, 0.0f, true, true);
-            FloatField(hash + ".g", "g", ref value.g, 0.0f, true, true);
-            FloatField(hash + ".b", "b", ref value.b, 0.0f, true, true);
-            FloatField(hash + ".a", "a", ref value.a, 0.0f, true, true);
+            var r = (byte)(Mathf.Clamp(value.r * 255.0f, byte.MinValue, byte.MaxValue));
+            var g = (byte)(Mathf.Clamp(value.g * 255.0f, byte.MinValue, byte.MaxValue));
+            var b = (byte)(Mathf.Clamp(value.b * 255.0f, byte.MinValue, byte.MaxValue));
+            var a = (byte)(Mathf.Clamp(value.a * 255.0f, byte.MinValue, byte.MaxValue));
+
+            ByteField(hash + ".r", "r", ref r, 0.0f, true, true);
+            ByteField(hash + ".g", "g", ref g, 0.0f, true, true);
+            ByteField(hash + ".b", "b", ref b, 0.0f, true, true);
+            ByteField(hash + ".a", "a", ref a, 0.0f, true, true);
+
+            value.r = Mathf.Clamp01((float)r / 255.0f);
+            value.g = Mathf.Clamp01((float)g / 255.0f);
+            value.b = Mathf.Clamp01((float)b / 255.0f);
+            value.a = Mathf.Clamp01((float)a / 255.0f);
 
             if (watch != null)
             {

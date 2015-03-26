@@ -1090,6 +1090,25 @@ namespace ModTools
                     material.SetColor(prop, f);
                 }
 
+                if (GUILayout.Button("c", GUILayout.Width(72)))
+                {
+                    var picker = ModTools.Instance.colorPicker;
+                    picker.SetColor(value);
+
+                    Vector2 mouse = Input.mousePosition;
+                    mouse.y = Screen.height - mouse.y;
+
+                    picker.rect.position = mouse;
+                    picker.visible = true;
+                }
+
+                var lastRect = GUILayoutUtility.GetLastRect();
+                lastRect.x += 4.0f;
+                lastRect.y += 4.0f;
+                lastRect.width -= 8.0f;
+                lastRect.height -= 8.0f;
+                GUI.DrawTexture(lastRect, ColorPicker.GetColorTexture(refChain.ToString(), value), ScaleMode.StretchToFill);
+
                 GUILayout.FlexibleSpace();
 
                 GUILayout.EndHorizontal();
