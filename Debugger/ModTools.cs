@@ -113,34 +113,41 @@ namespace ModTools
             resizable = false;
         }
 
+        private static bool loggingInitialized = false;
+
         void Awake()
         {
-            Application.logMessageReceived += (condition, trace, type) =>
+            if (!loggingInitialized)
             {
-                if (!logExceptionsToConsole)
+                Application.logMessageReceived += (condition, trace, type) =>
                 {
-                    return;
-                }
+                    if (!logExceptionsToConsole)
+                    {
+                        return;
+                    }
 
-                if (ModTools.Instance.console != null)
-                {
-                    ModTools.Instance.console.AddMessage(condition, type);
-                    return;
-                }
+                    if (ModTools.Instance.console != null)
+                    {
+                        ModTools.Instance.console.AddMessage(condition, type);
+                        return;
+                    }
 
-                if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert)
-                {
-                    Log.Error(condition);
-                }
-                else if (type == LogType.Warning)
-                {
-                    Log.Warning(condition);
-                }
-                else
-                {
-                    Log.Message(condition);
-                }
-            };
+                    if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert)
+                    {
+                        Log.Error(condition);
+                    }
+                    else if (type == LogType.Warning)
+                    {
+                        Log.Warning(condition);
+                    }
+                    else
+                    {
+                        Log.Message(condition);
+                    }
+                };
+
+                loggingInitialized = true;
+            }
 
             sceneExplorer = gameObject.AddComponent<SceneExplorer>();
 

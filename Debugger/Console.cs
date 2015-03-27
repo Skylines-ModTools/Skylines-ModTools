@@ -385,8 +385,16 @@ namespace ModTools
         void RunCommandLine()
         {
             var commandLine = commandHistory[currentCommandHistoryIndex];
-            commandHistory.Add("");
-            currentCommandHistoryIndex++;
+
+            if (commandHistory.Last() != "")
+            {
+                commandHistory.Add("");
+                currentCommandHistoryIndex = commandHistory.Count - 1;
+            }
+            else
+            {
+                currentCommandHistoryIndex = commandHistory.Count - 1;
+            }
 
             var source = String.Format(defaultSource, commandLine);
             var file = new ScriptEditorFile() { path = "ModToolsCommandLineScript.cs", source = source };
