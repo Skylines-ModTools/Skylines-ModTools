@@ -94,7 +94,7 @@ namespace ModTools
                 UIAlignAnchor.TopRight, 
                 (component, param) =>
                 {
-                    InstanceID instance = Util.ReadPrivate<ZonedBuildingWorldInfoPanel, InstanceID>(zonedBuildingInfoPanel, "m_InstanceID");
+                    InstanceID instance = Util.GetPrivate<InstanceID>(zonedBuildingInfoPanel, "m_InstanceID");
                     sceneExplorer.ExpandFromRefChain(buildingsBufferRefChain.Add(instance.Building));
                     sceneExplorer.visible = true;
                 }
@@ -108,7 +108,7 @@ namespace ModTools
                 UIAlignAnchor.TopRight, 
                 (component, param) =>
                 {
-                    InstanceID instance = Util.ReadPrivate<ZonedBuildingWorldInfoPanel, InstanceID>(zonedBuildingInfoPanel, "m_InstanceID");
+                    InstanceID instance = Util.GetPrivate<InstanceID>(zonedBuildingInfoPanel, "m_InstanceID");
                     var building = BuildingManager.instance.m_buildings.m_buffer[instance.Building];
                     var material = building.Info.m_material;
                     var mesh = building.Info.m_mesh;
@@ -147,7 +147,7 @@ namespace ModTools
 
             if (zonedBuildingInfoPanel.component.isVisible)
             {
-                InstanceID instance = Util.ReadPrivate<ZonedBuildingWorldInfoPanel, InstanceID>(zonedBuildingInfoPanel, "m_InstanceID");
+                InstanceID instance = Util.GetPrivate<InstanceID>(zonedBuildingInfoPanel, "m_InstanceID");
                 var building = BuildingManager.instance.m_buildings.m_buffer[instance.Building];
                 zonedBuildingAssetNameLabel.text = "AssetName: " + building.Info.name;
             }

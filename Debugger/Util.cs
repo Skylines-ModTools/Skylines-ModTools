@@ -163,9 +163,9 @@ namespace ModTools
             return (T)field.GetValue(o);
         }
 
-        public static Q ReadPrivate<T, Q>(T o, string fieldName)
+        public static Q GetPrivate<Q>(object o, string fieldName)
         {
-            var fields = typeof(T).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            var fields = o.GetType().GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             FieldInfo field = null;
 
             foreach (var f in fields)
@@ -180,9 +180,9 @@ namespace ModTools
             return (Q)field.GetValue(o);
         }
 
-        public static void WritePrivate<T, Q>(T o, string fieldName, object value)
+        public static void SetPrivate<Q>(object o, string fieldName, object value)
         {
-            var fields = typeof(T).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            var fields = o.GetType().GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             FieldInfo field = null;
 
             foreach (var f in fields)
@@ -200,8 +200,8 @@ namespace ModTools
         public static void SetMouseScrolling(bool isEnabled)
         {
             var cameraController = GameObject.FindObjectOfType<CameraController>();
-            var mouseWheelZoom = ReadPrivate<CameraController, SavedBool>(cameraController, "m_mouseWheelZoom");
-            WritePrivate<SavedBool, bool>(mouseWheelZoom, "m_Value", isEnabled);
+            var mouseWheelZoom = GetPrivate<SavedBool>(cameraController, "m_mouseWheelZoom");
+            SetPrivate<bool>(mouseWheelZoom, "m_Value", isEnabled);
         }
 
         public static bool ComponentIsEnabled(Component component)

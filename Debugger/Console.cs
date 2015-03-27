@@ -38,10 +38,10 @@ namespace ModTools
         private float commandLineAreaHeight = 45.0f;
 
         private List<ConsoleMessage> history = new List<ConsoleMessage>();
+        private List<string> commandHistory = new List<string>() { "" };
+        private int currentCommandHistoryIndex = 0;
 
         private Vector2 consoleScrollPosition = Vector2.zero;
-
-        private string commandLine = "";
 
         private DebugOutputPanel vanillaPanel;
         private Transform oldVanillaPanelParent;
@@ -191,6 +191,12 @@ namespace ModTools
             GUILayout.Label("Show console configuration");
 
             GUILayout.FlexibleSpace();
+
+            if (GUILayout.Button("Clear", GUILayout.ExpandWidth(false)))
+            {
+                history.Clear();
+            }
+
             GUILayout.EndHorizontal();
         }
 
@@ -332,40 +338,77 @@ namespace ModTools
 
             GUILayout.BeginHorizontal();
 
-            commandLine = GUILayout.TextField(commandLine);
+            GUI.SetNextControlName("ModToolsConsoleCommandLine");
+            commandHistory[currentCommandHistoryIndex] = GUILayout.TextField(commandHistory[currentCommandHistoryIndex]);
 
-            if (GUILayout.Button("Submit", GUILayout.ExpandWidth(false)))
+            if (commandHistory[currentCommandHistoryIndex].Trim().Length == 0)
             {
-                throw new Exception("TEST");
-                var source = String.Format(defaultSource, commandLine);
-                var file = new ScriptEditorFile() {path = "ModToolsCommandLineScript.cs", source = source};
-
-/*
-                string errorMessage;
-                IModEntryPoint instance;
-                if (ScriptCompiler.RunSource(new List<ScriptEditorFile>() {file}, out errorMessage, out instance))
-                {
-                    Log.Error("Failed to compile command-line!");    
-                }
-                else
-                {
-                    if (instance != null)
-                    {
-                        Log.Message("Executing command-line..");
-                        instance.OnModLoaded();
-                    }
-                    else
-                    {
-                        Log.Error("Error xxecuting command-line..");
-                    }
-                }
-*/
-                commandLine = "";
+                GUI.enabled = false;
             }
+
+            if (GUILayout.Button("Run", GUILayout.ExpandWidth(false)))
+            {
+                RunCommandLine();
+            }
+
+            GUI.enabled = true;
+
+            if (currentCommandHistoryIndex == 0)
+            {
+                GUI.enabled = false;
+            }
+
+            if (GUILayout.Button("↑", GUILayout.ExpandWidth(false)))
+            {
+                currentCommandHistoryIndex--;
+            }
+
+            GUI.enabled = true;
+
+            if (currentCommandHistoryIndex >= commandHistory.Count - 1)
+            {
+                GUI.enabled = false;
+            }
+
+            if (GUILayout.Button("↓", GUILayout.ExpandWidth(false)))
+            {
+                currentCommandHistoryIndex++;
+            }
+
+            GUI.enabled = true;
 
             GUILayout.EndHorizontal();
 
             commandLineArea.End();
+        }
+
+        void RunCommandLine()
+        {
+            var commandLine = commandHistory[currentCommandHistoryIndex];
+            commandHistory.Add("");
+            currentCommandHistoryIndex++;
+
+            var source = String.Format(defaultSource, commandLine);
+            var file = new ScriptEditorFile() { path = "ModToolsCommandLineScript.cs", source = source };
+            string errorMessage;
+            IModEntryPoint instance;
+            if (!ScriptCompiler.RunSource(new List<ScriptEditorFile>() { file }, out errorMessage, out instance))
+            {
+                Log.Error("Failed to compile command-line!");
+            }
+            else
+            {
+                if (instance != null)
+                {
+                    Log.Message("Executing command-line..");
+                    instance.OnModLoaded();
+                }
+                else
+                {
+                    Log.Error("Error executing command-line..");
+                }
+            }
+            commandLine = "";
         }
 
         void DrawWindow()
@@ -375,21 +418,33 @@ namespace ModTools
             DrawCommandLineArea();
         }
 
-        private readonly string defaultSource = @"
-namespace ModTools
-{
-    class ModToolsCommandLineRunner : ModTools.IModEntryPoint
-    {
-        public void OnModLoaded()
+        void Update()
         {
-            {0}
         }
 
+        private readonly string defaultSource = @"
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
+using System.IO;
+using System.Linq;
+using UnityEngine;
+
+namespace ModTools
+{{
+    class ModToolsCommandLineRunner : IModEntryPoint
+    {{
+        public void OnModLoaded()
+        {{
+            {0}
+        }}
+
         public void OnModUnloaded()
-        {
-        }
-    }
-}";
+        {{
+        }}
+    }}
+}}";
 
     }
 }

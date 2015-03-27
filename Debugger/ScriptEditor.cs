@@ -223,7 +223,7 @@ namespace ModTools
                 GUI.enabled = false;
             }
 
-            if (GUILayout.Button("Compile"))
+           /* if (GUILayout.Button("Compile"))
             {
                 string dllPath;
                 if (ScriptCompiler.CompileSource(projectFiles, out dllPath))
@@ -258,7 +258,7 @@ namespace ModTools
                     Log.Error("Failed to compile or run source, reason: " + errorMessage);
                 }
             }
-
+            */
             GUI.enabled = false;
             if (currentMod != null)
             {
