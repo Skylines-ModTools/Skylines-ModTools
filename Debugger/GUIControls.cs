@@ -537,50 +537,58 @@ namespace ModTools
         {
             GUILayout.BeginHorizontal();
 
-            if (ident != 0.0f)
+            try
             {
-                GUILayout.Space(ident);
-            }
-
-            var enumType = value.GetType();
-
-            if (!noTypeLabel)
-            {
-                GUI.contentColor = config.typeColor;
-                GUILayout.Label(enumType.FullName);
-            }
-
-            GUI.contentColor = config.nameColor;
-            GUILayout.Label(name);
-            GUI.contentColor = config.valueColor;
-
-            if (!noSpace)
-            {
-                GUILayout.FlexibleSpace();
-            }
-
-            var enumNames = Enum.GetNames(enumType).ToArray();
-
-            if (TypeUtil.IsBitmaskEnum(enumType))
-            {
-                GUILayout.Label(value.ToString());
-            }
-            else
-            {
-                int i = 0;
-                for (; i < enumNames.Length; i++)
+                if (ident != 0.0f)
                 {
-                    if (value.ToString() == enumNames[i])
-                    {
-                        break;
-                    }
+                    GUILayout.Space(ident);
                 }
 
-                int newIndex = GUIComboBox.Box(i, enumNames, hash);
-                value = Enum.Parse(enumType, enumNames[newIndex]);
-            }
+                var enumType = value.GetType();
 
-            GUI.contentColor = Color.white;
+                if (!noTypeLabel)
+                {
+                    GUI.contentColor = config.typeColor;
+                    GUILayout.Label(enumType.FullName);
+                }
+
+                GUI.contentColor = config.nameColor;
+                GUILayout.Label(name);
+                GUI.contentColor = config.valueColor;
+
+                if (!noSpace)
+                {
+                    GUILayout.FlexibleSpace();
+                }
+
+                var enumNames = Enum.GetNames(enumType).ToArray();
+
+                if (TypeUtil.IsBitmaskEnum(enumType))
+                {
+                    GUILayout.Label(value.ToString());
+                }
+                else
+                {
+                    int i = 0;
+                    for (; i < enumNames.Length; i++)
+                    {
+                        if (value.ToString() == enumNames[i])
+                        {
+                            break;
+                        }
+                    }
+
+                    int newIndex = GUIComboBox.Box(i, enumNames, hash);
+                    value = Enum.Parse(enumType, enumNames[newIndex]);
+                }
+
+                GUI.contentColor = Color.white;
+            }
+            catch (Exception)
+            {
+                GUILayout.EndHorizontal();
+                throw;
+            }
 
             GUILayout.EndHorizontal();
         }

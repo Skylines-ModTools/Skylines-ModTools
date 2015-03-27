@@ -112,6 +112,7 @@ namespace ModTools
             componentArea.absolutePosition.y = headerHeight - windowTopMargin;
             componentArea.absoluteSize.y = -(headerHeight - windowTopMargin) - windowBottomMargin;
         }
+
         void ExceptionHandler(Exception ex)
         {
             Log.Error("Exception in Scene Explorer - " + ex.Message);

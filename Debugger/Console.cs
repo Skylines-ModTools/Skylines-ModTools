@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Management.Instrumentation;
 using System.Reflection;
 using ColossalFramework.UI;
 using UnityEngine;
@@ -41,7 +42,10 @@ namespace ModTools
         private Vector2 consoleScrollPosition = Vector2.zero;
 
         private string commandLine = "";
-        
+
+        private DebugOutputPanel vanillaPanel;
+        private Transform oldVanillaPanelParent;
+
         public Console() : base("Debug console", config.consoleRect, skin)
         {
             onDraw = DrawWindow;
@@ -54,13 +58,14 @@ namespace ModTools
 
             RecalculateAreas();
 
-            GameObject.Find("(Library) DebugOutputPanel").GetComponent<UIPanel>().isVisible = false;
-            GameObject.Find("(Library) DebugOutputPanel").GetComponent<DebugOutputPanel>().enabled = false;
+            vanillaPanel = UIView.library.Get<DebugOutputPanel>("DebugOutputPanel");
+            oldVanillaPanelParent = vanillaPanel.transform.parent;
+            vanillaPanel.transform.parent = transform;
         }
 
         void HandleDestroy()
         {
-            GameObject.Find("(Library) DebugOutputPanel").GetComponent<DebugOutputPanel>().enabled = true;
+            vanillaPanel.transform.parent = oldVanillaPanelParent;
         }
 
         public void AddMessage(string message, LogType type = LogType.Log, bool _internal = false)
@@ -80,7 +85,14 @@ namespace ModTools
             {
                 var frame = new StackFrame(3);
                 var callingMethod = frame.GetMethod();
-                caller = String.Format("{0}.{1}()", callingMethod.DeclaringType, callingMethod.Name, frame.GetFileName(), frame.GetFileLineNumber());
+
+                if (callingMethod.DeclaringType.ToString() == "UnityEngine.Debug")
+                {
+                    frame = new StackFrame(5);
+                    callingMethod = frame.GetMethod();
+                }
+
+                caller = String.Format("{0}.{1}()", callingMethod.DeclaringType, callingMethod.Name);
             }
 
             StackTrace trace = null;
