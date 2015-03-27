@@ -1253,7 +1253,7 @@ namespace ModTools
 
         private void OnSceneTreeRecursive(ReferenceChain refChain, GameObject obj)
         {
-            if (obj == gameObject)
+            if (obj == gameObject && !ModTools.DEBUG_MODTOOLS)
             {
                 return;
             }

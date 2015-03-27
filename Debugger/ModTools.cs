@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using ColossalFramework.UI;
 using UnityEngine;
 
@@ -10,6 +11,7 @@ namespace ModTools
 
         public static bool mapEditor = false;
         public static bool assetEditor = false;
+        public static readonly bool DEBUG_MODTOOLS = false;
 
         private Vector2 mainScroll = Vector2.zero;
 
@@ -118,7 +120,7 @@ namespace ModTools
 
         private static bool loggingInitialized = false;
 
-        void Awake()
+        void Start()
         {
             if (!loggingInitialized)
             {
@@ -131,7 +133,7 @@ namespace ModTools
 
                     if (Instance.console != null)
                     {
-                        Instance.console.AddMessage(condition, type, true);
+                        Instance.console.AddMessage(String.Format("{0} ({1})", condition, trace), type, true);
                         return;
                     }
 
@@ -153,15 +155,12 @@ namespace ModTools
             }
 
             sceneExplorer = gameObject.AddComponent<SceneExplorer>();
-
-            //scriptEditor = gameObject.AddComponent<ScriptEditor>();
-
             watches = gameObject.AddComponent<Watches>();
             colorPicker = gameObject.AddComponent<ColorPicker>();
 
-            LoadConfig();
-
             sceneExplorerColorConfig = gameObject.AddComponent<SceneExplorerColorConfig>();
+
+            LoadConfig();
 
             if (extendGamePanels && !mapEditor && !assetEditor)
             {
@@ -235,23 +234,26 @@ namespace ModTools
                 SaveConfig();
             }
 
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Game panel extensions");
-            var newExtendGamePanels = GUILayout.Toggle(extendGamePanels, "");
-            GUILayout.EndHorizontal();
-
-            if (newExtendGamePanels != extendGamePanels)
+            if (!mapEditor && !assetEditor)
             {
-                extendGamePanels = newExtendGamePanels;
-                SaveConfig();
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Game panel extensions");
+                var newExtendGamePanels = GUILayout.Toggle(extendGamePanels, "");
+                GUILayout.EndHorizontal();
 
-                if (extendGamePanels)
+                if (newExtendGamePanels != extendGamePanels)
                 {
-                    gameObject.AddComponent<GamePanelExtender>();
-                }
-                else
-                {
-                    Destroy(gameObject.GetComponent<GamePanelExtender>());
+                    extendGamePanels = newExtendGamePanels;
+                    SaveConfig();
+
+                    if (extendGamePanels)
+                    {
+                        gameObject.AddComponent<GamePanelExtender>();
+                    }
+                    else
+                    {
+                        Destroy(gameObject.GetComponent<GamePanelExtender>());
+                    }
                 }
             }
 
