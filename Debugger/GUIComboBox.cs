@@ -144,7 +144,7 @@ namespace ModTools
                 var clippedMousePos = Event.current.mousePosition;
                 rect.x = (rect.x + mousePos.x) - clippedMousePos.x;
                 rect.y = (rect.y + mousePos.y) - clippedMousePos.y;
-                rect.height = rect.height*entries.Length;
+                rect.height = Mathf.Min(rect.height*entries.Length, 400.0f);
                 comboBoxScroll = Vector2.zero;
             }
 
