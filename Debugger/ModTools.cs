@@ -39,6 +39,8 @@ namespace ModTools
             Destroy(watches);
             Destroy(panelExtender);
             Destroy(colorPicker);
+
+            instance = null;
         }
 
         public static ModTools Instance

@@ -1380,6 +1380,7 @@ namespace ModTools
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Configure font & colors", GUILayout.ExpandWidth(false)))
             {
+                Log.Message("FONT & COLORS");
                 ModTools.Instance.sceneExplorerColorConfig.visible = true;
                 ModTools.Instance.sceneExplorerColorConfig.rect.position = rect.position + new Vector2(32.0f, 32.0f);
             }
