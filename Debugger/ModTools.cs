@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using ColossalFramework.UI;
 using UnityEngine;
 
 namespace ModTools
@@ -65,6 +66,12 @@ namespace ModTools
             rect = config.mainWindowRect;
             visible = config.mainWindowVisible;
 
+            if (console != null)
+            {
+                console.rect = config.consoleRect;
+                console.visible = config.consoleVisible;
+            }
+
             watches.rect = config.watchesRect;
             watches.visible = config.watchesVisible;
 
@@ -87,6 +94,12 @@ namespace ModTools
 
                 config.mainWindowRect = rect;
                 config.mainWindowVisible = visible;
+
+                if (console != null)
+                {
+                    config.consoleRect = console.rect;
+                    config.consoleVisible = console.visible;
+                }
 
                 config.watchesRect = watches.rect;
                 config.watchesVisible = watches.visible;
@@ -235,6 +248,20 @@ namespace ModTools
                 }
             }
 
+            if (GUILayout.Button("Debug console (F7)"))
+            {
+                if (console != null)
+                {
+                    console.visible = true;
+                }
+                else
+                {
+                    var debugOutputPanel = GameObject.Find("(Library) DebugOutputPanel").GetComponent<DebugOutputPanel>();
+                    debugOutputPanel.enabled = true;
+                    debugOutputPanel.GetComponent<UIPanel>().isVisible = true;
+                }
+            }
+        
             if (GUILayout.Button("Watches (Ctrl+W)"))
             {
                 watches.visible = !watches.visible;

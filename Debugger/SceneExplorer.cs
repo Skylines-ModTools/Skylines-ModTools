@@ -57,7 +57,7 @@ namespace ModTools
         private float windowTopMargin = 16.0f;
         private float windowBottomMargin = 8.0f;
 
-        private float headerHeightCompact = 1.5f;
+        private float headerHeightCompact = 1.65f;
         private float headerHeightExpanded = 15.0f;
         private bool headerExpanded = false;
 
@@ -1570,7 +1570,7 @@ namespace ModTools
         {
             GUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("▼"))
+            if (GUILayout.Button("▼", GUILayout.ExpandWidth(false)))
             {
                 headerExpanded = true;
                 RecalculateAreas();
@@ -1596,7 +1596,7 @@ namespace ModTools
             GUILayout.BeginHorizontal();
 
             GUI.contentColor = Color.green;
-            GUILayout.Label("Show:");
+            GUILayout.Label("Show:", GUILayout.ExpandWidth(false));
             GUI.contentColor = Color.white;
 
             GUILayout.Label("Fields");
@@ -1623,7 +1623,7 @@ namespace ModTools
 
             GUILayout.BeginHorizontal();
             GUI.contentColor = Color.green;
-            GUILayout.Label("Show field/ property modifiers:");
+            GUILayout.Label("Show field/ property modifiers:", GUILayout.ExpandWidth(false));
             showModifiers = GUILayout.Toggle(showModifiers, "");
             GUI.contentColor = Color.white;
             GUILayout.FlexibleSpace();
@@ -1631,7 +1631,7 @@ namespace ModTools
 
             GUILayout.BeginHorizontal();
             GUI.contentColor = Color.green;
-            GUILayout.Label("Evaluate properties automatically:");
+            GUILayout.Label("Evaluate properties automatically:", GUILayout.ExpandWidth(false));
             evaluatePropertiesAutomatically = GUILayout.Toggle(evaluatePropertiesAutomatically, "");
             GUI.contentColor = Color.white;
             GUILayout.FlexibleSpace();
@@ -1639,7 +1639,7 @@ namespace ModTools
 
             GUILayout.BeginHorizontal();
             GUI.contentColor = Color.green;
-            GUILayout.Label("Sort alphabetically:");
+            GUILayout.Label("Sort alphabetically:", GUILayout.ExpandWidth(false));
             GUI.contentColor = Color.white;
             sortAlphabetically = GUILayout.Toggle(sortAlphabetically, "");
             GUILayout.FlexibleSpace();
@@ -1649,7 +1649,7 @@ namespace ModTools
 
             GUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("▲"))
+            if (GUILayout.Button("▲", GUILayout.ExpandWidth(false)))
             {
                 headerExpanded = false;
                 RecalculateAreas();

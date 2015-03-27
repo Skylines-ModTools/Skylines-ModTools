@@ -55,7 +55,15 @@ namespace ModTools
 
         public static float uiScale = 1.0f;
 
-        public bool visible = false;
+        private bool _visible = false;
+
+        public bool visible
+        {
+            get { return _visible; }
+
+            set { _visible = value; GUI.BringWindowToFront(id); }
+        }
+
         public bool resizable = true;
         public bool hasCloseButton = true;
         public bool hasTitlebar = true;

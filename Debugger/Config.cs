@@ -8,8 +8,17 @@ namespace ModTools
     public class Configuration
     {
 
-        public Rect mainWindowRect = new Rect(128, 128, 356, 260);
+        public Rect mainWindowRect = new Rect(128, 128, 356, 300);
         public bool mainWindowVisible = false;
+
+        public Rect consoleRect = new Rect(16.0f, 16.0f, 512.0f, 256.0f);
+        public bool consoleVisible = false;
+
+        public int consoleMaxHistoryLength = 1024;
+        public string consoleFormatString = "[{{type}}] {{caller}}: {{message}}";
+        public bool showConsoleOnMessage = false;
+        public bool showConsoleOnWarning = false;
+        public bool showConsoleOnError = true;
 
         public Rect sceneExplorerRect = new Rect(128, 440, 800, 500);
         public bool sceneExplorerVisible = false;
@@ -28,7 +37,7 @@ namespace ModTools
         public Color disabledComponentColor = new Color(127.0f / 255.0f, 127.0f / 255.0f, 127.0f / 255.0f, 1.0f);
         public Color selectedComponentColor = new Color(233.0f / 255.0f, 138.0f / 255.0f, 23.0f / 255.0f, 1.0f);
 
-        public Color nameColor = new Color(0.0f, 179.0f / 255.0f, 255.0f / 255.0f, 1.0f);
+        public Color nameColor = new Color(148.0f / 255.0f, 196.0f / 255.0f, 238.0f / 255.0f, 1.0f);
         public Color typeColor = new Color(58.0f / 255.0f, 179.0f / 255.0f, 58.0f / 255.0f, 1.0f);
         public Color keywordColor = new Color(233.0f / 255.0f, 102.0f / 255.0f, 47.0f / 255.0f, 1.0f);
         public Color modifierColor = new Color(84.0f / 255.0f, 109.0f / 255.0f, 57.0f / 255.0f, 1.0f);
