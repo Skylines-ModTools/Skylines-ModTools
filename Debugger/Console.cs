@@ -255,6 +255,11 @@ namespace ModTools
                 ModTools.Instance.SaveConfig();
             }
 
+            if (GUILayout.Button("Clear", GUILayout.ExpandWidth(false)))
+            {
+                history.Clear();
+            }
+
             GUILayout.EndHorizontal();
         }
 
