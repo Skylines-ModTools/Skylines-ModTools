@@ -57,8 +57,8 @@ namespace ModTools
         private float windowTopMargin = 16.0f;
         private float windowBottomMargin = 8.0f;
 
-        private float headerHeightCompact = 60.0f;
-        private float headerHeightExpanded = 230.0f;
+        private float headerHeightCompact = 1.5f;
+        private float headerHeightExpanded = 15.0f;
         private bool headerExpanded = false;
 
         private float sceneTreeWidth = 300.0f;
@@ -86,7 +86,7 @@ namespace ModTools
             RecalculateAreas();
         }
 
-        void RecalculateAreas()
+        public void RecalculateAreas()
         {
             headerArea = new GUIArea(this);
             headerArea.absolutePosition.y = windowTopMargin;
@@ -102,7 +102,9 @@ namespace ModTools
             componentArea.relativeSize.y = 1.0f;
             componentArea.absoluteSize.x = -sceneTreeWidth;
 
-            float headerHeight = headerExpanded ? headerHeightExpanded : headerHeightCompact;
+            float headerHeight = (headerExpanded ? headerHeightExpanded : headerHeightCompact);
+            headerHeight *= config.fontSize;
+            headerHeight += 32.0f;
 
             headerArea.absoluteSize.y = headerHeight - windowTopMargin;
             sceneTreeArea.absolutePosition.y = headerHeight - windowTopMargin;
@@ -482,14 +484,14 @@ namespace ModTools
             {
                 if (expandedObjects.ContainsKey(refChain))
                 {
-                    if (GUILayout.Button("-", GUILayout.Width(16)))
+                    if (GUILayout.Button("-", GUILayout.ExpandWidth(false)))
                     {
                         expandedObjects.Remove(refChain);
                     }
                 }
                 else
                 {
-                    if (GUILayout.Button("+", GUILayout.Width(16)))
+                    if (GUILayout.Button("+", GUILayout.ExpandWidth(false)))
                     {
                         expandedObjects.Add(refChain, true);
                     }
@@ -654,14 +656,14 @@ namespace ModTools
                 {
                     if (expandedObjects.ContainsKey(refChain))
                     {
-                        if (GUILayout.Button("-", GUILayout.Width(16)))
+                        if (GUILayout.Button("-", GUILayout.ExpandWidth(false)))
                         {
                             expandedObjects.Remove(refChain);
                         }
                     }
                     else
                     {
-                        if (GUILayout.Button("+", GUILayout.Width(16)))
+                        if (GUILayout.Button("+", GUILayout.ExpandWidth(false)))
                         {
                             expandedObjects.Add(refChain, true);
                         }
@@ -992,14 +994,14 @@ namespace ModTools
                 {
                     if (expandedObjects.ContainsKey(refChain))
                     {
-                        if (GUILayout.Button("-", GUILayout.Width(16)))
+                        if (GUILayout.Button("-", GUILayout.ExpandWidth(false)))
                         {
                             expandedObjects.Remove(refChain);
                         }
                     }
                     else
                     {
-                        if (GUILayout.Button("+", GUILayout.Width(16)))
+                        if (GUILayout.Button("+", GUILayout.ExpandWidth(false)))
                         {
                             expandedObjects.Add(refChain, true);
                         }
@@ -1063,14 +1065,14 @@ namespace ModTools
                 {
                     if (expandedObjects.ContainsKey(refChain))
                     {
-                        if (GUILayout.Button("-", GUILayout.Width(16)))
+                        if (GUILayout.Button("-", GUILayout.ExpandWidth(false)))
                         {
                             expandedObjects.Remove(refChain);
                         }
                     }
                     else
                     {
-                        if (GUILayout.Button("+", GUILayout.Width(16)))
+                        if (GUILayout.Button("+", GUILayout.ExpandWidth(false)))
                         {
                             expandedObjects.Add(refChain, true);
                         }
@@ -1202,14 +1204,14 @@ namespace ModTools
                     {
                         if (expandedObjects.ContainsKey(refChain))
                         {
-                            if (GUILayout.Button("-", GUILayout.Width(16)))
+                            if (GUILayout.Button("-", GUILayout.ExpandWidth(false)))
                             {
                                 expandedObjects.Remove(refChain);
                             }
                         }
                         else
                         {
-                            if (GUILayout.Button("+", GUILayout.Width(16)))
+                            if (GUILayout.Button("+", GUILayout.ExpandWidth(false)))
                             {
                                 expandedObjects.Add(refChain, true);
                             }
@@ -1280,14 +1282,14 @@ namespace ModTools
                     {
                         if (expandedObjects.ContainsKey(refChain))
                         {
-                            if (GUILayout.Button("-", GUILayout.Width(16)))
+                            if (GUILayout.Button("-", GUILayout.ExpandWidth(false)))
                             {
                                 expandedObjects.Remove(refChain);
                             }
                         }
                         else
                         {
-                            if (GUILayout.Button("+", GUILayout.Width(16)))
+                            if (GUILayout.Button("+", GUILayout.ExpandWidth(false)))
                             {
                                 expandedObjects.Add(refChain, true);
                             }
@@ -1461,7 +1463,7 @@ namespace ModTools
 
             if (currentRefChain == null || !currentRefChain.Equals(refChain.Add(component)))
             {
-                if (GUILayout.Button(">", GUILayout.Width(16)))
+                if (GUILayout.Button(">", GUILayout.ExpandWidth(false)))
                 {
                     currentRefChain = refChain.Add(component);
                     currentRefChain.identOffset = -(refChain.Length + 1);
@@ -1470,7 +1472,7 @@ namespace ModTools
             else
             {
                 GUI.contentColor = config.selectedComponentColor;
-                if (GUILayout.Button("<", GUILayout.Width(16)))
+                if (GUILayout.Button("<", GUILayout.ExpandWidth(false)))
                 {
                     currentRefChain = null;
                 }
@@ -1503,7 +1505,7 @@ namespace ModTools
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
-                if (GUILayout.Button("-", GUILayout.Width(16)))
+                if (GUILayout.Button("-", GUILayout.ExpandWidth(false)))
                 {
                     expandedGameObjects.Remove(refChain);
                 }
@@ -1536,7 +1538,7 @@ namespace ModTools
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
-                if (GUILayout.Button("+", GUILayout.Width(16)))
+                if (GUILayout.Button("+", GUILayout.ExpandWidth(false)))
                 {
                     expandedGameObjects.Add(refChain, true);
                 }
@@ -1574,12 +1576,12 @@ namespace ModTools
                 RecalculateAreas();
             }
 
-            if (GUILayout.Button("Refresh", GUILayout.Width(200)))
+            if (GUILayout.Button("Refresh", GUILayout.ExpandWidth(false)))
             {
                 Refresh();
             }
 
-            if (GUILayout.Button("Fold all/ Clear", GUILayout.Width(200)))
+            if (GUILayout.Button("Fold all/ Clear", GUILayout.ExpandWidth(false)))
             {
                 ClearExpanded();
                 Refresh();
@@ -1594,7 +1596,7 @@ namespace ModTools
             GUILayout.BeginHorizontal();
 
             GUI.contentColor = Color.green;
-            GUILayout.Label("Show: ");
+            GUILayout.Label("Show:");
             GUI.contentColor = Color.white;
 
             GUILayout.Label("Fields");
@@ -1610,7 +1612,7 @@ namespace ModTools
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Configure colors", GUILayout.Width(120)))
+            if (GUILayout.Button("Configure font & colors", GUILayout.ExpandWidth(false)))
             {
                 ModTools.Instance.sceneExplorerColorConfig.visible = true;
                 ModTools.Instance.sceneExplorerColorConfig.rect.position = rect.position + new Vector2(32.0f, 32.0f);
@@ -1629,7 +1631,7 @@ namespace ModTools
 
             GUILayout.BeginHorizontal();
             GUI.contentColor = Color.green;
-            GUILayout.Label("Evaluate properties automatically");
+            GUILayout.Label("Evaluate properties automatically:");
             evaluatePropertiesAutomatically = GUILayout.Toggle(evaluatePropertiesAutomatically, "");
             GUI.contentColor = Color.white;
             GUILayout.FlexibleSpace();
@@ -1653,12 +1655,12 @@ namespace ModTools
                 RecalculateAreas();
             }
 
-            if (GUILayout.Button("Refresh", GUILayout.Width(200)))
+            if (GUILayout.Button("Refresh", GUILayout.ExpandWidth(false)))
             {
                 Refresh();
             }
 
-            if (GUILayout.Button("Fold all/ Clear", GUILayout.Width(200)))
+            if (GUILayout.Button("Fold all/ Clear", GUILayout.ExpandWidth(false)))
             {
                 ClearExpanded();
                 Refresh();

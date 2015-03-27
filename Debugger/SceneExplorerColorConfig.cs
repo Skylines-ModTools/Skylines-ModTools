@@ -6,12 +6,35 @@ namespace ModTools
     public class SceneExplorerColorConfig : GUIWindow
     {
 
-        public SceneExplorerColorConfig() : base("Color configuration", new Rect(16.0f, 16.0f, 500.0f, 324.0f), skin)
+        private static Configuration config
+        {
+            get { return ModTools.Instance.config; }
+        }
+
+        private string[] availableFonts;
+        private int selectedFont;
+
+        public SceneExplorerColorConfig() : base("Font/ color configuration", new Rect(16.0f, 16.0f, 600.0f, 440.0f), skin)
         {
             onDraw = DrawWindow;
             onException = HandleException;
             visible = false;
             resizable = false;
+
+            availableFonts = Font.GetOSInstalledFontNames();
+            int c = 0;
+            var configFont = config.fontName;
+
+            foreach (var font in availableFonts)
+            {
+                if (font == configFont)
+                {
+                    selectedFont = c;
+                    break;
+                }
+
+                c++;
+            }
         }
 
         void DrawColorControl(string name, ref Color value, ColorPicker.OnColorChanged onColorChanged)
@@ -26,6 +49,33 @@ namespace ModTools
         void DrawWindow()
         {
             var config = ModTools.Instance.config;
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Font");
+
+            var newSelectedFont = GUIComboBox.Box(selectedFont, availableFonts, "SceneExplorerColorConfigFontsComboBox");
+            if (newSelectedFont != selectedFont)
+            {
+                config.fontName = availableFonts[newSelectedFont];
+                selectedFont = newSelectedFont;
+                UpdateFont();
+            }
+
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+
+            GUILayout.Label("Font size");
+
+            var newFontSize = (int)GUILayout.HorizontalSlider((float) config.fontSize, 13.0f, 17.0f, GUILayout.Width(256));
+
+            if (newFontSize != config.fontSize)
+            {
+                config.fontSize = newFontSize;
+                UpdateFont();
+            }
+
+            GUILayout.EndHorizontal();
+            
             DrawColorControl("Background", ref config.backgroundColor, color =>
             {
                 config.backgroundColor = color;
@@ -56,6 +106,9 @@ namespace ModTools
                 var template = new Configuration();
 
                 config.backgroundColor = template.backgroundColor;
+                bgTexture.SetPixel(0, 0, config.backgroundColor);
+                bgTexture.Apply();
+
                 config.gameObjectColor = template.gameObjectColor;
                 config.enabledComponentColor = template.enabledComponentColor;
                 config.disabledComponentColor = template.disabledComponentColor;
@@ -65,7 +118,10 @@ namespace ModTools
                 config.modifierColor = template.modifierColor;
                 config.memberTypeColor = template.memberTypeColor;
                 config.valueColor = template.valueColor;
+                config.fontName = template.fontName;
+                config.fontSize = template.fontSize;
 
+                UpdateFont();
                 ModTools.Instance.SaveConfig();
             }
 

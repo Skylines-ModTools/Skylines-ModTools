@@ -7,7 +7,7 @@ namespace ModTools
     public class GUIWindow : MonoBehaviour
     {
 
-        private Configuration config
+        private static Configuration config
         {
             get { return ModTools.Instance.config; }
         }
@@ -24,12 +24,15 @@ namespace ModTools
 
         public delegate void OnMove(Vector2 position);
 
+        public delegate void OnUnityDestroy();
+
         public OnDraw onDraw = null;
         public OnException onException = null;
         public OnUnityGUI onUnityGUI = null;
         public OnClose onClose = null;
         public OnResize onResize = null;
         public OnMove onMove = null;
+        public OnUnityDestroy onUnityDestroy = null;
 
         public Rect rect = new Rect(0, 0, 64, 64);
 
@@ -96,7 +99,18 @@ namespace ModTools
 
         void OnDestroy()
         {
+            if (onUnityDestroy != null)
+            {
+                onUnityDestroy();
+            }
+
             windows.Remove(this);
+        }
+
+        public static void UpdateFont()
+        {
+            skin.font = Font.CreateDynamicFontFromOSFont(config.fontName, config.fontSize);
+            ModTools.Instance.sceneExplorer.RecalculateAreas();
         }
 
         void OnGUI()
@@ -161,7 +175,7 @@ namespace ModTools
                 skin.settings.selectionColor = GUI.skin.settings.selectionColor;
                 skin.settings.tripleClickSelectsLine = GUI.skin.settings.tripleClickSelectsLine;
 
-                skin.font = GUI.skin.font;
+                UpdateFont();
             }
 
             if (visible)
