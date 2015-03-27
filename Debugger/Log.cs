@@ -8,7 +8,7 @@ namespace ModTools
         {
             if (ModTools.Instance.console != null)
             {
-                ModTools.Instance.console.AddMessage(s, LogType.Log, true);
+                ModTools.Instance.console.AddMessage(s, LogType.Log);
             }
             else
             {
@@ -20,7 +20,7 @@ namespace ModTools
         {
             if (ModTools.Instance.console != null)
             {
-                ModTools.Instance.console.AddMessage(s, LogType.Error, true);
+                ModTools.Instance.console.AddMessage(s, LogType.Error);
             }
             else
             {
@@ -32,7 +32,7 @@ namespace ModTools
         {
             if (ModTools.Instance.console != null)
             {
-                ModTools.Instance.console.AddMessage(s, LogType.Warning, true);
+                ModTools.Instance.console.AddMessage(s, LogType.Warning);
             }
             else
             {

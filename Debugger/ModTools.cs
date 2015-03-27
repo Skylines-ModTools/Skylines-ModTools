@@ -122,9 +122,9 @@ namespace ModTools
                     return;
                 }
 
-                if (instance.console != null)
+                if (ModTools.Instance.console != null)
                 {
-                    instance.console.AddMessage(condition, type);
+                    ModTools.Instance.console.AddMessage(condition, type);
                     return;
                 }
 

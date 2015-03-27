@@ -49,7 +49,7 @@ namespace ModTools
         public Console() : base("Debug console", config.consoleRect, skin)
         {
             onDraw = DrawWindow;
-          //  onException = HandleException;
+            onException = HandleException;
             onUnityDestroy = HandleDestroy;
 
             headerArea = new GUIArea(this);
@@ -68,7 +68,7 @@ namespace ModTools
             vanillaPanel.transform.parent = oldVanillaPanelParent;
         }
 
-        public void AddMessage(string message, LogType type = LogType.Log, bool _internal = false)
+        public void AddMessage(string message, LogType type = LogType.Log, bool global = false)
         {
             if (history.Count > 0)
             {
@@ -81,24 +81,54 @@ namespace ModTools
 
             string caller = "ModTools";
 
-            if (!_internal)
-            {
-                var frame = new StackFrame(3);
-                var callingMethod = frame.GetMethod();
+            StackTrace trace = null;
+            trace = new StackTrace();
 
-                if (callingMethod.DeclaringType != null && callingMethod.DeclaringType.ToString() == "UnityEngine.Debug")
+            int i;
+            for (i = 0; i < trace.FrameCount; i++)
+            {
+                MethodBase callingMethod = null;
+
+                var frame = trace.GetFrame(i);
+                if (frame != null)
                 {
-                    frame = new StackFrame(5);
                     callingMethod = frame.GetMethod();
                 }
 
-                caller = String.Format("{0}.{1}()", callingMethod.DeclaringType, callingMethod.Name);
+                if (callingMethod == null)
+                {
+                    continue;
+                }
+
+                if (callingMethod.DeclaringType != null)
+                {
+                    var typeName = callingMethod.DeclaringType.ToString();
+                    if (typeName.StartsWith("UnityEngine"))
+                    {
+                        continue;
+                    }
+
+                    if (typeName.StartsWith("ModTools"))
+                    {
+                        continue;
+                    }
+
+                    caller = String.Format("{0}.{1}()", callingMethod.DeclaringType, callingMethod.Name);
+                }
+                else
+                {
+                    caller = String.Format("{0}()", callingMethod.ToString());
+                    
+                }
+
+                break;
             }
 
-            StackTrace trace = null;
-            if (type == LogType.Error || type == LogType.Exception)
+            trace = new StackTrace(i);
+
+            if (global)
             {
-                trace = new StackTrace(3);
+                caller = "Global unhandled exception";
             }
            
             history.Add(new ConsoleMessage() {caller = caller, message = message, type = type, trace = trace});
@@ -121,6 +151,7 @@ namespace ModTools
                 visible = true;
             }
         }
+
         void RecalculateAreas()
         {
             float headerHeight = (headerExpanded ? headerHeightExpanded : headerHeightCompact);
@@ -144,6 +175,7 @@ namespace ModTools
 
         void HandleException(Exception ex)
         {
+            AddMessage("Exception in ModTools Console - " + ex.Message, LogType.Exception);
         }
 
         void DrawCompactHeader()
@@ -304,8 +336,10 @@ namespace ModTools
 
             if (GUILayout.Button("Submit", GUILayout.ExpandWidth(false)))
             {
+                throw new Exception("TEST");
                 var source = String.Format(defaultSource, commandLine);
                 var file = new ScriptEditorFile() {path = "ModToolsCommandLineScript.cs", source = source};
+
 /*
                 string errorMessage;
                 IModEntryPoint instance;
