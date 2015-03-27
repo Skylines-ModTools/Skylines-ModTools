@@ -199,9 +199,15 @@ namespace ModTools
 
         public static void SetMouseScrolling(bool isEnabled)
         {
-            var cameraController = GameObject.FindObjectOfType<CameraController>();
-            var mouseWheelZoom = GetPrivate<SavedBool>(cameraController, "m_mouseWheelZoom");
-            SetPrivate<bool>(mouseWheelZoom, "m_Value", isEnabled);
+            try
+            {
+                var cameraController = GameObject.FindObjectOfType<CameraController>();
+                var mouseWheelZoom = GetPrivate<SavedBool>(cameraController, "m_mouseWheelZoom");
+                SetPrivate<bool>(mouseWheelZoom, "m_Value", isEnabled);
+            }
+            catch (Exception)
+            {
+            }
         }
 
         public static bool ComponentIsEnabled(Component component)

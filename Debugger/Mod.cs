@@ -28,6 +28,22 @@ namespace ModTools
         {
             modToolsGameObject = new GameObject("ModTools");
             modTools = modToolsGameObject.AddComponent<ModTools>();
+
+            if (mode == LoadMode.LoadAsset || mode == LoadMode.NewAsset)
+            {
+                ModTools.assetEditor = true;
+                ModTools.mapEditor = false;
+            }
+            else if (mode == LoadMode.LoadMap || mode == LoadMode.NewMap)
+            {
+                ModTools.mapEditor = true;
+                ModTools.assetEditor = false;
+            }
+            else
+            {
+                ModTools.mapEditor = false;
+                ModTools.assetEditor = false;
+            }
         }
 
         public override void OnLevelUnloading()

@@ -81,56 +81,55 @@ namespace ModTools
 
             string caller = "ModTools";
 
-            StackTrace trace = null;
-            trace = new StackTrace();
+            StackTrace trace = new StackTrace();
 
-            int i;
-            for (i = 0; i < trace.FrameCount; i++)
+            if (!global)
             {
-                MethodBase callingMethod = null;
-
-                var frame = trace.GetFrame(i);
-                if (frame != null)
+                int i;
+                for (i = 0; i < trace.FrameCount; i++)
                 {
-                    callingMethod = frame.GetMethod();
-                }
+                    MethodBase callingMethod = null;
 
-                if (callingMethod == null)
-                {
-                    continue;
-                }
+                    var frame = trace.GetFrame(i);
+                    if (frame != null)
+                    {
+                        callingMethod = frame.GetMethod();
+                    }
 
-                if (callingMethod.DeclaringType != null)
-                {
-                    var typeName = callingMethod.DeclaringType.ToString();
-                    if (typeName.StartsWith("UnityEngine"))
+                    if (callingMethod == null)
                     {
                         continue;
                     }
 
-                    if (typeName.StartsWith("ModTools"))
+                    if (callingMethod.DeclaringType != null)
                     {
-                        continue;
+                        var typeName = callingMethod.DeclaringType.ToString();
+                        if (typeName.StartsWith("UnityEngine"))
+                        {
+                            continue;
+                        }
+
+                        if (typeName.StartsWith("ModTools"))
+                        {
+                            continue;
+                        }
+
+                        caller = String.Format("{0}.{1}()", callingMethod.DeclaringType, callingMethod.Name);
+                    }
+                    else
+                    {
+                        caller = String.Format("{0}()", callingMethod.ToString());
+
                     }
 
-                    caller = String.Format("{0}.{1}()", callingMethod.DeclaringType, callingMethod.Name);
+                    break;
                 }
-                else
-                {
-                    caller = String.Format("{0}()", callingMethod.ToString());
-                    
-                }
-
-                break;
             }
-
-            trace = new StackTrace(i);
-
-            if (global)
+            else
             {
-                caller = "Global unhandled exception";
+                caller = "";
             }
-           
+
             history.Add(new ConsoleMessage() {caller = caller, message = message, type = type, trace = trace});
 
             if (history.Count >= config.consoleMaxHistoryLength)

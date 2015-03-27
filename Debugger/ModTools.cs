@@ -8,6 +8,9 @@ namespace ModTools
     public class ModTools : GUIWindow
     {
 
+        public static bool mapEditor = false;
+        public static bool assetEditor = false;
+
         private Vector2 mainScroll = Vector2.zero;
 
         public Console console;
@@ -126,9 +129,9 @@ namespace ModTools
                         return;
                     }
 
-                    if (ModTools.Instance.console != null)
+                    if (Instance.console != null)
                     {
-                        ModTools.Instance.console.AddMessage(condition, type);
+                        Instance.console.AddMessage(condition, type, true);
                         return;
                     }
 
@@ -160,7 +163,7 @@ namespace ModTools
 
             sceneExplorerColorConfig = gameObject.AddComponent<SceneExplorerColorConfig>();
 
-            if (extendGamePanels)
+            if (extendGamePanels && !mapEditor && !assetEditor)
             {
                 panelExtender = gameObject.AddComponent<GamePanelExtender>();
             }
