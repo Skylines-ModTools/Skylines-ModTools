@@ -276,6 +276,59 @@ namespace ModTools
             return current;
         }
 
+        public bool SetValue(object value)
+        {
+            object current = null;
+            for (int i = 0; i < count - 1; i++)
+            {
+                switch (chainTypes[i])
+                {
+                    case ReferenceType.GameObject:
+                    case ReferenceType.Component:
+                        current = chainObjects[i];
+                        break;
+                    case ReferenceType.Field:
+                        current = ((FieldInfo)chainObjects[i]).GetValue(current);
+                        break;
+                    case ReferenceType.Property:
+                        current = ((PropertyInfo)chainObjects[i]).GetValue(current, null);
+                        break;
+                    case ReferenceType.Method:
+                        break;
+                    case ReferenceType.EnumerableItem:
+                        var collection = current as IEnumerable;
+                        int itemCount = 0;
+                        foreach (var item in collection)
+                        {
+                            if (itemCount == (int)chainObjects[i])
+                            {
+                                current = item;
+                                break;
+                            }
+
+                            itemCount++;
+                        }
+                        break;
+                    case ReferenceType.SpecialNamedProperty:
+                        break;
+                }
+            }
+
+            if (LastItemType == ReferenceType.Field)
+            {
+                ((FieldInfo)LastItem).SetValue(current, value);
+                return true;
+            }
+
+            if (LastItemType == ReferenceType.Property)
+            {
+                ((PropertyInfo)LastItem).SetValue(current, value, null);
+                return true;
+            }
+
+            return false;
+        }
+
     }
 
 }

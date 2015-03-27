@@ -58,10 +58,15 @@ namespace ModTools
         private float windowBottomMargin = 8.0f;
 
         private float headerHeightCompact = 60.0f;
-        private float headerHeightExpanded = 220.0f;
+        private float headerHeightExpanded = 230.0f;
         private bool headerExpanded = false;
 
         private float sceneTreeWidth = 300.0f;
+
+        private Configuration config
+        {
+            get { return ModTools.Instance.config; }
+        }
 
         private void AddDebugLine(string line, params System.Object[] arg)
         {
@@ -193,7 +198,7 @@ namespace ModTools
             currentRefChain.identOffset = -currentRefChain.Length;
         }
 
-        private object EditorValueField(string hash, Type type, object value)
+        private object EditorValueField(ReferenceChain refChain, string hash, Type type, object value)
         {
             if (type == typeof(System.Single))
             {
@@ -390,7 +395,7 @@ namespace ModTools
             if (type == typeof(UnityEngine.Color))
             {
                 var f = (Color)value;
-                GUIControls.ColorField(hash, "", ref f, 0.0f, null, true, true);
+                GUIControls.ColorField(hash, "", ref f, 0.0f, null, true, true, color => { refChain.SetValue(color); });
                 if (f != (Color)value)
                 {
                     return f;
@@ -402,7 +407,7 @@ namespace ModTools
             if (type == typeof(UnityEngine.Color32))
             {
                 var f = (Color32)value;
-                GUIControls.Color32Field(hash, "", ref f, 0.0f, null, true, true);
+                GUIControls.Color32Field(hash, "", ref f, 0.0f, null, true, true, color => { refChain.SetValue(color); });
                 var v = (Color32)value;
                 if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
                 {
@@ -498,6 +503,8 @@ namespace ModTools
 
             if (showModifiers)
             {
+                GUI.contentColor = config.modifierColor;
+
                 if (field.IsPublic)
                 {
                     GUILayout.Label("public ");
@@ -507,32 +514,33 @@ namespace ModTools
                     GUILayout.Label("private ");
                 }
 
-                GUI.contentColor = Color.white;
+                GUI.contentColor = config.memberTypeColor;
 
                 GUILayout.Label("field ");
 
                 if (field.IsStatic)
                 {
-                    GUI.contentColor = Color.blue;
+                    GUI.contentColor = config.keywordColor;
                     GUILayout.Label("static ");
                 }
 
                 if (field.IsInitOnly)
                 {
-                    GUI.contentColor = Color.blue;
+                    GUI.contentColor = config.keywordColor;
                     GUILayout.Label("const ");
                 }
             }
 
-            GUI.contentColor = Color.green;
+            GUI.contentColor = config.typeColor;
             GUILayout.Label(field.FieldType.ToString() + " ");
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
 
             GUILayout.Label(field.Name);
 
             GUI.contentColor = Color.white;
             GUILayout.Label(" = ");
+            GUI.contentColor = config.valueColor;
 
             if (value == null || !TypeUtil.IsBuiltInType(field.FieldType))
             {
@@ -542,7 +550,7 @@ namespace ModTools
             {
                 try
                 {
-                    var newValue = EditorValueField(hash, field.FieldType, value);
+                    var newValue = EditorValueField(refChain, hash, field.FieldType, value);
                     if (newValue != value)
                     {
                         field.SetValue(obj, newValue);
@@ -555,6 +563,7 @@ namespace ModTools
             }
 
             GUI.enabled = true;
+            GUI.contentColor = Color.white;
 
             GUILayout.FlexibleSpace();
 
@@ -567,9 +576,7 @@ namespace ModTools
             {
                 if (GUILayout.Button("Preview"))
                 {
-                    ModTools.Instance.textureViewer.previewTexture = (Texture)value;
-                    ModTools.Instance.textureViewer.caller = refChain;
-                    ModTools.Instance.textureViewer.visible = true;
+                    TextureViewer.CreateTextureViewer(refChain, (Texture)value);
                 }
 
                 if (GUILayout.Button("Dump .png"))
@@ -579,12 +586,10 @@ namespace ModTools
             }
             else if (TypeUtil.IsMeshType(field.FieldType) && value != null)
             {
-                /*if (GUILayout.Button("Preview"))
+                if (GUILayout.Button("Preview"))
                 {
-                    ModTools.Instance.meshViewer.previewMesh = (Mesh)value;
-                    ModTools.Instance.meshViewer.caller = refChain;
-                    ModTools.Instance.meshViewer.visible = true;
-                }*/
+                    MeshViewer.CreateMeshViewer(refChain, (Mesh) value);
+                }
 
                 if (GUILayout.Button("Dump .obj"))
                 {
@@ -663,7 +668,7 @@ namespace ModTools
                     }
                 }
             }
-            
+
             GUI.contentColor = Color.white;
 
             if (!property.CanWrite)
@@ -673,25 +678,27 @@ namespace ModTools
 
             if (showModifiers)
             {
+                GUI.contentColor = config.memberTypeColor;
                 GUILayout.Label("property ");
 
                 if (!property.CanWrite)
                 {
-                    GUI.contentColor = Color.blue;
+                    GUI.contentColor = config.keywordColor;
                     GUILayout.Label("const ");
                 }
             }
 
-            GUI.contentColor = Color.green;
+            GUI.contentColor = config.typeColor;
 
             GUILayout.Label(property.PropertyType.ToString() + " ");
 
-            GUI.contentColor = Color.red;
+            GUI.contentColor = config.nameColor;
 
             GUILayout.Label(property.Name);
 
             GUI.contentColor = Color.white;
             GUILayout.Label(" = ");
+            GUI.contentColor = config.valueColor;
 
             if (!evaluatePropertiesAutomatically && !evaluatedProperties.ContainsKey(refChain))
             {
@@ -733,7 +740,7 @@ namespace ModTools
                 {
                     try
                     {
-                        var newValue = EditorValueField(hash, property.PropertyType, value);
+                        var newValue = EditorValueField(refChain, hash, property.PropertyType, value);
                         if (newValue != value)
                         {
                             property.SetValue(obj, newValue, null);
@@ -756,6 +763,7 @@ namespace ModTools
             }
 
             GUI.enabled = true;
+            GUI.contentColor = Color.white;
 
             GUILayout.FlexibleSpace();
 
@@ -768,9 +776,7 @@ namespace ModTools
             {
                 if (GUILayout.Button("Preview"))
                 {
-                    ModTools.Instance.textureViewer.previewTexture = (Texture)value;
-                    ModTools.Instance.textureViewer.caller = refChain;
-                    ModTools.Instance.textureViewer.visible = true;
+                    TextureViewer.CreateTextureViewer(refChain, (Texture) value);
                 }
 
                 if (GUILayout.Button("Dump .png"))
@@ -780,12 +786,10 @@ namespace ModTools
             }
             else if (TypeUtil.IsMeshType(property.PropertyType) && value != null)
             {
-               /* if (GUILayout.Button("Preview"))
+                if (GUILayout.Button("Preview"))
                 {
-                    ModTools.Instance.meshViewer.previewMesh = (Mesh)value;
-                    ModTools.Instance.meshViewer.caller = refChain;
-                    ModTools.Instance.meshViewer.visible = true;
-                }*/
+                    MeshViewer.CreateMeshViewer(refChain, (Mesh)value);
+                }
 
                 if (GUILayout.Button("Dump .obj"))
                 {
@@ -831,11 +835,11 @@ namespace ModTools
             GUILayout.BeginHorizontal();
             GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
-            GUI.contentColor = Color.green;
+            GUI.contentColor = config.memberTypeColor;
             GUILayout.Label("method ");
             GUI.contentColor = Color.white;
             GUILayout.Label(method.ReturnType.ToString() + " " + method.Name + "(");
-            GUI.contentColor = Color.blue;
+            GUI.contentColor = config.nameColor;
 
             bool first = true;
             var parameters = method.GetParameters();
@@ -1002,26 +1006,27 @@ namespace ModTools
                     }
                 }
 
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
 
                 GUILayout.Label(type.ToString() + " ");
 
-                GUI.contentColor = Color.red;
+                GUI.contentColor = config.nameColor;
 
                 GUILayout.Label(prop);
 
                 GUI.contentColor = Color.white;
 
                 GUILayout.Label(" = ");
+
+                GUI.contentColor = config.valueColor;
                 GUILayout.Label(value.ToString());
+                GUI.contentColor = Color.white;
 
                 GUILayout.FlexibleSpace();
 
                 if (GUILayout.Button("Preview"))
                 {
-                    ModTools.Instance.textureViewer.previewTexture = (Texture)value;
-                    ModTools.Instance.textureViewer.caller = refChain;
-                    ModTools.Instance.textureViewer.visible = true;
+                    TextureViewer.CreateTextureViewer(refChain, value);
                 }
 
                 if (GUILayout.Button("Dump .png"))
@@ -1072,11 +1077,11 @@ namespace ModTools
                     }
                 }
 
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
 
                 GUILayout.Label(type.ToString() + " ");
 
-                GUI.contentColor = Color.red;
+                GUI.contentColor = config.nameColor;
 
                 GUILayout.Label(prop);
 
@@ -1084,30 +1089,17 @@ namespace ModTools
 
                 GUILayout.Label(" = ");
                 var f = value;
-                GUIControls.ColorField(refChain.ToString(), "", ref f, 0.0f, null, true, true);
+
+                GUI.contentColor = config.valueColor;
+
+                var propertyCopy = prop;
+                GUIControls.ColorField(refChain.ToString(), "", ref f, 0.0f, null, true, true, color => { material.SetColor(propertyCopy, color); });
                 if (f != value)
                 {
                     material.SetColor(prop, f);
                 }
 
-                if (GUILayout.Button("c", GUILayout.Width(72)))
-                {
-                    var picker = ModTools.Instance.colorPicker;
-                    picker.SetColor(value);
-
-                    Vector2 mouse = Input.mousePosition;
-                    mouse.y = Screen.height - mouse.y;
-
-                    picker.rect.position = mouse;
-                    picker.visible = true;
-                }
-
-                var lastRect = GUILayoutUtility.GetLastRect();
-                lastRect.x += 4.0f;
-                lastRect.y += 4.0f;
-                lastRect.width -= 8.0f;
-                lastRect.height -= 8.0f;
-                GUI.DrawTexture(lastRect, ColorPicker.GetColorTexture(refChain.ToString(), value), ScaleMode.StretchToFill);
+                GUI.contentColor = Color.white;
 
                 GUILayout.FlexibleSpace();
 
@@ -1224,18 +1216,22 @@ namespace ModTools
                         }
                     }
 
-                    GUI.contentColor = Color.green;
+                    GUI.contentColor = config.typeColor;
 
                     GUILayout.Label(type.ToString() + " ");
 
-                    GUI.contentColor = Color.red;
+                    GUI.contentColor = config.nameColor;
 
                     GUILayout.Label(String.Format("{0}.[{1}]", oldRefChain.LastItemName, count));
 
                     GUI.contentColor = Color.white;
 
                     GUILayout.Label(" = ");
+
+                    GUI.contentColor = config.valueColor;
                     GUILayout.Label(value == null ? "null" : value.ToString());
+
+                    GUI.contentColor = Color.white;
 
                     GUILayout.FlexibleSpace();
                     GUILayout.EndHorizontal();
@@ -1298,18 +1294,23 @@ namespace ModTools
                         }
                     }
 
-                    GUI.contentColor = Color.green;
+                    GUI.contentColor = config.typeColor;
 
                     GUILayout.Label(type.ToString() + " ");
 
-                    GUI.contentColor = Color.red;
+                    GUI.contentColor = config.nameColor;
 
                     GUILayout.Label(String.Format("{0}.[{1}]", oldRefChain.LastItemName, count));
 
                     GUI.contentColor = Color.white;
 
                     GUILayout.Label(" = ");
+
+                    GUI.contentColor = config.valueColor;
+              
                     GUILayout.Label(value == null ? "null" : value.ToString());
+
+                    GUI.contentColor = Color.white;
 
                     GUILayout.FlexibleSpace();
                     GUILayout.EndHorizontal();
@@ -1449,6 +1450,15 @@ namespace ModTools
             GUILayout.BeginHorizontal();
             GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
+            if (Util.ComponentIsEnabled(component))
+            {
+                GUI.contentColor = config.enabledComponentColor;
+            }
+            else
+            {
+                GUI.contentColor = config.disabledComponentColor;
+            }
+
             if (currentRefChain == null || !currentRefChain.Equals(refChain.Add(component)))
             {
                 if (GUILayout.Button(">", GUILayout.Width(16)))
@@ -1459,14 +1469,12 @@ namespace ModTools
             }
             else
             {
+                GUI.contentColor = config.selectedComponentColor;
                 if (GUILayout.Button("<", GUILayout.Width(16)))
                 {
                     currentRefChain = null;
                 }
-
-                GUI.contentColor = Color.green;
             }
-            
        
             GUILayout.Label(component.GetType().ToString());
 
@@ -1500,7 +1508,10 @@ namespace ModTools
                     expandedGameObjects.Remove(refChain);
                 }
 
+                GUI.contentColor = config.gameObjectColor;
                 GUILayout.Label(obj.name);
+                GUI.contentColor = Color.white;
+
                 GUILayout.EndHorizontal();
 
                 var components = obj.GetComponents(typeof(Component));
@@ -1529,8 +1540,10 @@ namespace ModTools
                 {
                     expandedGameObjects.Add(refChain, true);
                 }
-
+                
+                GUI.contentColor = config.gameObjectColor;
                 GUILayout.Label(obj.name);
+                GUI.contentColor = Color.white;
                 GUILayout.EndHorizontal();
             }
         }
@@ -1594,6 +1607,16 @@ namespace ModTools
             showMethods = GUILayout.Toggle(showMethods, "");
             GUILayout.FlexibleSpace();
 
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Configure colors", GUILayout.Width(120)))
+            {
+                ModTools.Instance.sceneExplorerColorConfig.visible = true;
+                ModTools.Instance.sceneExplorerColorConfig.rect.position = rect.position + new Vector2(32.0f, 32.0f);
+            }
+
+            GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();

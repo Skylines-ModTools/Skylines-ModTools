@@ -80,6 +80,8 @@
     <Compile Include="Mod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReferenceChain.cs" />
+    <Compile Include="SceneExplorerColorConfig.cs" />
+    <Compile Include="Shaders.cs" />
     <Compile Include="TextureViewer.cs" />
     <Compile Include="SceneExplorer.cs" />
     <Compile Include="TextToTexture.cs" />

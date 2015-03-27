@@ -8,6 +8,11 @@ namespace ModTools
     public class Watches : GUIWindow
     {
 
+        private Configuration config
+        {
+            get { return ModTools.Instance.config; }
+        }
+
         private Vector2 watchesScroll = Vector2.zero;
 
         public Watches()
@@ -161,9 +166,9 @@ namespace ModTools
 
                 var type = GetWatchType(watch);
 
-                GUI.contentColor = Color.green;
+                GUI.contentColor = config.typeColor;
                 GUILayout.Label(type.ToString());
-                GUI.contentColor = Color.red;
+                GUI.contentColor = config.nameColor;
                 GUILayout.Label(watch.ToString());
                 GUI.contentColor = Color.white;
                 GUILayout.Label(" = ");
@@ -174,6 +179,7 @@ namespace ModTools
                 }
 
                 var value = ReadWatch(watch);
+                GUI.contentColor = config.valueColor;
 
                 if (type.ToString() == "System.Single")
                 {
@@ -313,7 +319,7 @@ namespace ModTools
                 else if (type.ToString() == "UnityEngine.Color")
                 {
                     var f = (Color)value;
-                    GUIControls.ColorField("watch." + watch, "", ref f, 0.0f, null, true, true);
+                    GUIControls.ColorField("watch." + watch, "", ref f, 0.0f, null, true, true, color => { watch.SetValue(color); });
                     if (f != (Color)value)
                     {
                         WriteWatch(watch, f);
@@ -322,7 +328,8 @@ namespace ModTools
                 else if (type.ToString() == "UnityEngine.Color32")
                 {
                     var f = (Color32)value;
-                    GUIControls.Color32Field("watch." + watch, "", ref f, 0.0f, null, true, true);
+                    var watchCopy = watch.Copy();
+                    GUIControls.Color32Field("watch." + watch, "", ref f, 0.0f, null, true, true, color => { watchCopy.SetValue(color); });
                     var v = (Color32)value;
                     if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
                     {
@@ -333,6 +340,8 @@ namespace ModTools
                 {
                     GUILayout.Label(value.ToString());
                 }
+
+                GUI.contentColor = Color.white;
 
                 GUI.enabled = true;
 

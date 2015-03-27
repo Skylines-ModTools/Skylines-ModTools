@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace ModTools
 {
@@ -7,133 +8,141 @@ namespace ModTools
 
         public struct HSV
         {
-            public float h;
-            public float s;
-            public float v;
+            public double h;
+            public double s;
+            public double v;
 
-            public HSV(Color color)
+            public override string ToString()
             {
-                double min, max, delta, temp;
-                min = Mathf.Min(color.r, Mathf.Min(color.g, color.b));
-                max = Mathf.Max(color.r, Mathf.Max(color.g, color.b));
-                delta = max - min;
-                v = (int)max;
-
-                if (delta == 0.0f)
-                {
-                    h = s = 0;
-                }
-                else
-                {
-                    temp = delta / max;
-                    s = (int)(temp * 255);
-
-                    if (color.r == (int)max)
-                    {
-                        temp = (double)(color.g - color.b) / delta;
-                    }
-                    else if (color.g == (int)max)
-                    {
-                        temp = 2.0 + ((double)(color.b - color.r) / delta);
-                    }
-                    else
-                    {
-                        temp = 4.0 + ((double)(color.r - color.g) / delta);
-                    }
-
-                    temp *= 60;
-
-                    if (temp < 0)
-                    {
-                        temp += 360;
-                    }
-
-                    if (temp == 360)
-                    {
-                        temp = 0;
-                    }
-
-                    h = (int)temp;
-                }
-
-                s /= 255.0f;
-                v /= 255.0f;
+                return String.Format("H: {0}, S: {1}, V:{2}", h.ToString("0.00"), s.ToString("0.00"), v.ToString("0.00"));
             }
 
-            public Color ToColor()
+            public static HSV RGB2HSV(Color color)
             {
-                if (h < 0.0f) { h += 360.0f; }
+                return RGB2HSV((int)(color.r * 255), (int)(color.g * 255), (int)(color.b * 255));
+            }
 
-                if (h > 360.0f) { h -= 360.0f; }
+            public static HSV RGB2HSV(double r, double b, double g)
+            {
 
-                s *= 255.0f;
-                v *= 255.0f;
-                float r, g, b;
+                double delta, min;
+                double h = 0, s, v;
 
-                if (h == 0.0f && s == 0.0f)
+                min = Math.Min(Math.Min(r, g), b);
+                v = Math.Max(Math.Max(r, g), b);
+                delta = v - min;
+
+                if (v == 0.0)
                 {
-                    r = g = b = v;
+                    s = 0;
+
+                }
+                else
+                    s = delta / v;
+
+                if (s == 0)
+                    h = 0.0f;
+
+                else
+                {
+                    if (r == v)
+                        h = (g - b) / delta;
+                    else if (g == v)
+                        h = 2 + (b - r) / delta;
+                    else if (b == v)
+                        h = 4 + (r - g) / delta;
+
+                    h *= 60;
+                    if (h < 0.0)
+                        h = h + 360;
+
                 }
 
-                double min, max, delta, hue;
-                max = v;
-                delta = (max * s) / 255.0;
-                min = max - delta;
-                hue = h;
+                HSV hsvColor = new HSV();
+                hsvColor.h = h;
+                hsvColor.s = s;
+                hsvColor.v = v / 255;
 
-                if (h > 300 || h <= 60)
+                return hsvColor;
+
+            }
+
+            public static Color HSV2RGB(HSV color)
+            {
+                return HSV2RGB(color.h, color.s, color.v);
+            }
+
+            public static Color HSV2RGB(double h, double s, double v)
+            {
+
+                double r = 0, g = 0, b = 0;
+
+                if (s == 0)
                 {
-                    r = (int)max;
-
-                    if (h > 300)
-                    {
-                        g = (int)min;
-                        hue = (hue - 360.0) / 60.0;
-                        b = (int)((hue * delta - min) * -1);
-                    }
-                    else
-                    {
-                        b = (int)min;
-                        hue = hue / 60.0;
-                        g = (int)(hue * delta + min);
-                    }
-                }
-                else if (h > 60 && h < 180)
-                {
-                    g = (int)max;
-
-                    if (h < 120)
-                    {
-                        b = (int)min;
-                        hue = (hue / 60.0 - 2.0) * delta;
-                        r = (int)(min - hue);
-                    }
-                    else
-                    {
-                        r = (int)min;
-                        hue = (hue / 60 - 2.0) * delta;
-                        b = (int)(min + hue);
-                    }
+                    r = v;
+                    g = v;
+                    b = v;
                 }
                 else
                 {
-                    b = (int)max;
+                    int i;
+                    double f, p, q, t;
 
-                    if (h < 240)
-                    {
-                        r = (int)min;
-                        hue = (hue / 60.0 - 4.0) * delta;
-                        g = (int)(min - hue);
-                    }
+
+                    if (h == 360)
+                        h = 0;
                     else
+                        h = h / 60;
+
+                    i = (int)(h);
+                    f = h - i;
+
+                    p = v * (1.0 - s);
+                    q = v * (1.0 - (s * f));
+                    t = v * (1.0 - (s * (1.0f - f)));
+
+                    switch (i)
                     {
-                        g = (int)min;
-                        hue = (hue / 60 - 4.0) * delta;
-                        r = (int)(min + hue);
+                        case 0:
+                            r = v;
+                            g = t;
+                            b = p;
+                            break;
+
+                        case 1:
+                            r = q;
+                            g = v;
+                            b = p;
+                            break;
+
+                        case 2:
+                            r = p;
+                            g = v;
+                            b = t;
+                            break;
+
+                        case 3:
+                            r = p;
+                            g = q;
+                            b = v;
+                            break;
+
+                        case 4:
+                            r = t;
+                            g = p;
+                            b = v;
+                            break;
+
+                        default:
+                            r = v;
+                            g = p;
+                            b = q;
+                            break;
                     }
+
                 }
 
-                return new Color(r/255.0f, g/255.0f, b/255.0f, 1.0f);
+                return new Color((float)r, (float)g, (float)b, 1);
             }
         }
 
