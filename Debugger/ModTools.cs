@@ -63,9 +63,6 @@ namespace ModTools
             extendGamePanels = config.extendGamePanels;
             useModToolsConsole = config.useModToolsConsole;
 
-            rect = config.mainWindowRect;
-            visible = config.mainWindowVisible;
-
             if (console != null)
             {
                 console.rect = config.consoleRect;
@@ -92,9 +89,6 @@ namespace ModTools
                 config.extendGamePanels = extendGamePanels;
                 config.useModToolsConsole = useModToolsConsole;
 
-                config.mainWindowRect = rect;
-                config.mainWindowVisible = visible;
-
                 if (console != null)
                 {
                     config.consoleRect = console.rect;
@@ -114,6 +108,7 @@ namespace ModTools
         public ModTools() : base("Mod Tools", new Rect(128, 128, 356, 260), skin)
         {
             onDraw = DoMainWindow;
+            resizable = false;
         }
 
         void Awake()

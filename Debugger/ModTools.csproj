@@ -87,6 +87,7 @@
     <Compile Include="ScriptCompiler.cs" />
     <Compile Include="ScriptEditor.cs" />
     <Compile Include="Shaders.cs" />
+    <Compile Include="StackTraceViewer.cs" />
     <Compile Include="TextureViewer.cs" />
     <Compile Include="SceneExplorer.cs" />
     <Compile Include="TextToTexture.cs" />

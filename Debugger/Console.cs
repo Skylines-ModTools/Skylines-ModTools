@@ -78,7 +78,7 @@ namespace ModTools
 
             if (!_internal)
             {
-                var frame = new StackFrame(2, true);
+                var frame = new StackFrame(3);
                 var callingMethod = frame.GetMethod();
                 caller = String.Format("{0}.{1}()", callingMethod.DeclaringType, callingMethod.Name, frame.GetFileName(), frame.GetFileLineNumber());
             }
@@ -86,7 +86,7 @@ namespace ModTools
             StackTrace trace = null;
             if (type == LogType.Error || type == LogType.Exception)
             {
-                trace = new StackTrace(2);
+                trace = new StackTrace(3);
             }
            
             history.Add(new ConsoleMessage() {caller = caller, message = message, type = type, trace = trace});
@@ -266,7 +266,11 @@ namespace ModTools
                 {
                     if (GUILayout.Button("Stack trace", GUILayout.ExpandWidth(false)))
                     {
-                        
+                        var viewer = StackTraceViewer.CreateStackTraceViewer(item.trace);
+                        var mouse = Input.mousePosition;
+                        mouse.y = Screen.height - mouse.y;
+                        viewer.rect.position = mouse;
+                        viewer.visible = true;
                     }
                 }
 
