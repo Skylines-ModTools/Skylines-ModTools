@@ -15,6 +15,7 @@ namespace ModTools
 
         // Position of the popuprect
         private static Rect rect;
+        private static bool hasScrollbars = false;
         // Identifier of the caller of the popup, null if nobody is waiting for a value
         private static string popupOwner;
         private static string[] entries;
@@ -78,9 +79,18 @@ namespace ModTools
 
             rect = GUILayout.Window(id, rect, identifier =>
             {
-                comboBoxScroll = GUILayout.BeginScrollView(comboBoxScroll);
+                if (hasScrollbars)
+                {
+                    comboBoxScroll = GUILayout.BeginScrollView(comboBoxScroll, false, false);
+                }
+                
                 selectedItem = GUILayout.SelectionGrid(-1, entries, 1, yellowOnHover);
-                GUILayout.EndScrollView();
+                
+                if (hasScrollbars)
+                {
+                    GUILayout.EndScrollView();
+                }
+
                 if (GUI.changed)
                     popupActive = false;
             }, "", style);
@@ -144,7 +154,9 @@ namespace ModTools
                 var clippedMousePos = Event.current.mousePosition;
                 rect.x = (rect.x + mousePos.x) - clippedMousePos.x;
                 rect.y = (rect.y + mousePos.y) - clippedMousePos.y;
-                rect.height = Mathf.Min(rect.height*entries.Length, 400.0f);
+                var targetHeight = rect.height*entries.Length;
+                hasScrollbars = targetHeight >= 400.0f;
+                rect.height = Mathf.Min(targetHeight, 400.0f);
                 comboBoxScroll = Vector2.zero;
             }
 

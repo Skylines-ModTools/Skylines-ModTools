@@ -49,7 +49,7 @@ namespace ModTools
         public Color consoleErrorColor = new Color(0.7f, 0.1f, 0.1f, 1.0f);
         public Color consoleExceptionColor = new Color(1.0f, 0.0f, 0.0f, 1.0f);
 
-        public string fontName = "Courier New";
+        public string fontName = "Courier New Bold";
         public int fontSize = 14;
 
         public void OnPreSerialize()
