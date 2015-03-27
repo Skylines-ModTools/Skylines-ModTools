@@ -62,6 +62,240 @@ namespace ModTools
             return res;
         }
 
+        public static object EditorValueField(ReferenceChain refChain, string hash, Type type, object value)
+        {
+            if (type == typeof(System.Single))
+            {
+                var f = (float)value;
+                FloatField(hash, "", ref f, 0.0f, true, true);
+                if (f != (float)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type == typeof(System.Double))
+            {
+                var f = (double)value;
+                DoubleField(hash, "", ref f, 0.0f, true, true);
+                if (f != (double)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type == typeof(System.Byte))
+            {
+                var f = (byte)value;
+                ByteField(hash, "", ref f, 0.0f, true, true);
+                if (f != (byte)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type == typeof(System.Int32))
+            {
+                var f = (int)value;
+                IntField(hash, "", ref f, 0.0f, true, true);
+                if (f != (int)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type == typeof(System.UInt32))
+            {
+                var f = (uint)value;
+                UIntField(hash, "", ref f, 0.0f, true, true);
+                if (f != (uint)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type == typeof(System.Int64))
+            {
+                var f = (Int64)value;
+                Int64Field(hash, "", ref f, 0.0f, true, true);
+                if (f != (Int64)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type == typeof(System.UInt64))
+            {
+                var f = (UInt64)value;
+                UInt64Field(hash, "", ref f, 0.0f, true, true);
+                if (f != (UInt64)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type == typeof(System.Int16))
+            {
+                var f = (Int16)value;
+                Int16Field(hash, "", ref f, 0.0f, true, true);
+                if (f != (Int16)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type == typeof(System.UInt16))
+            {
+                var f = (UInt16)value;
+                UInt16Field(hash, "", ref f, 0.0f, true, true);
+                if (f != (UInt16)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type == typeof(System.Boolean))
+            {
+                var f = (bool)value;
+                BoolField("", ref f, 0.0f, true, true);
+                if (f != (bool)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type == typeof(System.String))
+            {
+                var f = (string)value;
+                StringField(hash, "", ref f, 0.0f, true, true);
+                if (f != (string)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type == typeof(System.Char))
+            {
+                var f = (char)value;
+                CharField(hash, "", ref f, 0.0f, true, true);
+                if (f != (char)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type == typeof(UnityEngine.Vector2))
+            {
+                var f = (Vector2)value;
+                Vector2Field(hash, "", ref f, 0.0f, null, true, true);
+                if (f != (Vector2)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type == typeof(UnityEngine.Vector3))
+            {
+                var f = (Vector3)value;
+                Vector3Field(hash, "", ref f, 0.0f, null, true, true);
+                if (f != (Vector3)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type == typeof(UnityEngine.Vector4))
+            {
+                var f = (Vector4)value;
+                Vector4Field(hash, "", ref f, 0.0f, null, true, true);
+                if (f != (Vector4)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type == typeof(UnityEngine.Quaternion))
+            {
+                var f = (Quaternion)value;
+                QuaternionField(hash, "", ref f, 0.0f, null, true, true);
+                if (f != (Quaternion)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type == typeof(UnityEngine.Color))
+            {
+                var f = (Color)value;
+                ColorField(hash, "", ref f, 0.0f, null, true, true, color => { refChain.SetValue(color); });
+                if (f != (Color)value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type == typeof(UnityEngine.Color32))
+            {
+                var f = (Color32)value;
+                Color32Field(hash, "", ref f, 0.0f, null, true, true, color => { refChain.SetValue(color); });
+                var v = (Color32)value;
+                if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            if (type.IsEnum)
+            {
+                var f = value;
+                EnumField(hash, "", ref f, 0.0f, true, true);
+                if (f != value)
+                {
+                    return f;
+                }
+
+                return value;
+            }
+
+            return value;
+        }
+
         public static void FloatField(string hash, string name, ref float value, float ident = 0.0f, bool noSpace = false, bool noTypeLabel = false)
         {
             GUILayout.BeginHorizontal();
@@ -91,7 +325,7 @@ namespace ModTools
             if (result != null)
             {
                 float newValue;
-                if (float.TryParse(result, out newValue))
+                if (Single.TryParse(result, out newValue))
                 {
                     value = newValue;
                 }
@@ -131,7 +365,7 @@ namespace ModTools
             if (result != null)
             {
                 double newValue;
-                if (double.TryParse(result, out newValue))
+                if (Double.TryParse(result, out newValue))
                 {
                     value = newValue;
                 }
@@ -173,7 +407,7 @@ namespace ModTools
             if (result != null)
             {
                 byte newValue;
-                if (byte.TryParse(result, out newValue))
+                if (Byte.TryParse(result, out newValue))
                 {
                     value = newValue;
                 }
@@ -214,7 +448,7 @@ namespace ModTools
             if (result != null)
             {
                 int newValue;
-                if (int.TryParse(result, out newValue))
+                if (Int32.TryParse(result, out newValue))
                 {
                     value = newValue;
                 }
@@ -254,7 +488,7 @@ namespace ModTools
             if (result != null)
             {
                 uint newValue;
-                if (uint.TryParse(result, out newValue))
+                if (UInt32.TryParse(result, out newValue))
                 {
                     value = newValue;
                 }
@@ -793,10 +1027,10 @@ namespace ModTools
                 GUILayout.FlexibleSpace();
             }
 
-            var r = (byte)(Mathf.Clamp(value.r * 255.0f, byte.MinValue, byte.MaxValue));
-            var g = (byte)(Mathf.Clamp(value.g * 255.0f, byte.MinValue, byte.MaxValue));
-            var b = (byte)(Mathf.Clamp(value.b * 255.0f, byte.MinValue, byte.MaxValue));
-            var a = (byte)(Mathf.Clamp(value.a * 255.0f, byte.MinValue, byte.MaxValue));
+            var r = (byte)(Mathf.Clamp(value.r * 255.0f, Byte.MinValue, Byte.MaxValue));
+            var g = (byte)(Mathf.Clamp(value.g * 255.0f, Byte.MinValue, Byte.MaxValue));
+            var b = (byte)(Mathf.Clamp(value.b * 255.0f, Byte.MinValue, Byte.MaxValue));
+            var a = (byte)(Mathf.Clamp(value.a * 255.0f, Byte.MinValue, Byte.MaxValue));
 
             ByteField(hash + ".r", "r", ref r, 0.0f, true, true);
             ByteField(hash + ".g", "g", ref g, 0.0f, true, true);
@@ -907,7 +1141,6 @@ namespace ModTools
 
             GUILayout.EndHorizontal();
         }
-
     }
 
 }

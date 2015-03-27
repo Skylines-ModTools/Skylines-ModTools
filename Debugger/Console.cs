@@ -86,7 +86,7 @@ namespace ModTools
                 var frame = new StackFrame(3);
                 var callingMethod = frame.GetMethod();
 
-                if (callingMethod.DeclaringType.ToString() == "UnityEngine.Debug")
+                if (callingMethod.DeclaringType != null && callingMethod.DeclaringType.ToString() == "UnityEngine.Debug")
                 {
                     frame = new StackFrame(5);
                     callingMethod = frame.GetMethod();
@@ -306,7 +306,7 @@ namespace ModTools
             {
                 var source = String.Format(defaultSource, commandLine);
                 var file = new ScriptEditorFile() {path = "ModToolsCommandLineScript.cs", source = source};
-
+/*
                 string errorMessage;
                 IModEntryPoint instance;
                 if (ScriptCompiler.RunSource(new List<ScriptEditorFile>() {file}, out errorMessage, out instance))
@@ -325,7 +325,7 @@ namespace ModTools
                         Log.Error("Error xxecuting command-line..");
                     }
                 }
-
+*/
                 commandLine = "";
             }
 
