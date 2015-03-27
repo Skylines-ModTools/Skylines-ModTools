@@ -802,7 +802,7 @@ namespace ModTools
             
             if (onColorChanged != null)
             {
-                if (GUILayout.Button("c", GUILayout.Width(72)))
+                if (GUILayout.Button("", GUILayout.Width(72)))
                 {
                     var picker = ModTools.Instance.colorPicker;
                     picker.SetColor(value, onColorChanged);
@@ -867,7 +867,7 @@ namespace ModTools
 
             if (onColorChanged != null)
             {
-                if (GUILayout.Button("c", GUILayout.Width(72)))
+                if (GUILayout.Button("", GUILayout.Width(72)))
                 {
                     var picker = ModTools.Instance.colorPicker;
                     picker.SetColor(value, onColorChanged);

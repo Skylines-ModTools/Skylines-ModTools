@@ -9,8 +9,11 @@ namespace ModTools
 
         private Vector2 mainScroll = Vector2.zero;
 
+        public Console console;
         public SceneExplorer sceneExplorer;
         public SceneExplorerColorConfig sceneExplorerColorConfig;
+
+     //   public ScriptEditor scriptEditor;
 
         public Watches watches;
         public ColorPicker colorPicker;
@@ -19,6 +22,7 @@ namespace ModTools
 
         public static bool logExceptionsToConsole = true;
         public static bool extendGamePanels = true;
+        public static bool useModToolsConsole = true;
 
         public Configuration config = new Configuration();
         public static readonly string configPath = "ModToolsConfig.xml";
@@ -27,9 +31,13 @@ namespace ModTools
 
         public void OnDestroy()
         {
+            Destroy(console);
             Destroy(sceneExplorer);
+            Destroy(sceneExplorerColorConfig);
+         //   Destroy(scriptEditor);
             Destroy(watches);
             Destroy(panelExtender);
+            Destroy(colorPicker);
         }
 
         public static ModTools Instance
@@ -52,6 +60,7 @@ namespace ModTools
 
             logExceptionsToConsole = config.logExceptionsToConsole;
             extendGamePanels = config.extendGamePanels;
+            useModToolsConsole = config.useModToolsConsole;
 
             rect = config.mainWindowRect;
             visible = config.mainWindowVisible;
@@ -61,6 +70,7 @@ namespace ModTools
 
             sceneExplorer.rect = config.sceneExplorerRect;
             sceneExplorer.visible = config.sceneExplorerVisible;
+
             if (sceneExplorer.visible)
             {
                 sceneExplorer.Refresh();
@@ -73,6 +83,7 @@ namespace ModTools
             {
                 config.logExceptionsToConsole = logExceptionsToConsole;
                 config.extendGamePanels = extendGamePanels;
+                config.useModToolsConsole = useModToolsConsole;
 
                 config.mainWindowRect = rect;
                 config.mainWindowVisible = visible;
@@ -101,15 +112,19 @@ namespace ModTools
                     return;
                 }
 
+                if (instance.console != null)
+                {
+                    instance.console.AddMessage(condition, type);
+                    return;
+                }
+
                 if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert)
                 {
                     Log.Error(condition);
-                    Log.Error(trace);
                 }
                 else if (type == LogType.Warning)
                 {
                     Log.Warning(condition);
-                    Log.Warning(trace);
                 }
                 else
                 {
@@ -118,16 +133,24 @@ namespace ModTools
             };
 
             sceneExplorer = gameObject.AddComponent<SceneExplorer>();
-            sceneExplorerColorConfig = gameObject.AddComponent<SceneExplorerColorConfig>();
+
+            //scriptEditor = gameObject.AddComponent<ScriptEditor>();
 
             watches = gameObject.AddComponent<Watches>();
             colorPicker = gameObject.AddComponent<ColorPicker>();
 
             LoadConfig();
 
+            sceneExplorerColorConfig = gameObject.AddComponent<SceneExplorerColorConfig>();
+
             if (extendGamePanels)
             {
                 panelExtender = gameObject.AddComponent<GamePanelExtender>();
+            }
+
+            if (useModToolsConsole)
+            {
+                console = gameObject.AddComponent<Console>();
             }
         }
 
@@ -153,10 +176,36 @@ namespace ModTools
             {
                 watches.visible = !watches.visible;
             }
+
+            if (useModToolsConsole && Input.GetKeyDown(KeyCode.F7))
+            {
+                console.visible = !console.visible;
+            }
         }
 
         void DoMainWindow()
         {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Use ModTools console");
+            var newUseConsole = GUILayout.Toggle(useModToolsConsole, "");
+            GUILayout.EndHorizontal();
+
+            if (newUseConsole != useModToolsConsole)
+            {
+                useModToolsConsole = newUseConsole;
+                SaveConfig();
+
+                if (useModToolsConsole)
+                {
+                    console = gameObject.AddComponent<Console>();
+                }
+                else
+                {
+                    Destroy(console);
+                    console = null;
+                }
+            }
+
             GUILayout.BeginHorizontal();
             GUILayout.Label("Log exceptions to console");
             logExceptionsToConsole = GUILayout.Toggle(logExceptionsToConsole, "");

@@ -78,7 +78,9 @@ namespace ModTools
 
             rect = GUILayout.Window(id, rect, identifier =>
             {
+                comboBoxScroll = GUILayout.BeginScrollView(comboBoxScroll);
                 selectedItem = GUILayout.SelectionGrid(-1, entries, 1, yellowOnHover);
+                GUILayout.EndScrollView();
                 if (GUI.changed)
                     popupActive = false;
             }, "", style);
@@ -87,6 +89,8 @@ namespace ModTools
             if (Event.current.type == EventType.MouseDown && !rect.Contains(Event.current.mousePosition))
                 popupOwner = null;
         }
+
+        private static Vector2 comboBoxScroll = Vector2.zero;
 
         public static int Box(int selectedItem, string[] entries, string caller)
         {
@@ -141,6 +145,7 @@ namespace ModTools
                 rect.x = (rect.x + mousePos.x) - clippedMousePos.x;
                 rect.y = (rect.y + mousePos.y) - clippedMousePos.y;
                 rect.height = rect.height*entries.Length;
+                comboBoxScroll = Vector2.zero;
             }
 
             return selectedItem;

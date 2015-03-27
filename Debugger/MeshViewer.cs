@@ -1,4 +1,5 @@
 ﻿using System;
+using ICities;
 using UnityEngine;
 
 namespace ModTools
@@ -27,7 +28,7 @@ namespace ModTools
             onDraw = DrawWindow;
 
             material = new Material(Shader.Find("Diffuse"));
-
+           
             try
             {
                 light = GameObject.Find("Directional Light").GetComponent<Light>();
