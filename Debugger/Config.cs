@@ -19,6 +19,7 @@ namespace ModTools
         public bool showConsoleOnMessage = false;
         public bool showConsoleOnWarning = false;
         public bool showConsoleOnError = true;
+        public bool consoleAutoScrollToBottom = true;
 
         public Rect sceneExplorerRect = new Rect(128, 440, 800, 500);
         public bool sceneExplorerVisible = false;

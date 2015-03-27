@@ -32,7 +32,7 @@ namespace ModTools
         private GUIArea commandLineArea;
 
         private float headerHeightCompact = 0.5f;
-        private float headerHeightExpanded = 6.3f;
+        private float headerHeightExpanded = 8.0f;
         private bool headerExpanded = false;
         
         private float commandLineAreaHeight = 45.0f;
@@ -149,6 +149,11 @@ namespace ModTools
             {
                 visible = true;
             }
+
+            if (config.consoleAutoScrollToBottom)
+            {
+                consoleScrollPosition.y = float.MaxValue;
+            }
         }
 
         void RecalculateAreas()
@@ -223,6 +228,12 @@ namespace ModTools
             GUILayout.Label("Error", GUILayout.ExpandWidth(false));
             config.showConsoleOnError = GUILayout.Toggle(config.showConsoleOnError, "", GUILayout.ExpandWidth(false));
             
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Auto-scroll on new messages:");
+            config.consoleAutoScrollToBottom = GUILayout.Toggle(config.consoleAutoScrollToBottom, "");
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
 
