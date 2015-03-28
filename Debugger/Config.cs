@@ -53,6 +53,8 @@ namespace ModTools
         public string fontName = "Courier New Bold";
         public int fontSize = 14;
 
+        public int hiddenNotifications = 0;
+
         public void OnPreSerialize()
         {
 

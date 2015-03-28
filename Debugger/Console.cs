@@ -46,6 +46,8 @@ namespace ModTools
         private DebugOutputPanel vanillaPanel;
         private Transform oldVanillaPanelParent;
 
+        private List<KeyValuePair<int, string>> userNotifications; 
+
         public Console() : base("Debug console", config.consoleRect, skin)
         {
             onDraw = DrawWindow;
@@ -292,9 +294,27 @@ namespace ModTools
 
         void DrawConsole()
         {
+            userNotifications = UserNotifications.GetNotifications();
+
             consoleArea.Begin();
 
             consoleScrollPosition = GUILayout.BeginScrollView(consoleScrollPosition);
+
+            foreach (var item in userNotifications)
+            {
+                GUILayout.BeginHorizontal(skin.box);
+
+                GUI.contentColor = Color.blue;
+                GUILayout.Label(item.Value);
+                GUI.contentColor = Color.white;
+
+                if (GUILayout.Button("Hide"))
+                {
+                    UserNotifications.HideNotification(item.Key);
+                }
+
+                GUILayout.EndHorizontal();
+            }
 
             foreach (ConsoleMessage item in history)
             {

@@ -224,6 +224,8 @@ namespace ModTools
                         var mouse = Input.mousePosition;
                         mouse.y = Screen.height - mouse.y;
 
+                        DrawBorder();
+
                         if (hasTitlebar)
                         {
                             DrawTitlebar(mouse);
@@ -250,6 +252,16 @@ namespace ModTools
 
                 GUI.skin = oldSkin;
             }
+        }
+
+        private void DrawBorder()
+        {
+            var leftRect = new Rect(0.0f, 0.0f, 1.0f, rect.height);
+            var rightRect = new Rect(rect.width - 1.0f, 0.0f, 1.0f, rect.height);
+            var bottomRect = new Rect(0.0f, rect.height - 1.0f, rect.width, 1.0f);
+            GUI.DrawTexture(leftRect, moveNormalTexture);
+            GUI.DrawTexture(rightRect, moveNormalTexture);
+            GUI.DrawTexture(bottomRect, moveNormalTexture);
         }
 
         private void DrawTitlebar(Vector3 mouse)

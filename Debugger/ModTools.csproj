@@ -92,6 +92,7 @@
     <Compile Include="SceneExplorer.cs" />
     <Compile Include="TextToTexture.cs" />
     <Compile Include="TypeUtil.cs" />
+    <Compile Include="UserNotifications.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="Watches.cs" />
   </ItemGroup>
