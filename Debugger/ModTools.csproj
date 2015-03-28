@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -56,6 +57,7 @@
     <Compile Include="ColorUtil.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Console.cs" />
+    <Compile Include="Detours.cs" />
     <Compile Include="ExtensionMethods\MeshExtension.cs" />
     <Compile Include="ExtensionMethods\StringExtensions.cs" />
     <Compile Include="ExtensionMethods\UnityExtension.cs" />
@@ -92,6 +94,7 @@
     <Compile Include="SceneExplorer.cs" />
     <Compile Include="TextToTexture.cs" />
     <Compile Include="TypeUtil.cs" />
+    <Compile Include="UnityLoggingHook.cs" />
     <Compile Include="UserNotifications.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="Watches.cs" />

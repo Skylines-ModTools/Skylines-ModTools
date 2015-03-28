@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
+using ColossalFramework.Plugins;
 using ColossalFramework.UI;
 using UnityEngine;
 
@@ -37,6 +39,8 @@ namespace ModTools
 
         public void OnDestroy()
         {
+            UnityLoggingHook.DisableHook();
+
             Destroy(console);
             Destroy(sceneExplorer);
             Destroy(sceneExplorerColorConfig);
@@ -171,6 +175,11 @@ namespace ModTools
             {
                 console = gameObject.AddComponent<Console>();
             }
+
+            if (config.hookUnityLogging)
+            {
+                UnityLoggingHook.EnableHook();
+            }
         }
 
         void Update()
@@ -222,6 +231,26 @@ namespace ModTools
                 {
                     Destroy(console);
                     console = null;
+                }
+            }
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Hook Unity's logging (experimental)");
+            var newHookLogging = GUILayout.Toggle(config.hookUnityLogging, "");
+            GUILayout.EndHorizontal();
+
+            if (newHookLogging != config.hookUnityLogging)
+            {
+                config.hookUnityLogging = newHookLogging;
+                SaveConfig();
+
+                if (config.hookUnityLogging)
+                {
+                    UnityLoggingHook.EnableHook();
+                }
+                else
+                {
+                    UnityLoggingHook.DisableHook();
                 }
             }
 
@@ -283,6 +312,11 @@ namespace ModTools
                 {
                     sceneExplorer.Refresh();
                 }
+            }
+
+            if (GUILayout.Button("Throw exception!"))
+            {
+                throw new Exception("Hello world!");
             }
         }
 

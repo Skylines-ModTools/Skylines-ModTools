@@ -37,6 +37,7 @@ namespace ModTools
         
         private float commandLineAreaHeight = 45.0f;
 
+        private object historyLock = new object();
         private List<ConsoleMessage> history = new List<ConsoleMessage>();
         private List<string> commandHistory = new List<string>() { "" };
         private int currentCommandHistoryIndex = 0;
@@ -70,18 +71,22 @@ namespace ModTools
             vanillaPanel.transform.parent = oldVanillaPanelParent;
         }
 
-        public void AddMessage(string message, LogType type = LogType.Log, bool global = false)
+        public void AddMessage(string message, LogType type = LogType.Log, bool global = false, bool _internal = false)
         {
-            if (history.Count > 0)
+            lock (historyLock)
             {
-                var last = history.Last();
-                if (message == last.message && type == last.type)
+                if (history.Count > 0)
                 {
-                    last.count++;
+                    var last = history.Last();
+                    if (message == last.message && type == last.type)
+                    {
+                        last.count++;
+                        return;
+                    }
                 }
             }
 
-            string caller = "ModTools";
+            string caller = "";
 
             StackTrace trace = new StackTrace();
 
@@ -129,14 +134,17 @@ namespace ModTools
             }
             else
             {
-                caller = "";
+                caller = _internal ? "ModTools" : "";
             }
 
-            history.Add(new ConsoleMessage() {caller = caller, message = message, type = type, trace = trace});
-
-            if (history.Count >= config.consoleMaxHistoryLength)
+            lock (historyLock)
             {
-                history.RemoveAt(0);
+                history.Add(new ConsoleMessage() { count = 1, caller = caller, message = message, type = type, trace = trace });
+
+                if (history.Count >= config.consoleMaxHistoryLength)
+                {
+                    history.RemoveAt(0);
+                }
             }
 
             if (type == LogType.Log && config.showConsoleOnMessage)
@@ -200,7 +208,10 @@ namespace ModTools
 
             if (GUILayout.Button("Clear", GUILayout.ExpandWidth(false)))
             {
-                history.Clear();
+                lock (historyLock)
+                {
+                    history.Clear();
+                }
             }
 
             GUILayout.EndHorizontal();
@@ -270,7 +281,10 @@ namespace ModTools
 
             if (GUILayout.Button("Clear", GUILayout.ExpandWidth(false)))
             {
-                history.Clear();
+                lock (historyLock)
+                {
+                    history.Clear();
+                }
             }
 
             GUILayout.EndHorizontal();
@@ -316,7 +330,14 @@ namespace ModTools
                 GUILayout.EndHorizontal();
             }
 
-            foreach (ConsoleMessage item in history)
+            ConsoleMessage[] messages = null;
+
+            lock (historyLock)
+            {
+                messages = history.ToArray();
+            }
+
+            foreach (ConsoleMessage item in messages)
             {
                 GUILayout.BeginHorizontal(skin.box);
 
@@ -346,6 +367,15 @@ namespace ModTools
                 GUI.contentColor = Color.white;
                 
                 GUILayout.FlexibleSpace();
+
+                if (item.count > 1)
+                {
+                    GUILayout.Label(item.count.ToString(), skin.box);
+                }
+                else
+                {
+                    GUILayout.Label("");
+                }
 
                 if (item.trace != null)
                 {
