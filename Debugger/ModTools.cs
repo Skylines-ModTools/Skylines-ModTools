@@ -124,7 +124,7 @@ namespace ModTools
 
         private static bool loggingInitialized = false;
 
-        void Start()
+        public void Initialize()
         {
             if (!loggingInitialized)
             {
