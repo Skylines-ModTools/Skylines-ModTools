@@ -229,9 +229,15 @@ namespace ModTools
                 }
                 else
                 {
+                    config.hookUnityLogging = false;
                     Destroy(console);
                     console = null;
                 }
+            }
+
+            if (!config.useModToolsConsole)
+            {
+                GUI.enabled = false;
             }
 
             GUILayout.BeginHorizontal();
@@ -253,6 +259,8 @@ namespace ModTools
                     UnityLoggingHook.DisableHook();
                 }
             }
+
+            GUI.enabled = true;
 
             GUILayout.BeginHorizontal();
             GUILayout.Label("Log exceptions to console");
