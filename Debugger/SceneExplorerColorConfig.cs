@@ -14,7 +14,7 @@ namespace ModTools
         private string[] availableFonts;
         private int selectedFont;
 
-        public SceneExplorerColorConfig() : base("Font/ color configuration", new Rect(16.0f, 16.0f, 600.0f, 440.0f), skin)
+        public SceneExplorerColorConfig() : base("Font/ color configuration", new Rect(16.0f, 16.0f, 600.0f, 490.0f), skin)
         {
             onDraw = DrawWindow;
             onException = HandleException;
@@ -83,6 +83,21 @@ namespace ModTools
                 bgTexture.Apply();
             });
 
+            DrawColorControl("Titlebar", ref config.titlebarColor, color =>
+            {
+                config.titlebarColor = color;
+                moveNormalTexture.SetPixel(0, 0, config.titlebarColor);
+                moveNormalTexture.Apply();
+
+                moveHoverTexture.SetPixel(0, 0, config.titlebarColor * 1.2f);
+                moveHoverTexture.Apply();
+            });
+
+            DrawColorControl("Titlebar text", ref config.titlebarTextColor, color =>
+            {
+                config.titlebarTextColor = color;
+            });
+
             DrawColorControl("GameObject", ref config.gameObjectColor, color => config.gameObjectColor = color);
             DrawColorControl("Component (enabled)", ref config.enabledComponentColor, color => config.enabledComponentColor = color);
             DrawColorControl("Component (disabled)", ref config.disabledComponentColor, color => config.disabledComponentColor = color);
@@ -108,6 +123,15 @@ namespace ModTools
                 config.backgroundColor = template.backgroundColor;
                 bgTexture.SetPixel(0, 0, config.backgroundColor);
                 bgTexture.Apply();
+
+                config.titlebarColor = template.titlebarColor;
+                moveNormalTexture.SetPixel(0, 0, config.titlebarColor);
+                moveNormalTexture.Apply();
+
+                moveHoverTexture.SetPixel(0, 0, config.titlebarColor * 1.2f);
+                moveHoverTexture.Apply();
+
+                config.titlebarTextColor = template.titlebarTextColor;
 
                 config.gameObjectColor = template.gameObjectColor;
                 config.enabledComponentColor = template.enabledComponentColor;

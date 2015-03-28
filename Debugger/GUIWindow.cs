@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ColossalFramework.UI;
 using UnityEngine;
 
 namespace ModTools
@@ -18,6 +19,8 @@ namespace ModTools
 
         public delegate void OnUnityGUI();
 
+        public delegate void OnOpen();
+
         public delegate void OnClose();
 
         public delegate void OnResize(Vector2 size);
@@ -29,6 +32,7 @@ namespace ModTools
         public OnDraw onDraw = null;
         public OnException onException = null;
         public OnUnityGUI onUnityGUI = null;
+        public OnOpen onOpen = null;
         public OnClose onClose = null;
         public OnResize onResize = null;
         public OnMove onMove = null;
@@ -61,7 +65,17 @@ namespace ModTools
         {
             get { return _visible; }
 
-            set { _visible = value; GUI.BringWindowToFront(id); }
+            set 
+            { 
+                _visible = value; 
+                GUI.BringWindowToFront(id);
+                UpdateClickCatcher();
+
+                if (_visible && onOpen != null)
+                {
+                    onOpen();
+                }
+            }
         }
 
         public bool resizable = true;
@@ -76,24 +90,7 @@ namespace ModTools
 
         private static List<GUIWindow> windows = new List<GUIWindow>();
 
-        public void UpdateMouseScrolling()
-        {
-            var mouse = Input.mousePosition;
-            mouse.y = Screen.height - mouse.y;
-
-            var mouseInsideGuiWindow = false;
-
-            foreach (var window in windows)
-            {
-                if (window.visible && window.rect.Contains(mouse))
-                {
-                    mouseInsideGuiWindow = true;
-                    break;
-                }
-            }
-
-            Util.SetMouseScrolling(!mouseInsideGuiWindow);
-        }
+        private UIPanel clickCatcher;
 
         public GUIWindow(string _title, Rect _rect, GUISkin _skin)
         {
@@ -103,6 +100,18 @@ namespace ModTools
             skin = _skin;
             minSize = new Vector2(64.0f, 64.0f);
             windows.Add(this);
+
+            clickCatcher = FindObjectOfType<UIView>().AddUIComponent(typeof (UIPanel)) as UIPanel;
+            UpdateClickCatcher();
+        }
+
+        void UpdateClickCatcher()
+        {
+            var aspect = (float) Screen.width/Screen.height;
+            clickCatcher.absolutePosition = rect.position;
+            clickCatcher.size = new Vector2(rect.width, rect.height);
+            clickCatcher.isVisible = visible;
+            clickCatcher.zOrder = int.MaxValue;
         }
 
         void OnDestroy()
@@ -119,6 +128,25 @@ namespace ModTools
         {
             skin.font = Font.CreateDynamicFontFromOSFont(config.fontName, config.fontSize);
             ModTools.Instance.sceneExplorer.RecalculateAreas();
+        }
+
+        public static void UpdateMouseScrolling()
+        {
+            var mouse = Input.mousePosition;
+            mouse.y = Screen.height - mouse.y;
+
+            var mouseInsideGuiWindow = false;
+
+            foreach (var window in windows)
+            {
+                if (window.visible && window.rect.Contains(mouse))
+                {
+                    mouseInsideGuiWindow = true;
+                    break;
+                }
+            }
+
+            Util.SetMouseScrolling(!mouseInsideGuiWindow);
         }
 
         void OnGUI()
@@ -146,11 +174,11 @@ namespace ModTools
                 closeHoverTexture.Apply();
 
                 moveNormalTexture = new Texture2D(1, 1);
-                moveNormalTexture.SetPixel(0, 0, new Color(0.8f, 0.8f, 0.8f, 1.0f));
+                moveNormalTexture.SetPixel(0, 0, config.titlebarColor);
                 moveNormalTexture.Apply();
 
                 moveHoverTexture = new Texture2D(1, 1);
-                moveHoverTexture.SetPixel(0, 0, Color.green);
+                moveHoverTexture.SetPixel(0, 0, config.titlebarColor * 1.2f);
                 moveHoverTexture.Apply();
 
                 skin = ScriptableObject.CreateInstance<GUISkin>();
@@ -303,6 +331,8 @@ namespace ModTools
                         movingWindow = null;
                         ModTools.Instance.SaveConfig();
 
+                        UpdateClickCatcher();
+
                         if (onMove != null)
                         {
                             onMove(rect.position);
@@ -321,7 +351,7 @@ namespace ModTools
             }
 
             GUI.DrawTexture(new Rect(0.0f, 0.0f, rect.width * uiScale, 20.0f), moveTex, ScaleMode.StretchToFill);
-            GUI.contentColor = Color.black;
+            GUI.contentColor = config.titlebarTextColor;
             GUI.Label(new Rect(0.0f, 0.0f, rect.width * uiScale, 20.0f), title);
             GUI.contentColor = Color.white;
         }
@@ -342,6 +372,8 @@ namespace ModTools
                     visible = false;
                     ModTools.Instance.SaveConfig();
 
+                    UpdateClickCatcher();
+                    
                     if (onClose != null)
                     {
                         onClose();
@@ -394,6 +426,8 @@ namespace ModTools
                     {
                         resizingWindow = null;
                         ModTools.Instance.SaveConfig();
+
+                        UpdateClickCatcher();
 
                         if (onResize != null)
                         {
