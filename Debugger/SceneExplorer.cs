@@ -1273,35 +1273,43 @@ namespace ModTools
 
             if (expandedGameObjects.ContainsKey(refChain))
             {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Ident);
+                try
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
-                if (GUILayout.Button("-", GUILayout.ExpandWidth(false)))
+                    if (GUILayout.Button("-", GUILayout.ExpandWidth(false)))
+                    {
+                        expandedGameObjects.Remove(refChain);
+                    }
+
+                    GUI.contentColor = config.gameObjectColor;
+                    GUILayout.Label(obj.name);
+                    GUI.contentColor = Color.white;
+
+                    GUILayout.EndHorizontal();
+
+                    var components = obj.GetComponents(typeof(Component));
+
+                    if (sortAlphabetically)
+                    {
+                        Array.Sort(components, (component, component1) => component.GetType().ToString().CompareTo(component1.GetType().ToString()));
+                    }
+
+                    foreach (var component in components)
+                    {
+                        OnSceneTreeComponent(refChain.Add(component), component);
+                    }
+
+                    for (int i = 0; i < obj.transform.childCount; i++)
+                    {
+                        OnSceneTreeRecursive(refChain.Add(obj.transform.GetChild(i)), obj.transform.GetChild(i).gameObject);
+                    }
+                }
+                catch (Exception)
                 {
                     expandedGameObjects.Remove(refChain);
-                }
-
-                GUI.contentColor = config.gameObjectColor;
-                GUILayout.Label(obj.name);
-                GUI.contentColor = Color.white;
-
-                GUILayout.EndHorizontal();
-
-                var components = obj.GetComponents(typeof(Component));
-
-                if (sortAlphabetically)
-                {
-                    Array.Sort(components, (component, component1) => component.GetType().ToString().CompareTo(component1.GetType().ToString()));
-                }
-
-                foreach (var component in components)
-                {
-                    OnSceneTreeComponent(refChain.Add(component), component);
-                }
-
-                for (int i = 0; i < obj.transform.childCount; i++)
-                {
-                    OnSceneTreeRecursive(refChain.Add(obj.transform.GetChild(i)), obj.transform.GetChild(i).gameObject);
+                    throw;
                 }
             }
             else
@@ -1559,7 +1567,15 @@ namespace ModTools
 
             if (currentRefChain != null)
             {
-                OnSceneTreeReflect(currentRefChain, currentRefChain.Evaluate());
+                try
+                {
+                    OnSceneTreeReflect(currentRefChain, currentRefChain.Evaluate());
+                }
+                catch (Exception)
+                {
+                    currentRefChain = null;
+                    throw;
+                }
             }
 
             GUILayout.EndScrollView();
