@@ -101,13 +101,26 @@ namespace ModTools
             minSize = new Vector2(64.0f, 64.0f);
             windows.Add(this);
 
-            clickCatcher = FindObjectOfType<UIView>().AddUIComponent(typeof (UIPanel)) as UIPanel;
+            var uiView = FindObjectOfType<UIView>();
+            if (uiView != null)
+            {
+                clickCatcher = uiView.AddUIComponent(typeof(UIPanel)) as UIPanel;
+                if (clickCatcher != null)
+                {
+                    clickCatcher.name = "_ModToolsInternal";
+                }
+            }
+
             UpdateClickCatcher();
         }
 
         void UpdateClickCatcher()
         {
-            var aspect = (float) Screen.width/Screen.height;
+            if (clickCatcher == null)
+            {
+                return;
+            }
+
             clickCatcher.absolutePosition = rect.position;
             clickCatcher.size = new Vector2(rect.width, rect.height);
             clickCatcher.isVisible = visible;
@@ -119,6 +132,11 @@ namespace ModTools
             if (onUnityDestroy != null)
             {
                 onUnityDestroy();
+            }
+
+            if (clickCatcher != null)
+            {
+                Destroy(clickCatcher.gameObject);
             }
 
             windows.Remove(this);

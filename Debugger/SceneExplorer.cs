@@ -1266,6 +1266,11 @@ namespace ModTools
                 return;
             }
 
+            if (obj.name == "_ModToolsInternal" && !ModTools.DEBUG_MODTOOLS)
+            {
+                return;
+            }
+
             if (expandedGameObjects.ContainsKey(refChain))
             {
                 GUILayout.BeginHorizontal();

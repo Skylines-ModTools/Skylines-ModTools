@@ -1041,9 +1041,14 @@ namespace ModTools
             value.g = Mathf.Clamp01((float)g / 255.0f);
             value.b = Mathf.Clamp01((float)b / 255.0f);
             value.a = Mathf.Clamp01((float)a / 255.0f);
-            
+
             if (onColorChanged != null)
             {
+                if (value.r != r || value.g != g || value.b != b || value.a != a)
+                {
+                    onColorChanged(value);
+                }
+
                 if (GUILayout.Button("", GUILayout.Width(72)))
                 {
                     var picker = ModTools.Instance.colorPicker;
