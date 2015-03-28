@@ -221,7 +221,6 @@ namespace ModTools
             if (newUseConsole != useModToolsConsole)
             {
                 useModToolsConsole = newUseConsole;
-                SaveConfig();
 
                 if (useModToolsConsole)
                 {
@@ -230,9 +229,12 @@ namespace ModTools
                 else
                 {
                     config.hookUnityLogging = false;
+                    UnityLoggingHook.DisableHook();
                     Destroy(console);
                     console = null;
                 }
+
+                SaveConfig();
             }
 
             if (!config.useModToolsConsole)
