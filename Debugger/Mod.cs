@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using ColossalFramework.Plugins;
+using ColossalFramework.UI;
 using ICities;
 using UnityEngine;
+using UnityEngineInternal;
 
 namespace ModTools
 {
@@ -12,6 +14,24 @@ namespace ModTools
 
         private static GameObject modToolsGameObject;
         private static ModTools modTools;
+
+        public static bool IsModToolsActive()
+        {
+            var pluginManager = PluginManager.instance;
+            var plugins = Util.GetPrivate<Dictionary<string, PluginManager.PluginInfo>>(pluginManager, "m_Plugins");
+
+            foreach (var item in plugins)
+            {
+                if (item.Value.name != "409520576")
+                {
+                    continue;
+                }
+
+                return item.Value.isEnabled;
+            }
+
+            return false;
+        }
 
         public static void Bootstrap()
         {
@@ -35,13 +55,17 @@ namespace ModTools
 
         private static void InitModTools(SimulationManager.UpdateMode mode)
         {
+            if (!IsModToolsActive())
+            {
+                return;
+            }
+
             if (modToolsGameObject != null)
             {
                 return;
             }
 
             modToolsGameObject = new GameObject("ModTools");
-
             modTools = modToolsGameObject.AddComponent<ModTools>();
             modTools.Initialize(mode);
         }
