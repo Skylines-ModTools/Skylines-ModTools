@@ -17,6 +17,8 @@ namespace ModTools
         {
             try
             {
+                InitModTools(SimulationManager.UpdateMode.Undefined);
+
                 var target = typeof(LoadingWrapper).GetMethod("OnLevelLoaded",
                 new[] { typeof(SimulationManager.UpdateMode) });
 
@@ -31,7 +33,7 @@ namespace ModTools
             }
         }
 
-        public void OnLevelLoaded(SimulationManager.UpdateMode mode)
+        private static void InitModTools(SimulationManager.UpdateMode mode)
         {
             if (modToolsGameObject != null)
             {
@@ -41,24 +43,12 @@ namespace ModTools
             modToolsGameObject = new GameObject("ModTools");
 
             modTools = modToolsGameObject.AddComponent<ModTools>();
+            modTools.Initialize(mode);
+        }
 
-            if (mode == SimulationManager.UpdateMode.LoadAsset || mode == SimulationManager.UpdateMode.NewAsset)
-            {
-                ModTools.assetEditor = true;
-                ModTools.mapEditor = false;
-            }
-            else if (mode == SimulationManager.UpdateMode.LoadMap || mode == SimulationManager.UpdateMode.NewMap)
-            {
-                ModTools.mapEditor = true;
-                ModTools.assetEditor = false;
-            }
-            else
-            {
-                ModTools.mapEditor = false;
-                ModTools.assetEditor = false;
-            }
-
-            modTools.Initialize();
+        public void OnLevelLoaded(SimulationManager.UpdateMode mode)
+        {
+            InitModTools(mode);
 
             var loadingManager = LoadingManager.instance;
             var wrapper = loadingManager.m_LoadingWrapper;

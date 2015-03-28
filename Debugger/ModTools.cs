@@ -10,9 +10,8 @@ namespace ModTools
 
     public class ModTools : GUIWindow
     {
+        public SimulationManager.UpdateMode updateMode = SimulationManager.UpdateMode.Undefined;
 
-        public static bool mapEditor = false;
-        public static bool assetEditor = false;
         public static readonly bool DEBUG_MODTOOLS = false;
 
         private Vector2 mainScroll = Vector2.zero;
@@ -124,8 +123,10 @@ namespace ModTools
 
         private static bool loggingInitialized = false;
 
-        public void Initialize()
+        public void Initialize(SimulationManager.UpdateMode _updateMode)
         {
+            updateMode = _updateMode;
+
             if (!loggingInitialized)
             {
                 Application.logMessageReceived += (condition, trace, type) =>
@@ -166,7 +167,7 @@ namespace ModTools
 
             LoadConfig();
 
-            if (extendGamePanels && !mapEditor && !assetEditor)
+            if (extendGamePanels && (updateMode == SimulationManager.UpdateMode.NewGame || updateMode == SimulationManager.UpdateMode.LoadGame))
             {
                 panelExtender = gameObject.AddComponent<GamePanelExtender>();
             }
@@ -273,7 +274,7 @@ namespace ModTools
                 SaveConfig();
             }
 
-            if (!mapEditor && !assetEditor)
+            if ((updateMode == SimulationManager.UpdateMode.NewGame || updateMode == SimulationManager.UpdateMode.LoadGame))
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Game panel extensions");
