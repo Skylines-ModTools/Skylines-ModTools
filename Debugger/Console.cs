@@ -306,6 +306,8 @@ namespace ModTools
             headerArea.End();
         }
 
+        private Color orangeColor = new Color(1.0f, 0.647f, 0.0f, 1.0f);
+
         void DrawConsole()
         {
             userNotifications = UserNotifications.GetNotifications();
@@ -364,18 +366,24 @@ namespace ModTools
 
                 GUILayout.Label(msg);
 
-                GUI.contentColor = Color.white;
-                
                 GUILayout.FlexibleSpace();
 
                 if (item.count > 1)
                 {
+                    GUI.contentColor = orangeColor;
+                    if (item.count > 1024)
+                    {
+                        GUI.contentColor = Color.red;
+                    }
+
                     GUILayout.Label(item.count.ToString(), skin.box);
                 }
                 else
                 {
                     GUILayout.Label("");
                 }
+
+                GUI.contentColor = Color.white;
 
                 if (item.trace != null)
                 {
