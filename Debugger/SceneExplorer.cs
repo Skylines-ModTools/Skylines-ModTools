@@ -14,16 +14,16 @@ namespace ModTools
         private const float treeIdentSpacing = 16.0f;
         public static int maxHierarchyDepth = 20;
 
-        private readonly Dictionary<ReferenceChain, bool> expandedGameObjects = new Dictionary<ReferenceChain, bool>();
-        private readonly Dictionary<ReferenceChain, bool> expandedComponents = new Dictionary<ReferenceChain, bool>();
-        private readonly Dictionary<ReferenceChain, bool> expandedObjects = new Dictionary<ReferenceChain, bool>();
+        private Dictionary<ReferenceChain, bool> expandedGameObjects = new Dictionary<ReferenceChain, bool>();
+        private Dictionary<ReferenceChain, bool> expandedComponents = new Dictionary<ReferenceChain, bool>();
+        private Dictionary<ReferenceChain, bool> expandedObjects = new Dictionary<ReferenceChain, bool>();
 
-        private readonly Dictionary<ReferenceChain, bool> evaluatedProperties = new Dictionary<ReferenceChain, bool>();
+        private Dictionary<ReferenceChain, bool> evaluatedProperties = new Dictionary<ReferenceChain, bool>();
 
-        private readonly Dictionary<ReferenceChain, int> selectedArrayStartIndices = new Dictionary<ReferenceChain, int>();
-        private readonly Dictionary<ReferenceChain, int> selectedArrayEndIndices = new Dictionary<ReferenceChain, int>();
+        private Dictionary<ReferenceChain, int> selectedArrayStartIndices = new Dictionary<ReferenceChain, int>();
+        private Dictionary<ReferenceChain, int> selectedArrayEndIndices = new Dictionary<ReferenceChain, int>();
 
-        private readonly Dictionary<int, bool> preventCircularReferences = new Dictionary<int, bool>();
+        private Dictionary<int, bool> preventCircularReferences = new Dictionary<int, bool>();
 
         private Dictionary<GameObject, bool> sceneRoots = new Dictionary<GameObject, bool>();
 
@@ -117,18 +117,20 @@ namespace ModTools
         {
             Log.Error("Exception in Scene Explorer - " + ex.Message);
 
+            expandedGameObjects = new Dictionary<ReferenceChain, bool>();
+            expandedComponents = new Dictionary<ReferenceChain, bool>();
+            expandedObjects = new Dictionary<ReferenceChain, bool>();
+            evaluatedProperties = new Dictionary<ReferenceChain, bool>();
+            preventCircularReferences = new Dictionary<int, bool>();
+            sceneRoots = GameObjectUtil.FindSceneRoots();
+            currentRefChain = null;
+
             if (debugMode)
             {
                 var filename = "ModTools_Crash_Report.log";
                 File.WriteAllText(filename, lastCrashReport);
                 Log.Warning(String.Format("ModTools - crash log dumped to \"{0}\"", filename));
             }
-
-            expandedGameObjects.Clear();
-            expandedComponents.Clear();
-            expandedObjects.Clear();
-            evaluatedProperties.Clear();
-            currentRefChain = null;
         }
 
         public void Refresh()
