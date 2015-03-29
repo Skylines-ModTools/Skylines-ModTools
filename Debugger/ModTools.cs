@@ -45,6 +45,8 @@ namespace ModTools
             Destroy(panelExtender);
             Destroy(colorPicker);
 
+            ImprovedWorkshopIntegration.Revert();
+
             instance = null;
         }
 
@@ -178,6 +180,11 @@ namespace ModTools
             {
                 UnityLoggingHook.EnableHook();
             }
+
+            if (config.improvedWorkshopIntegration)
+            {
+                ImprovedWorkshopIntegration.Bootstrap();
+            }
         }
 
         void Update()
@@ -241,7 +248,7 @@ namespace ModTools
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Hook Unity's logging (experimental)");
+            GUILayout.Label("Hook Unity's logging");
             var newHookLogging = GUILayout.Toggle(config.hookUnityLogging, "");
             GUILayout.EndHorizontal();
 
@@ -292,6 +299,15 @@ namespace ModTools
                         Destroy(gameObject.GetComponent<GamePanelExtender>());
                     }
                 }
+            }
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Improved Workshop integration");
+            var improvedWorkshopIntegration = GUILayout.Toggle(config.improvedWorkshopIntegration, "");
+            GUILayout.EndHorizontal();
+            if (improvedWorkshopIntegration != config.improvedWorkshopIntegration)
+            {
+                SaveConfig();
             }
 
             if (GUILayout.Button("Debug console (F7)"))

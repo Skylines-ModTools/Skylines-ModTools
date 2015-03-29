@@ -163,6 +163,11 @@ namespace ModTools
             return (T)field.GetValue(o);
         }
 
+        public static void SetFieldValue(FieldInfo field, object o, object value)
+        {
+            field.SetValue(o, value);
+        }
+
         public static Q GetPrivate<Q>(object o, string fieldName)
         {
             var fields = o.GetType().GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);

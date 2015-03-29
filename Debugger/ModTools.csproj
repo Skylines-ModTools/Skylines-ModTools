@@ -71,6 +71,7 @@
     <Compile Include="GUIWindow.cs" />
     <Compile Include="HashCodeUtil.cs" />
     <Compile Include="IModEntryPoint.cs" />
+    <Compile Include="ImprovedWorkshopIntegration.cs" />
     <Compile Include="MeshOBJTools\Int32Converter.cs" />
     <Compile Include="MeshOBJTools\OBJData.cs" />
     <Compile Include="MeshOBJTools\OBJFace.cs" />
