@@ -32,7 +32,6 @@ namespace ModTools
         private static FieldInfo m_ChangeNote;
         private static FieldInfo m_DefaultModPreviewTexture;
 
-        private static MethodInfo prepareStagingArea;
         private static MethodInfo reloadPreviewImage;
         private static MethodInfo startWatchingPath;
 
@@ -40,7 +39,7 @@ namespace ModTools
         private static RedirectCallsState revertState2;
         private static RedirectCallsState revertState3;
 
-        private static bool refreshOnStart = true;
+        private static bool improvedModsPanelExists = false;
 
         public static void Bootstrap()
         {
@@ -48,6 +47,8 @@ namespace ModTools
             {
                 return;
             }
+
+            improvedModsPanelExists = CheckForImprovedModsPanel();
 
             var go = GameObject.Find("(Library) WorkshopModUploadPanel");
             if (go == null)
@@ -80,9 +81,6 @@ namespace ModTools
             m_ChangeNote = Util.FindField(workshopModUploadPanel, "m_ChangeNote");
             m_DefaultModPreviewTexture = Util.FindField(workshopModUploadPanel, "m_DefaultModPreviewTexture");
 
-            prepareStagingArea = typeof(WorkshopModUploadPanel).GetMethod("PrepareStagingArea",
-                BindingFlags.Instance | BindingFlags.NonPublic);
-
             reloadPreviewImage = typeof(WorkshopModUploadPanel).GetMethod("ReloadPreviewImage",
                 BindingFlags.Instance | BindingFlags.NonPublic);
 
@@ -97,16 +95,16 @@ namespace ModTools
                     BindingFlags.Instance | BindingFlags.NonPublic)
             );
 
-            revertState2 = RedirectionHelper.RedirectCalls
-            (
-                typeof(PackageEntry).GetMethod("FormatPackageName",
-                    BindingFlags.Static | BindingFlags.NonPublic),
-                typeof(ImprovedWorkshopIntegration).GetMethod("FormatPackageName",
-                    BindingFlags.Static | BindingFlags.NonPublic)
-            );
-
-            if (modsList.GetComponent("ImprovedModsPanel") == null)
+            if (!improvedModsPanelExists)
             {
+                revertState2 = RedirectionHelper.RedirectCalls
+                (
+                    typeof(PackageEntry).GetMethod("FormatPackageName",
+                        BindingFlags.Static | BindingFlags.NonPublic),
+                    typeof(ImprovedWorkshopIntegration).GetMethod("FormatPackageName",
+                        BindingFlags.Static | BindingFlags.NonPublic)
+                );
+
                 revertState3 = RedirectionHelper.RedirectCalls
                 (
                     typeof(CustomContentPanel).GetMethod("RefreshPlugins",
@@ -115,8 +113,24 @@ namespace ModTools
                         BindingFlags.Static | BindingFlags.Public)
                 );
             }
-
+            
             bootstrapped = true;
+        }
+
+        public static bool CheckForImprovedModsPanel()
+        {
+            var plugins = PluginManager.instance.GetPluginsInfo();
+
+            foreach (var current in plugins)
+            {
+                IUserMod[] instances = current.GetInstances<IUserMod>();
+                if (instances[0].Name == "ImprovedModsPanel")
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public static void Revert()
@@ -135,15 +149,15 @@ namespace ModTools
             RedirectionHelper.RevertRedirect(typeof(WorkshopModUploadPanel).GetMethod("SetAssetInternal",
                     BindingFlags.Instance | BindingFlags.NonPublic), revertState);
 
-            RedirectionHelper.RevertRedirect(typeof(PackageEntry).GetMethod("FormatPackageName",
-                    BindingFlags.Static | BindingFlags.NonPublic), revertState2);
-            
-            if (modsList.GetComponent("ImprovedModsPanel") == null)
+            if (!improvedModsPanelExists)
             {
-                RedirectionHelper.RevertRedirect(typeof (CustomContentPanel).GetMethod("RefreshPlugins",
+                RedirectionHelper.RevertRedirect(typeof(PackageEntry).GetMethod("FormatPackageName",
+                  BindingFlags.Static | BindingFlags.NonPublic), revertState2);
+
+                RedirectionHelper.RevertRedirect(typeof(CustomContentPanel).GetMethod("RefreshPlugins",
                     BindingFlags.Instance | BindingFlags.NonPublic), revertState3);
             }
-
+          
             bootstrapped = false;
         }
 
@@ -164,6 +178,11 @@ namespace ModTools
 
         public static void RefreshPlugins()
         {
+            if (improvedModsPanelExists)
+            {
+                return;
+            }
+
             var modsList = GameObject.Find("ModsList");
             if (modsList == null)
             {
