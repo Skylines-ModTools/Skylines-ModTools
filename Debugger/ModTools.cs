@@ -187,8 +187,16 @@ namespace ModTools
             }
         }
 
+        private bool modListUpdated = false;
+
         void Update()
         {
+            if (!modListUpdated && config.improvedWorkshopIntegration)
+            {
+                ImprovedWorkshopIntegration.RefreshPlugins();
+                modListUpdated = true;
+            }
+
             UpdateMouseScrolling();
 
             if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.Q))
