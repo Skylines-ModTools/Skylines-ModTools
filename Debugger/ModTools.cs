@@ -315,6 +315,17 @@ namespace ModTools
             GUILayout.EndHorizontal();
             if (improvedWorkshopIntegration != config.improvedWorkshopIntegration)
             {
+                config.improvedWorkshopIntegration = improvedWorkshopIntegration;
+                if (config.improvedWorkshopIntegration)
+                {
+                    ImprovedWorkshopIntegration.Bootstrap();
+                    ImprovedWorkshopIntegration.RefreshPlugins();
+                }
+                else
+                {
+                    ImprovedWorkshopIntegration.Revert();
+                }
+
                 SaveConfig();
             }
 
