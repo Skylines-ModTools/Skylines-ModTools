@@ -62,6 +62,12 @@ namespace ModTools
                 return;
             }
 
+            var modsList = GameObject.Find("ModsList");
+            if (modsList == null)
+            {
+                return;
+            }
+
             m_StagingPath = Util.FindField(workshopModUploadPanel, "m_StagingPath");
             m_PreviewPath = Util.FindField(workshopModUploadPanel, "m_PreviewPath");
             m_ContentPath = Util.FindField(workshopModUploadPanel, "m_ContentPath");
@@ -99,13 +105,16 @@ namespace ModTools
                     BindingFlags.Static | BindingFlags.NonPublic)
             );
 
-            revertState3 = RedirectionHelper.RedirectCalls
-            (
-                typeof(CustomContentPanel).GetMethod("RefreshPlugins",
-                    BindingFlags.Instance | BindingFlags.NonPublic),
-                typeof(ImprovedWorkshopIntegration).GetMethod("RefreshPlugins",
-                    BindingFlags.Static | BindingFlags.NonPublic)
-            );
+            if (modsList.GetComponent("ImprovedModsPanel") == null)
+            {
+                revertState3 = RedirectionHelper.RedirectCalls
+                (
+                    typeof(CustomContentPanel).GetMethod("RefreshPlugins",
+                        BindingFlags.Instance | BindingFlags.NonPublic),
+                    typeof(ImprovedWorkshopIntegration).GetMethod("RefreshPlugins",
+                        BindingFlags.Static | BindingFlags.Public)
+                );
+            }
 
             bootstrapped = true;
         }
@@ -128,14 +137,13 @@ namespace ModTools
 
             RedirectionHelper.RevertRedirect(typeof(PackageEntry).GetMethod("FormatPackageName",
                     BindingFlags.Static | BindingFlags.NonPublic), revertState2);
-
+            
             if (modsList.GetComponent("ImprovedModsPanel") == null)
             {
-                RedirectionHelper.RevertRedirect(typeof(CustomContentPanel).GetMethod("RefreshPlugins",
-                   BindingFlags.Instance | BindingFlags.NonPublic), revertState3);
+                RedirectionHelper.RevertRedirect(typeof (CustomContentPanel).GetMethod("RefreshPlugins",
+                    BindingFlags.Instance | BindingFlags.NonPublic), revertState3);
             }
 
-           
             bootstrapped = false;
         }
 
