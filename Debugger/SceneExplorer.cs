@@ -1160,7 +1160,10 @@ namespace ModTools
 
             if (sortAlphabetically)
             {
-                Array.Sort(members, (info, info1) => info.Name.CompareTo(info1.Name));
+                Array.Sort(members, (info, info1) =>
+                {
+                    return info.Name.CompareTo(info1.Name);
+                });
             }
 
             foreach (MemberInfo member in members)
@@ -1548,7 +1551,20 @@ namespace ModTools
 
             if (sortAlphabetically)
             {
-                Array.Sort(gameObjects, (o, o1) => o.name.CompareTo(o1.name));
+                Array.Sort(gameObjects, (o, o1) =>
+                {
+                    if (o.name == null)
+                    {
+                        return 1;
+                    }
+
+                    if (o1.name == null)
+                    {
+                        return -1;
+                    }
+
+                    return o.name.CompareTo(o1.name);
+                });
             }
 
             foreach (var obj in gameObjects)
