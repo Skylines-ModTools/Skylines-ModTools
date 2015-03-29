@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Management.Instrumentation;
 using System.Reflection;
 using ColossalFramework.UI;
 using UnityEngine;
@@ -34,8 +33,22 @@ namespace ModTools
         private float headerHeightCompact = 0.5f;
         private float headerHeightExpanded = 8.0f;
         private bool headerExpanded = false;
-        
-        private float commandLineAreaHeight = 45.0f;
+
+        private float commandLineAreaHeightCompact = 45.0f;
+        private float commandLineAreaHeightExpanded = 120.0f;
+
+        private bool commandLineAreaExpanded 
+        {
+            get 
+            {
+                if (commandHistory[currentCommandHistoryIndex].Contains('\n'))
+                {
+                    return true;
+                }
+
+                return commandHistory[currentCommandHistoryIndex].Length >= 64;
+            }
+        }
 
         private object historyLock = new object();
         private List<ConsoleMessage> history = new List<ConsoleMessage>();
@@ -43,6 +56,7 @@ namespace ModTools
         private int currentCommandHistoryIndex = 0;
 
         private Vector2 consoleScrollPosition = Vector2.zero;
+        private Vector2 commandLineScrollPosition = Vector2.zero;
 
         private DebugOutputPanel vanillaPanel;
         private Transform oldVanillaPanelParent;
@@ -69,6 +83,14 @@ namespace ModTools
         void HandleDestroy()
         {
             vanillaPanel.transform.parent = oldVanillaPanelParent;
+        }
+
+        void Update()
+        {
+            if (Input.GetKey(KeyCode.Tab))
+            {
+                UnityEngine.Debug.LogWarning("Tab");
+            }
         }
 
         public void AddMessage(string message, LogType type = LogType.Log, bool global = false, bool _internal = false)
@@ -168,13 +190,17 @@ namespace ModTools
 
         void RecalculateAreas()
         {
-            float headerHeight = (headerExpanded ? headerHeightExpanded : headerHeightCompact);
+            float headerHeight = headerExpanded ? headerHeightExpanded : headerHeightCompact;
             headerHeight *= config.fontSize;
             headerHeight += 32.0f;
 
             headerArea.relativeSize.x = 1.0f;
             headerArea.absolutePosition.y = 16.0f;
             headerArea.absoluteSize.y = headerHeight;
+
+            var commandLineAreaHeight = commandLineAreaExpanded
+                ? commandLineAreaHeightExpanded
+                : commandLineAreaHeightCompact;
 
             consoleArea.absolutePosition.y = 16.0f + headerHeight;
             consoleArea.relativeSize.x = 1.0f;
@@ -409,10 +435,13 @@ namespace ModTools
         {
             commandLineArea.Begin();
 
+            commandLineScrollPosition = GUILayout.BeginScrollView(commandLineScrollPosition, false, false);
+
             GUILayout.BeginHorizontal();
 
             GUI.SetNextControlName("ModToolsConsoleCommandLine");
-            commandHistory[currentCommandHistoryIndex] = GUILayout.TextField(commandHistory[currentCommandHistoryIndex]);
+
+            commandHistory[currentCommandHistoryIndex] = GUILayout.TextArea(commandHistory[currentCommandHistoryIndex], GUILayout.ExpandHeight(true));
 
             if (commandHistory[currentCommandHistoryIndex].Trim().Length == 0)
             {
@@ -451,6 +480,8 @@ namespace ModTools
             GUI.enabled = true;
 
             GUILayout.EndHorizontal();
+
+            GUILayout.EndScrollView();
 
             commandLineArea.End();
         }
@@ -494,13 +525,10 @@ namespace ModTools
 
         void DrawWindow()
         {
+            RecalculateAreas();
             DrawHeader();
             DrawConsole();
             DrawCommandLineArea();
-        }
-
-        void Update()
-        {
         }
 
         private readonly string defaultSource = @"
@@ -510,6 +538,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
 using System.Linq;
+using ColossalFramework.UI;
 using UnityEngine;
 
 namespace ModTools
