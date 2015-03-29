@@ -12,7 +12,7 @@ namespace ModTools
     public class SceneExplorer : GUIWindow
     {
         private const float treeIdentSpacing = 16.0f;
-        public static int maxHierarchyDepth = 20;
+        public static int maxHierarchyDepth = 32;
 
         private Dictionary<ReferenceChain, bool> expandedGameObjects = new Dictionary<ReferenceChain, bool>();
         private Dictionary<ReferenceChain, bool> expandedComponents = new Dictionary<ReferenceChain, bool>();
@@ -39,7 +39,6 @@ namespace ModTools
         private string findObjectTypeFilter = "";
         private string searchDisplayString = "";
 
-        public static bool debugMode = false;
         public static string debugOutput = "";
         public static string lastCrashReport = "";
 
@@ -61,19 +60,11 @@ namespace ModTools
         private float headerHeightExpanded = 15.0f;
         private bool headerExpanded = false;
 
-        private float sceneTreeWidth = 300.0f;
+        private float sceneTreeWidth = 320.0f;
 
         private Configuration config
         {
             get { return ModTools.Instance.config; }
-        }
-
-        private void AddDebugLine(string line, params System.Object[] arg)
-        {
-            if (debugMode)
-            {
-                debugOutput += String.Format(line, arg) + '\n';
-            }
         }
 
         public SceneExplorer()
@@ -124,13 +115,6 @@ namespace ModTools
             preventCircularReferences = new Dictionary<int, bool>();
             sceneRoots = GameObjectUtil.FindSceneRoots();
             currentRefChain = null;
-
-            if (debugMode)
-            {
-                var filename = "ModTools_Crash_Report.log";
-                File.WriteAllText(filename, lastCrashReport);
-                Log.Warning(String.Format("ModTools - crash log dumped to \"{0}\"", filename));
-            }
         }
 
         public void Refresh()
@@ -1614,12 +1598,6 @@ namespace ModTools
             if (enterPressed)
             {
                 GUI.FocusControl(null);
-            }
-
-            if (debugMode)
-            {
-                lastCrashReport = debugOutput;
-                debugOutput = "";
             }
 
             preventCircularReferences.Clear();
