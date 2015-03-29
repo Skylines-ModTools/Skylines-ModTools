@@ -1082,7 +1082,7 @@ namespace ModTools
             GUILayout.EndHorizontal();
         }
 
-        static public void Color32Field(string hash, string name, ref Color32 value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false, ColorPicker.OnColorChanged onColorChanged = null)
+        static public void Color32Field(string hash, string name, ref Color32 value, float ident = 0.0f, WatchButtonCallback watch = null, bool noSpace = false, bool noTypeLabel = false, ColorPicker.OnColor32Changed onColor32Changed = null)
         {
             GUILayout.BeginHorizontal();
 
@@ -1112,12 +1112,12 @@ namespace ModTools
             ByteField(hash+".b", "b", ref value.b, 0.0f, true, true);
             ByteField(hash+".a", "a", ref value.a, 0.0f, true, true);
 
-            if (onColorChanged != null)
+            if (onColor32Changed != null)
             {
                 if (GUILayout.Button("", GUILayout.Width(72)))
                 {
                     var picker = ModTools.Instance.colorPicker;
-                    picker.SetColor(value, onColorChanged);
+                    picker.SetColor(value, onColor32Changed);
 
                     Vector2 mouse = Input.mousePosition;
                     mouse.y = Screen.height - mouse.y;
