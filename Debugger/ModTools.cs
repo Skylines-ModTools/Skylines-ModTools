@@ -181,7 +181,7 @@ namespace ModTools
                 UnityLoggingHook.EnableHook();
             }
 
-            if (config.improvedWorkshopIntegration)
+            if (updateMode == SimulationManager.UpdateMode.Undefined && config.improvedWorkshopIntegration)
             {
                 ImprovedWorkshopIntegration.Bootstrap();
             }
@@ -316,12 +316,12 @@ namespace ModTools
             if (improvedWorkshopIntegration != config.improvedWorkshopIntegration)
             {
                 config.improvedWorkshopIntegration = improvedWorkshopIntegration;
-                if (config.improvedWorkshopIntegration)
+                if (config.improvedWorkshopIntegration && updateMode == SimulationManager.UpdateMode.Undefined)
                 {
                     ImprovedWorkshopIntegration.Bootstrap();
                     ImprovedWorkshopIntegration.RefreshPlugins();
                 }
-                else
+                else if (updateMode == SimulationManager.UpdateMode.Undefined)
                 {
                     ImprovedWorkshopIntegration.Revert();
                 }

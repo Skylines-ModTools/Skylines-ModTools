@@ -40,6 +40,7 @@ namespace ModTools
         private static RedirectCallsState revertState3;
 
         private static bool improvedModsPanelExists = false;
+        private static bool modsPanelBootstrapped = false;
 
         public static void Bootstrap()
         {
@@ -97,6 +98,7 @@ namespace ModTools
 
             if (!improvedModsPanelExists)
             {
+                modsPanelBootstrapped = true;
                 revertState2 = RedirectionHelper.RedirectCalls
                 (
                     typeof(PackageEntry).GetMethod("FormatPackageName",
@@ -112,6 +114,10 @@ namespace ModTools
                     typeof(ImprovedWorkshopIntegration).GetMethod("RefreshPlugins",
                         BindingFlags.Static | BindingFlags.Public)
                 );
+            }
+            else
+            {
+                modsPanelBootstrapped = false;
             }
             
             bootstrapped = true;
@@ -140,16 +146,10 @@ namespace ModTools
                 return;
             }
 
-            var modsList = GameObject.Find("ModsList");
-            if (modsList == null)
-            {
-                return;
-            }
-
             RedirectionHelper.RevertRedirect(typeof(WorkshopModUploadPanel).GetMethod("SetAssetInternal",
                     BindingFlags.Instance | BindingFlags.NonPublic), revertState);
 
-            if (!improvedModsPanelExists)
+            if (modsPanelBootstrapped)
             {
                 RedirectionHelper.RevertRedirect(typeof(PackageEntry).GetMethod("FormatPackageName",
                   BindingFlags.Static | BindingFlags.NonPublic), revertState2);
@@ -224,28 +224,22 @@ namespace ModTools
                     ((byte)(panel.color.r * 0.60f), (byte)(panel.color.g * 0.60f), (byte)(panel.color.b * 0.60f), panel.color.a);
 
                 var name = (UILabel)panel.Find("Name");
-               // name.isVisible = false;
                 name.textScale = 0.85f;
                 name.tooltip = pluginDescriptions[current];
                 name.textColor = count % 2 == 0 ? blackColor : whiteColor;
                 name.textScaleMode = UITextScaleMode.ControlSize;
                 name.position = new Vector3(30.0f, 2.0f, name.position.z);
-               // name.isVisible = true;
 
                 var view = (UIButton) panel.Find("View");
                 view.size = new Vector2(84.0f, 20.0f);
                 view.textScale = 0.7f;
-               // view.isVisible = false;
                 view.text = "WORKSHOP";
                 view.position = new Vector3(1011.0f, -2.0f, view.position.z);
-               // view.isVisible = true;
 
                 var share = (UIButton)panel.Find("Share");
                 share.size = new Vector2(84.0f, 20.0f);
                 share.textScale = 0.7f;
-               // share.isVisible = false;
                 share.position = new Vector3(1103.0f, -2.0f, share.position.z);
-               // share.isVisible = true;
 
                 var delete = (UIButton) panel.Find("Delete");
                 delete.size = new Vector2(24.0f, 24.0f);
@@ -256,7 +250,6 @@ namespace ModTools
 
                 var onOff = (UILabel) active.Find("OnOff");
                 onOff.enabled = false;
-
                 count++;
             }
         }
@@ -319,7 +312,7 @@ namespace ModTools
             if (!File.Exists(previewPath))
             {
                 var defaultTexture = m_DefaultModPreviewTexture.GetValue(workshopModUploadPanel);
-                File.WriteAllBytes(previewPath, (UnityEngine.Object.Instantiate<Texture>((Texture)defaultTexture) as Texture2D).EncodeToPNG());
+                File.WriteAllBytes(previewPath, (UnityEngine.Object.Instantiate((Texture)defaultTexture) as Texture2D).EncodeToPNG());
             }
 
             m_PreviewPath.SetValue(workshopModUploadPanel, previewPath);

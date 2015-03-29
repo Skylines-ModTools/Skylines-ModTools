@@ -115,7 +115,7 @@ namespace ModTools
 
         void ExceptionHandler(Exception ex)
         {
-            Log.Error("Exception in Scene Explorer - " + ex.Message);
+            Debug.LogException(ex);
 
             expandedGameObjects = new Dictionary<ReferenceChain, bool>();
             expandedComponents = new Dictionary<ReferenceChain, bool>();
@@ -1551,20 +1551,26 @@ namespace ModTools
 
             if (sortAlphabetically)
             {
-                Array.Sort(gameObjects, (o, o1) =>
+                try
                 {
-                    if (o.name == null)
+                    Array.Sort(gameObjects, (o, o1) =>
                     {
-                        return 1;
-                    }
+                        if (o.name == null)
+                        {
+                            return 1;
+                        }
 
-                    if (o1.name == null)
-                    {
-                        return -1;
-                    }
+                        if (o1.name == null)
+                        {
+                            return -1;
+                        }
 
-                    return o.name.CompareTo(o1.name);
-                });
+                        return o.name.CompareTo(o1.name);
+                    });
+                }
+                catch (Exception)
+                {
+                }
             }
 
             foreach (var obj in gameObjects)
