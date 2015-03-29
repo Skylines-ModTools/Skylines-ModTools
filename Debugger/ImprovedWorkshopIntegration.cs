@@ -165,11 +165,11 @@ namespace ModTools
         {
             if (!isWorkshopItem)
             {
-                return String.Format("{0} (by {1})", entryName, authorName);
+                return String.Format(entryName, authorName);
             }
             else
             {
-                return entryName;
+                return String.Format(entryName, "Unknown");
             }
         }
 
@@ -212,7 +212,10 @@ namespace ModTools
             {
                 PackageEntry packageEntry = UITemplateManager.Get<PackageEntry>("ModEntryTemplate");
                 uIComponent.AttachUIComponent(packageEntry.gameObject);
-                packageEntry.entryName = pluginNames[current];
+
+                var lastUpdatedDelta = GetPluginLastModifiedDelta(current);
+
+                packageEntry.entryName = String.Format("{0} (by {{0}}) - Last update: {1}", pluginNames[current], lastUpdatedDelta);
                 packageEntry.entryActive = current.isEnabled;
                 packageEntry.pluginInfo = current;
                 packageEntry.publishedFileId = current.publishedFileID;
@@ -252,6 +255,25 @@ namespace ModTools
                 onOff.enabled = false;
                 count++;
             }
+        }
+
+        private static string GetPluginLastModifiedDelta(PluginManager.PluginInfo plugin)
+        {
+            DateTime lastModified = DateTime.MinValue;
+            
+            foreach (var file in Directory.GetFiles(plugin.modPath))
+            {
+                if (Path.GetExtension(file) == ".dll")
+                {
+                    var tmp = File.GetLastWriteTime(file);
+                    if (tmp > lastModified)
+                    {
+                        lastModified = tmp;
+                    }
+                }
+            }
+
+            return DateTimeUtil.TimeSpanToString(DateTime.Now - lastModified);
         }
 
         private void SetAssetInternal(string folder)

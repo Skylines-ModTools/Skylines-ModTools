@@ -57,6 +57,7 @@
     <Compile Include="ColorUtil.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Console.cs" />
+    <Compile Include="DateTimeUtil.cs" />
     <Compile Include="Detours.cs" />
     <Compile Include="ExtensionMethods\MeshExtension.cs" />
     <Compile Include="ExtensionMethods\StringExtensions.cs" />

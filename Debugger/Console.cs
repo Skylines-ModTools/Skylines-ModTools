@@ -87,10 +87,6 @@ namespace ModTools
 
         void Update()
         {
-            if (Input.GetKey(KeyCode.Tab))
-            {
-                UnityEngine.Debug.LogWarning("Tab");
-            }
         }
 
         public void AddMessage(string message, LogType type = LogType.Log, bool global = false, bool _internal = false)
