@@ -74,24 +74,38 @@ namespace ModTools
             onException = ExceptionHandler;
             onUnityGUI = () => GUIComboBox.DrawGUI();
 
+            headerArea = new GUIArea(this);
+            sceneTreeArea = new GUIArea(this);
+            componentArea = new GUIArea(this);
+
             RecalculateAreas();
         }
 
         public void RecalculateAreas()
         {
-            headerArea = new GUIArea(this);
             headerArea.absolutePosition.y = windowTopMargin;
             headerArea.relativeSize.x = 1.0f;
 
-            sceneTreeArea = new GUIArea(this);
-            sceneTreeArea.relativeSize.y = 1.0f;
-            sceneTreeArea.absoluteSize.x = sceneTreeWidth;
+            if (rect.width < (float) Screen.width/4.0f && currentRefChain != null)
+            {
+                sceneTreeArea.relativeSize = Vector2.zero;
+                sceneTreeArea.relativeSize = Vector2.zero;
 
-            componentArea = new GUIArea(this);
-            componentArea.absolutePosition.x = sceneTreeWidth;
-            componentArea.relativeSize.x = 1.0f;
-            componentArea.relativeSize.y = 1.0f;
-            componentArea.absoluteSize.x = -sceneTreeWidth;
+                componentArea.absolutePosition.x = 0.0f;
+                componentArea.relativeSize.x = 1.0f;
+                componentArea.relativeSize.y = 1.0f;
+                componentArea.absoluteSize.x = 0.0f;
+            }
+            else
+            {
+                sceneTreeArea.relativeSize.y = 1.0f;
+                sceneTreeArea.absoluteSize.x = sceneTreeWidth;
+
+                componentArea.absolutePosition.x = sceneTreeWidth;
+                componentArea.relativeSize.x = 1.0f;
+                componentArea.relativeSize.y = 1.0f;
+                componentArea.absoluteSize.x = -sceneTreeWidth;
+            }
 
             float headerHeight = (headerExpanded ? headerHeightExpanded : headerHeightCompact);
             headerHeight *= config.fontSize;
@@ -1593,6 +1607,8 @@ namespace ModTools
 
         public void DrawWindow()
         {
+            RecalculateAreas();
+
             bool enterPressed = Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter);
 
             if (enterPressed)
