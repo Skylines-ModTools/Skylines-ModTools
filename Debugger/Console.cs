@@ -29,6 +29,7 @@ namespace ModTools
         private GUIArea headerArea;
         private GUIArea consoleArea;
         private GUIArea commandLineArea;
+        private bool focusCommandLineArea = false;
 
         private float headerHeightCompact = 0.5f;
         private float headerHeightExpanded = 8.0f;
@@ -85,7 +86,11 @@ namespace ModTools
         void KeyboardCallback()
         {
             Event e = Event.current;
-            if (e.type == EventType.KeyUp && e.keyCode == KeyCode.Return)
+            if (e.type != EventType.KeyUp)
+            {
+                return;
+            }
+            if (e.keyCode == KeyCode.Return)
             {
                 if (e.shift)
                 {
@@ -94,7 +99,7 @@ namespace ModTools
                 e.Use();
                 RunCommandLine();
             }
-            if (e.type == EventType.KeyUp && e.keyCode == KeyCode.UpArrow && e.shift)
+            if (e.keyCode == KeyCode.UpArrow && !e.shift)
             {
                 if (currentCommandHistoryIndex == 0)
                 {
@@ -103,7 +108,7 @@ namespace ModTools
                 }
                 currentCommandHistoryIndex--;
             }
-            if (e.type == EventType.KeyUp && e.keyCode == KeyCode.DownArrow && e.shift)
+            if (e.keyCode == KeyCode.DownArrow && !e.shift)
             {
                 if (currentCommandHistoryIndex == commandHistory.Count - 1)
                 {
@@ -519,7 +524,12 @@ namespace ModTools
 
 
             commandLineArea.End();
-            GUI.FocusControl("ModToolsConsoleCommandLine");
+
+            if (focusCommandLineArea)
+            {
+                GUI.FocusControl("ModToolsConsoleCommandLine");
+                focusCommandLineArea = false;
+            }
         }
 
         void RunCommandLine()
@@ -558,6 +568,7 @@ namespace ModTools
                 }
             }
             commandLine = "";
+            focusCommandLineArea = true;
         }
 
         void DrawWindow()
