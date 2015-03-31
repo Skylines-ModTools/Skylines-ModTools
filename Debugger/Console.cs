@@ -99,7 +99,7 @@ namespace ModTools
                 e.Use();
                 RunCommandLine();
             }
-            if (e.keyCode == KeyCode.UpArrow && !e.shift)
+            if (e.keyCode == KeyCode.UpArrow && !e.control)
             {
                 if (currentCommandHistoryIndex == 0)
                 {
@@ -108,7 +108,7 @@ namespace ModTools
                 }
                 currentCommandHistoryIndex--;
             }
-            if (e.keyCode == KeyCode.DownArrow && !e.shift)
+            if (e.keyCode == KeyCode.DownArrow && !e.control)
             {
                 if (currentCommandHistoryIndex == commandHistory.Count - 1)
                 {
