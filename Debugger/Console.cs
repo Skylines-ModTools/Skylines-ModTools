@@ -431,19 +431,25 @@ namespace ModTools
         {
             commandLineArea.Begin();
 
-            commandLineScrollPosition = GUILayout.BeginScrollView(commandLineScrollPosition, false, false);
 
-            GUILayout.BeginHorizontal();
+            GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
+
+            GUILayout.BeginVertical(GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(false));
+            commandLineScrollPosition = GUILayout.BeginScrollView(commandLineScrollPosition, false, false, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(false));
 
             GUI.SetNextControlName("ModToolsConsoleCommandLine");
 
-            commandHistory[currentCommandHistoryIndex] = GUILayout.TextArea(commandHistory[currentCommandHistoryIndex], GUILayout.ExpandHeight(true));
+            commandHistory[currentCommandHistoryIndex] = GUILayout.TextArea(commandHistory[currentCommandHistoryIndex], GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
 
             if (commandHistory[currentCommandHistoryIndex].Trim().Length == 0)
             {
                 GUI.enabled = false;
             }
+            GUILayout.EndScrollView();
 
+            GUILayout.EndVertical();
+            GUILayout.BeginVertical(GUILayout.ExpandWidth(false));
+            GUILayout.BeginHorizontal();
             if (GUILayout.Button("Run", GUILayout.ExpandWidth(false)))
             {
                 RunCommandLine();
@@ -474,10 +480,10 @@ namespace ModTools
             }
 
             GUI.enabled = true;
-
+            GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
             GUILayout.EndHorizontal();
 
-            GUILayout.EndScrollView();
 
             commandLineArea.End();
         }
