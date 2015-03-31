@@ -63,14 +63,18 @@ namespace ModTools
                 thisGameObject.transform.parent = ModTools.Instance.gameObject.transform;
             }
 
-            InitializeModSortDropDown();
+            improvedModsPanelExists = CheckForImprovedModsPanel();
+
+            if (!improvedModsPanelExists)
+            {
+                InitializeModSortDropDown();
+            }
 
             if (bootstrapped)
             {
                 return;
             }
 
-            improvedModsPanelExists = CheckForImprovedModsPanel();
 
             var go = GameObject.Find("(Library) WorkshopModUploadPanel");
             if (go == null)
@@ -433,10 +437,11 @@ namespace ModTools
                 lastUpdated.size = new Vector2(400.0f, 18.0f);
                 lastUpdated.textAlignment = UIHorizontalAlignment.Right;
                 lastUpdated.textColor = blackColor;
+                lastUpdated.textScale = 0.8f;
                 lastUpdated.text = String.Format("Last update: {0}",
                     DateTimeUtil.TimeSpanToString(pluginLastUpdatedTimeDelta[current]));
                 lastUpdated.AlignTo(panel, UIAlignAnchor.TopRight);
-                lastUpdated.relativePosition = new Vector3(600.0f, 4.0f, 0.0f);
+                lastUpdated.relativePosition = new Vector3(600.0f, 6.0f, 0.0f);
 
                 var delete = (UIButton)panel.Find("Delete");
                 delete.size = new Vector2(24.0f, 24.0f);

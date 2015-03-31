@@ -17,6 +17,11 @@ namespace ModTools
 
         public static bool IsModToolsActive()
         {
+
+#if MODTOOLS_DEBUG
+            return true;
+#else
+
             var pluginManager = PluginManager.instance;
             var plugins = Util.GetPrivate<Dictionary<string, PluginManager.PluginInfo>>(pluginManager, "m_Plugins");
 
@@ -31,6 +36,7 @@ namespace ModTools
             }
 
             return false;
+#endif
         }
 
         public static void Bootstrap()
