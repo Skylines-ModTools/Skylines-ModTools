@@ -75,7 +75,6 @@ namespace ModTools
                 return;
             }
 
-
             var go = GameObject.Find("(Library) WorkshopModUploadPanel");
             if (go == null)
             {
@@ -305,11 +304,16 @@ namespace ModTools
                     BindingFlags.Instance | BindingFlags.NonPublic), revertState3);
             }
 
-            var customContentPanel = GameObject.Find("(Library) CustomContentPanel").GetComponent<CustomContentPanel>();
-
-            typeof (CustomContentPanel).GetMethod("RefreshPlugins",
-                BindingFlags.Instance | BindingFlags.NonPublic)
-                .Invoke(customContentPanel, null);
+            if (GameObject.Find("(Library) CustomContentPanel") != null)
+            {
+                var customContentPanel = GameObject.Find("(Library) CustomContentPanel").GetComponent<CustomContentPanel>();
+                if (customContentPanel != null)
+                {
+                    typeof(CustomContentPanel).GetMethod("RefreshPlugins",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                        .Invoke(customContentPanel, null);
+                }
+            }
 
             bootstrapped = false;
         }
