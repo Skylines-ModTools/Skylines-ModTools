@@ -40,14 +40,25 @@ namespace ModTools
 
         private bool commandLineAreaExpanded 
         {
-            get 
+            get
             {
-                if (commandHistory[currentCommandHistoryIndex].Contains('\n'))
+                var command = commandHistory[currentCommandHistoryIndex];
+                if (command.Length == 0)
+                {
+                    return false;
+                }
+
+                if (command.Last() == '\n')
+                {
+                    command = command.Substring(0, command.Length - 1);
+                }
+
+                if (command.Contains('\n'))
                 {
                     return true;
                 }
 
-                return commandHistory[currentCommandHistoryIndex].Length >= 64;
+                return command.Length >= 64;
             }
         }
 
@@ -468,7 +479,6 @@ namespace ModTools
         void DrawCommandLineArea()
         {
             commandLineArea.Begin();
-
 
             GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
 
