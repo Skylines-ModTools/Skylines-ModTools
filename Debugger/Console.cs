@@ -78,8 +78,41 @@ namespace ModTools
             vanillaPanel = UIView.library.Get<DebugOutputPanel>("DebugOutputPanel");
             oldVanillaPanelParent = vanillaPanel.transform.parent;
             vanillaPanel.transform.parent = transform;
+
+            onUnityGUI = () => KeyboardCallback();
         }
 
+        void KeyboardCallback()
+        {
+            Event e = Event.current;
+            if (e.type == EventType.KeyUp && e.keyCode == KeyCode.Return)
+            {
+                if (e.shift)
+                {
+                    return;
+                }
+                e.Use();
+                RunCommandLine();
+            }
+            if (e.type == EventType.KeyUp && e.keyCode == KeyCode.UpArrow && e.shift)
+            {
+                if (currentCommandHistoryIndex == 0)
+                {
+                    // avoid going into the negative with the index
+                    return;
+                }
+                currentCommandHistoryIndex--;
+            }
+            if (e.type == EventType.KeyUp && e.keyCode == KeyCode.DownArrow && e.shift)
+            {
+                if (currentCommandHistoryIndex == commandHistory.Count - 1)
+                {
+                    // avoid overshooting the history
+                    return;
+                }
+                currentCommandHistoryIndex++;
+            }
+        }
         void HandleDestroy()
         {
             vanillaPanel.transform.parent = oldVanillaPanelParent;
@@ -486,11 +519,13 @@ namespace ModTools
 
 
             commandLineArea.End();
+            GUI.FocusControl("ModToolsConsoleCommandLine");
         }
 
         void RunCommandLine()
         {
             var commandLine = commandHistory[currentCommandHistoryIndex];
+            commandHistory[currentCommandHistoryIndex] = commandHistory[currentCommandHistoryIndex].Trim();
 
             if (commandHistory.Last() != "")
             {
