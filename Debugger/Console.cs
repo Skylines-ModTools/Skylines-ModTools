@@ -86,7 +86,7 @@ namespace ModTools
         void KeyboardCallback()
         {
             Event e = Event.current;
-            if (e.type != EventType.KeyUp)
+            if (e.type != EventType.KeyUp || GUI.GetNameOfFocusedControl() != "ModToolsConsoleCommandLine")
             {
                 return;
             }
@@ -98,24 +98,10 @@ namespace ModTools
                 }
                 e.Use();
                 RunCommandLine();
-            }
-            if (e.keyCode == KeyCode.UpArrow && !e.control)
-            {
-                if (currentCommandHistoryIndex == 0)
+                if (e.control)
                 {
-                    // avoid going into the negative with the index
-                    return;
+                    currentCommandHistoryIndex--;
                 }
-                currentCommandHistoryIndex--;
-            }
-            if (e.keyCode == KeyCode.DownArrow && !e.control)
-            {
-                if (currentCommandHistoryIndex == commandHistory.Count - 1)
-                {
-                    // avoid overshooting the history
-                    return;
-                }
-                currentCommandHistoryIndex++;
             }
         }
         void HandleDestroy()
