@@ -18,7 +18,6 @@ namespace ModTools
 
             RenderAxes(width, height, pixels);
 
-
             texture.SetPixels32(pixels);
             texture.Apply();
             return texture;

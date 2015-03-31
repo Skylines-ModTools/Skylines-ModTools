@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -56,6 +57,8 @@
     <Compile Include="ColorUtil.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Console.cs" />
+    <Compile Include="DateTimeUtil.cs" />
+    <Compile Include="Detours.cs" />
     <Compile Include="ExtensionMethods\MeshExtension.cs" />
     <Compile Include="ExtensionMethods\StringExtensions.cs" />
     <Compile Include="ExtensionMethods\UnityExtension.cs" />
@@ -69,6 +72,7 @@
     <Compile Include="GUIWindow.cs" />
     <Compile Include="HashCodeUtil.cs" />
     <Compile Include="IModEntryPoint.cs" />
+    <Compile Include="ImprovedWorkshopIntegration.cs" />
     <Compile Include="MeshOBJTools\Int32Converter.cs" />
     <Compile Include="MeshOBJTools\OBJData.cs" />
     <Compile Include="MeshOBJTools\OBJFace.cs" />
@@ -87,10 +91,13 @@
     <Compile Include="ScriptCompiler.cs" />
     <Compile Include="ScriptEditor.cs" />
     <Compile Include="Shaders.cs" />
+    <Compile Include="StackTraceViewer.cs" />
     <Compile Include="TextureViewer.cs" />
     <Compile Include="SceneExplorer.cs" />
     <Compile Include="TextToTexture.cs" />
     <Compile Include="TypeUtil.cs" />
+    <Compile Include="UnityLoggingHook.cs" />
+    <Compile Include="UserNotifications.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="Watches.cs" />
   </ItemGroup>

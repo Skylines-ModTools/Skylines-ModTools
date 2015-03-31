@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using ColossalFramework.UI;
 using UnityEngine;
 
 namespace ModTools
@@ -6,6 +7,13 @@ namespace ModTools
 
     public class ModTools : GUIWindow
     {
+        public SimulationManager.UpdateMode updateMode = SimulationManager.UpdateMode.Undefined;
+
+#if MODTOOLS_DEBUG
+        public static readonly bool DEBUG_MODTOOLS = true;
+#else
+        public static readonly bool DEBUG_MODTOOLS = false;
+#endif
 
         private Vector2 mainScroll = Vector2.zero;
 
@@ -31,6 +39,8 @@ namespace ModTools
 
         public void OnDestroy()
         {
+            UnityLoggingHook.DisableHook();
+
             Destroy(console);
             Destroy(sceneExplorer);
             Destroy(sceneExplorerColorConfig);
@@ -38,6 +48,10 @@ namespace ModTools
             Destroy(watches);
             Destroy(panelExtender);
             Destroy(colorPicker);
+
+            ImprovedWorkshopIntegration.Revert();
+
+            instance = null;
         }
 
         public static ModTools Instance
@@ -62,8 +76,11 @@ namespace ModTools
             extendGamePanels = config.extendGamePanels;
             useModToolsConsole = config.useModToolsConsole;
 
-            rect = config.mainWindowRect;
-            visible = config.mainWindowVisible;
+            if (console != null)
+            {
+                console.rect = config.consoleRect;
+                console.visible = config.consoleVisible;
+            }
 
             watches.rect = config.watchesRect;
             watches.visible = config.watchesVisible;
@@ -85,8 +102,11 @@ namespace ModTools
                 config.extendGamePanels = extendGamePanels;
                 config.useModToolsConsole = useModToolsConsole;
 
-                config.mainWindowRect = rect;
-                config.mainWindowVisible = visible;
+                if (console != null)
+                {
+                    config.consoleRect = console.rect;
+                    config.consoleVisible = console.visible;
+                }
 
                 config.watchesRect = watches.rect;
                 config.watchesVisible = watches.visible;
@@ -101,49 +121,56 @@ namespace ModTools
         public ModTools() : base("Mod Tools", new Rect(128, 128, 356, 260), skin)
         {
             onDraw = DoMainWindow;
+            resizable = false;
         }
 
-        void Awake()
+        private static bool loggingInitialized = false;
+
+        public void Initialize(SimulationManager.UpdateMode _updateMode)
         {
-            Application.logMessageReceived += (condition, trace, type) =>
+            updateMode = _updateMode;
+
+            if (!loggingInitialized)
             {
-                if (!logExceptionsToConsole)
+                Application.logMessageReceived += (condition, trace, type) =>
                 {
-                    return;
-                }
+                    if (!logExceptionsToConsole)
+                    {
+                        return;
+                    }
 
-                if (instance.console != null)
-                {
-                    instance.console.AddMessage(condition, type);
-                    return;
-                }
+                    if (Instance.console != null)
+                    {
+                        Instance.console.AddMessage(String.Format("{0} ({1})", condition, trace), type, true);
+                        return;
+                    }
 
-                if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert)
-                {
-                    Log.Error(condition);
-                }
-                else if (type == LogType.Warning)
-                {
-                    Log.Warning(condition);
-                }
-                else
-                {
-                    Log.Message(condition);
-                }
-            };
+                    if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert)
+                    {
+                        Log.Error(condition);
+                    }
+                    else if (type == LogType.Warning)
+                    {
+                        Log.Warning(condition);
+                    }
+                    else
+                    {
+                        Log.Message(condition);
+                    }
+                };
+
+                loggingInitialized = true;
+            }
 
             sceneExplorer = gameObject.AddComponent<SceneExplorer>();
-
-            //scriptEditor = gameObject.AddComponent<ScriptEditor>();
-
             watches = gameObject.AddComponent<Watches>();
             colorPicker = gameObject.AddComponent<ColorPicker>();
 
-            LoadConfig();
-
             sceneExplorerColorConfig = gameObject.AddComponent<SceneExplorerColorConfig>();
 
-            if (extendGamePanels)
+            LoadConfig();
+
+            if (extendGamePanels && (updateMode == SimulationManager.UpdateMode.NewGame || updateMode == SimulationManager.UpdateMode.LoadGame))
             {
                 panelExtender = gameObject.AddComponent<GamePanelExtender>();
             }
@@ -152,10 +179,28 @@ namespace ModTools
             {
                 console = gameObject.AddComponent<Console>();
             }
+
+            if (config.hookUnityLogging)
+            {
+                UnityLoggingHook.EnableHook();
+            }
+
+            if (updateMode == SimulationManager.UpdateMode.Undefined && config.improvedWorkshopIntegration)
+            {
+                ImprovedWorkshopIntegration.Bootstrap();
+            }
         }
+
+        private bool modListUpdated = false;
 
         void Update()
         {
+            if (!modListUpdated && config.improvedWorkshopIntegration)
+            {
+                ImprovedWorkshopIntegration.RefreshPlugins();
+                modListUpdated = true;
+            }
+
             UpdateMouseScrolling();
 
             if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.Q))
@@ -193,7 +238,6 @@ namespace ModTools
             if (newUseConsole != useModToolsConsole)
             {
                 useModToolsConsole = newUseConsole;
-                SaveConfig();
 
                 if (useModToolsConsole)
                 {
@@ -201,10 +245,41 @@ namespace ModTools
                 }
                 else
                 {
+                    config.hookUnityLogging = false;
+                    UnityLoggingHook.DisableHook();
                     Destroy(console);
                     console = null;
                 }
+
+                SaveConfig();
             }
+
+            if (!config.useModToolsConsole)
+            {
+                GUI.enabled = false;
+            }
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Hook Unity's logging");
+            var newHookLogging = GUILayout.Toggle(config.hookUnityLogging, "");
+            GUILayout.EndHorizontal();
+
+            if (newHookLogging != config.hookUnityLogging)
+            {
+                config.hookUnityLogging = newHookLogging;
+                SaveConfig();
+
+                if (config.hookUnityLogging)
+                {
+                    UnityLoggingHook.EnableHook();
+                }
+                else
+                {
+                    UnityLoggingHook.DisableHook();
+                }
+            }
+
+            GUI.enabled = true;
 
             GUILayout.BeginHorizontal();
             GUILayout.Label("Log exceptions to console");
@@ -215,26 +290,63 @@ namespace ModTools
                 SaveConfig();
             }
 
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Game panel extensions");
-            var newExtendGamePanels = GUILayout.Toggle(extendGamePanels, "");
-            GUILayout.EndHorizontal();
-
-            if (newExtendGamePanels != extendGamePanels)
+            if ((updateMode == SimulationManager.UpdateMode.NewGame || updateMode == SimulationManager.UpdateMode.LoadGame))
             {
-                extendGamePanels = newExtendGamePanels;
-                SaveConfig();
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Game panel extensions");
+                var newExtendGamePanels = GUILayout.Toggle(extendGamePanels, "");
+                GUILayout.EndHorizontal();
 
-                if (extendGamePanels)
+                if (newExtendGamePanels != extendGamePanels)
                 {
-                    gameObject.AddComponent<GamePanelExtender>();
-                }
-                else
-                {
-                    Destroy(gameObject.GetComponent<GamePanelExtender>());
+                    extendGamePanels = newExtendGamePanels;
+                    SaveConfig();
+
+                    if (extendGamePanels)
+                    {
+                        gameObject.AddComponent<GamePanelExtender>();
+                    }
+                    else
+                    {
+                        Destroy(gameObject.GetComponent<GamePanelExtender>());
+                    }
                 }
             }
 
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Improved Workshop integration");
+            var improvedWorkshopIntegration = GUILayout.Toggle(config.improvedWorkshopIntegration, "");
+            GUILayout.EndHorizontal();
+            if (improvedWorkshopIntegration != config.improvedWorkshopIntegration)
+            {
+                config.improvedWorkshopIntegration = improvedWorkshopIntegration;
+                if (config.improvedWorkshopIntegration && updateMode == SimulationManager.UpdateMode.Undefined)
+                {
+                    ImprovedWorkshopIntegration.Bootstrap();
+                    ImprovedWorkshopIntegration.RefreshPlugins();
+                }
+                else if (updateMode == SimulationManager.UpdateMode.Undefined)
+                {
+                    ImprovedWorkshopIntegration.Revert();
+                }
+
+                SaveConfig();
+            }
+
+            if (GUILayout.Button("Debug console (F7)"))
+            {
+                if (console != null)
+                {
+                    console.visible = true;
+                }
+                else
+                {
+                    var debugOutputPanel = GameObject.Find("(Library) DebugOutputPanel").GetComponent<DebugOutputPanel>();
+                    debugOutputPanel.enabled = true;
+                    debugOutputPanel.GetComponent<UIPanel>().isVisible = true;
+                }
+            }
+        
             if (GUILayout.Button("Watches (Ctrl+W)"))
             {
                 watches.visible = !watches.visible;
@@ -247,6 +359,11 @@ namespace ModTools
                 {
                     sceneExplorer.Refresh();
                 }
+            }
+
+            if (GUILayout.Button("Throw exception!"))
+            {
+                throw new Exception("Hello world!");
             }
         }
 

@@ -41,7 +41,7 @@ namespace ModTools
 
             PluginManager.eventLogMessage += (type, message) =>
             {
-                Log.Error(String.Format("PluginManager error ({0}) - {1}", type, message));
+         //       Log.Error(String.Format("PluginManager error ({0}) - {1}", type, message));
             };
         }
 

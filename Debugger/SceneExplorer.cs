@@ -12,18 +12,18 @@ namespace ModTools
     public class SceneExplorer : GUIWindow
     {
         private const float treeIdentSpacing = 16.0f;
-        public static int maxHierarchyDepth = 20;
+        public static int maxHierarchyDepth = 32;
 
-        private readonly Dictionary<ReferenceChain, bool> expandedGameObjects = new Dictionary<ReferenceChain, bool>();
-        private readonly Dictionary<ReferenceChain, bool> expandedComponents = new Dictionary<ReferenceChain, bool>();
-        private readonly Dictionary<ReferenceChain, bool> expandedObjects = new Dictionary<ReferenceChain, bool>();
+        private Dictionary<ReferenceChain, bool> expandedGameObjects = new Dictionary<ReferenceChain, bool>();
+        private Dictionary<ReferenceChain, bool> expandedComponents = new Dictionary<ReferenceChain, bool>();
+        private Dictionary<ReferenceChain, bool> expandedObjects = new Dictionary<ReferenceChain, bool>();
 
-        private readonly Dictionary<ReferenceChain, bool> evaluatedProperties = new Dictionary<ReferenceChain, bool>();
+        private Dictionary<ReferenceChain, bool> evaluatedProperties = new Dictionary<ReferenceChain, bool>();
 
-        private readonly Dictionary<ReferenceChain, int> selectedArrayStartIndices = new Dictionary<ReferenceChain, int>();
-        private readonly Dictionary<ReferenceChain, int> selectedArrayEndIndices = new Dictionary<ReferenceChain, int>();
+        private Dictionary<ReferenceChain, int> selectedArrayStartIndices = new Dictionary<ReferenceChain, int>();
+        private Dictionary<ReferenceChain, int> selectedArrayEndIndices = new Dictionary<ReferenceChain, int>();
 
-        private readonly Dictionary<int, bool> preventCircularReferences = new Dictionary<int, bool>();
+        private Dictionary<int, bool> preventCircularReferences = new Dictionary<int, bool>();
 
         private Dictionary<GameObject, bool> sceneRoots = new Dictionary<GameObject, bool>();
 
@@ -39,7 +39,6 @@ namespace ModTools
         private string findObjectTypeFilter = "";
         private string searchDisplayString = "";
 
-        public static bool debugMode = false;
         public static string debugOutput = "";
         public static string lastCrashReport = "";
 
@@ -57,23 +56,15 @@ namespace ModTools
         private float windowTopMargin = 16.0f;
         private float windowBottomMargin = 8.0f;
 
-        private float headerHeightCompact = 1.5f;
+        private float headerHeightCompact = 1.65f;
         private float headerHeightExpanded = 15.0f;
         private bool headerExpanded = false;
 
-        private float sceneTreeWidth = 300.0f;
+        private float sceneTreeWidth = 320.0f;
 
         private Configuration config
         {
             get { return ModTools.Instance.config; }
-        }
-
-        private void AddDebugLine(string line, params System.Object[] arg)
-        {
-            if (debugMode)
-            {
-                debugOutput += String.Format(line, arg) + '\n';
-            }
         }
 
         public SceneExplorer()
@@ -83,24 +74,38 @@ namespace ModTools
             onException = ExceptionHandler;
             onUnityGUI = () => GUIComboBox.DrawGUI();
 
+            headerArea = new GUIArea(this);
+            sceneTreeArea = new GUIArea(this);
+            componentArea = new GUIArea(this);
+
             RecalculateAreas();
         }
 
         public void RecalculateAreas()
         {
-            headerArea = new GUIArea(this);
             headerArea.absolutePosition.y = windowTopMargin;
             headerArea.relativeSize.x = 1.0f;
 
-            sceneTreeArea = new GUIArea(this);
-            sceneTreeArea.relativeSize.y = 1.0f;
-            sceneTreeArea.absoluteSize.x = sceneTreeWidth;
+            if (rect.width < (float) Screen.width/4.0f && currentRefChain != null)
+            {
+                sceneTreeArea.relativeSize = Vector2.zero;
+                sceneTreeArea.relativeSize = Vector2.zero;
 
-            componentArea = new GUIArea(this);
-            componentArea.absolutePosition.x = sceneTreeWidth;
-            componentArea.relativeSize.x = 1.0f;
-            componentArea.relativeSize.y = 1.0f;
-            componentArea.absoluteSize.x = -sceneTreeWidth;
+                componentArea.absolutePosition.x = 0.0f;
+                componentArea.relativeSize.x = 1.0f;
+                componentArea.relativeSize.y = 1.0f;
+                componentArea.absoluteSize.x = 0.0f;
+            }
+            else
+            {
+                sceneTreeArea.relativeSize.y = 1.0f;
+                sceneTreeArea.absoluteSize.x = sceneTreeWidth;
+
+                componentArea.absolutePosition.x = sceneTreeWidth;
+                componentArea.relativeSize.x = 1.0f;
+                componentArea.relativeSize.y = 1.0f;
+                componentArea.absoluteSize.x = -sceneTreeWidth;
+            }
 
             float headerHeight = (headerExpanded ? headerHeightExpanded : headerHeightCompact);
             headerHeight *= config.fontSize;
@@ -112,21 +117,17 @@ namespace ModTools
             componentArea.absolutePosition.y = headerHeight - windowTopMargin;
             componentArea.absoluteSize.y = -(headerHeight - windowTopMargin) - windowBottomMargin;
         }
+
         void ExceptionHandler(Exception ex)
         {
-            Log.Error("Exception in Scene Explorer - " + ex.Message);
+            Debug.LogException(ex);
 
-            if (debugMode)
-            {
-                var filename = "ModTools_Crash_Report.log";
-                File.WriteAllText(filename, lastCrashReport);
-                Log.Warning(String.Format("ModTools - crash log dumped to \"{0}\"", filename));
-            }
-
-            expandedGameObjects.Clear();
-            expandedComponents.Clear();
-            expandedObjects.Clear();
-            evaluatedProperties.Clear();
+            expandedGameObjects = new Dictionary<ReferenceChain, bool>();
+            expandedComponents = new Dictionary<ReferenceChain, bool>();
+            expandedObjects = new Dictionary<ReferenceChain, bool>();
+            evaluatedProperties = new Dictionary<ReferenceChain, bool>();
+            preventCircularReferences = new Dictionary<int, bool>();
+            sceneRoots = GameObjectUtil.FindSceneRoots();
             currentRefChain = null;
         }
 
@@ -199,241 +200,6 @@ namespace ModTools
             currentRefChain = refChain.Copy();
             currentRefChain.identOffset = -currentRefChain.Length;
         }
-
-        private object EditorValueField(ReferenceChain refChain, string hash, Type type, object value)
-        {
-            if (type == typeof(System.Single))
-            {
-                var f = (float)value;
-                GUIControls.FloatField(hash, "", ref f, 0.0f, true, true);
-                if (f != (float)value)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-            
-            if (type == typeof(System.Double))
-            {
-                var f = (double)value;
-                GUIControls.DoubleField(hash, "", ref f, 0.0f, true, true);
-                if (f != (double)value)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-
-            if (type == typeof(System.Byte))
-            {
-                var f = (byte)value;
-                GUIControls.ByteField(hash, "", ref f, 0.0f, true, true);
-                if (f != (byte)value)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-
-            if (type == typeof(System.Int32))
-            {
-                var f = (int)value;
-                GUIControls.IntField(hash, "", ref f, 0.0f, true, true);
-                if (f != (int)value)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-            
-            if (type == typeof(System.UInt32))
-            {
-                var f = (uint)value;
-                GUIControls.UIntField(hash, "", ref f, 0.0f, true, true);
-                if (f != (uint)value)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-            
-            if (type == typeof(System.Int64))
-            {
-                var f = (Int64)value;
-                GUIControls.Int64Field(hash, "", ref f, 0.0f, true, true);
-                if (f != (Int64)value)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-            
-            if (type == typeof(System.UInt64))
-            {
-                var f = (UInt64)value;
-                GUIControls.UInt64Field(hash, "", ref f, 0.0f, true, true);
-                if (f != (UInt64)value)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-            
-            if (type == typeof(System.Int16))
-            {
-                var f = (Int16)value;
-                GUIControls.Int16Field(hash, "", ref f, 0.0f, true, true);
-                if (f != (Int16)value)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-            
-            if (type == typeof(System.UInt16))
-            {
-                var f = (UInt16)value;
-                GUIControls.UInt16Field(hash, "", ref f, 0.0f, true, true);
-                if (f != (UInt16)value)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-            
-            if (type == typeof(System.Boolean))
-            {
-                var f = (bool)value;
-                GUIControls.BoolField("", ref f, 0.0f, true, true);
-                if (f != (bool)value)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-            
-            if (type == typeof(System.String))
-            {
-                var f = (string)value;
-                GUIControls.StringField(hash, "", ref f, 0.0f, true, true);
-                if (f != (string)value)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-            
-            if (type == typeof(System.Char))
-            {
-                var f = (char)value;
-                GUIControls.CharField(hash, "", ref f, 0.0f, true, true);
-                if (f != (char)value)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-            
-            if (type == typeof(UnityEngine.Vector2))
-            {
-                var f = (Vector2)value;
-                GUIControls.Vector2Field(hash, "", ref f, 0.0f, null, true, true);
-                if (f != (Vector2)value)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-            
-            if (type == typeof(UnityEngine.Vector3))
-            {
-                var f = (Vector3)value;
-                GUIControls.Vector3Field(hash, "", ref f, 0.0f, null, true, true);
-                if (f != (Vector3)value)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-            
-            if (type == typeof(UnityEngine.Vector4))
-            {
-                var f = (Vector4)value;
-                GUIControls.Vector4Field(hash, "", ref f, 0.0f, null, true, true);
-                if (f != (Vector4)value)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-            
-            if (type == typeof(UnityEngine.Quaternion))
-            {
-                var f = (Quaternion)value;
-                GUIControls.QuaternionField(hash, "", ref f, 0.0f, null, true, true);
-                if (f != (Quaternion)value)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-            
-            if (type == typeof(UnityEngine.Color))
-            {
-                var f = (Color)value;
-                GUIControls.ColorField(hash, "", ref f, 0.0f, null, true, true, color => { refChain.SetValue(color); });
-                if (f != (Color)value)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-            
-            if (type == typeof(UnityEngine.Color32))
-            {
-                var f = (Color32)value;
-                GUIControls.Color32Field(hash, "", ref f, 0.0f, null, true, true, color => { refChain.SetValue(color); });
-                var v = (Color32)value;
-                if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-
-            if (type.IsEnum)
-            {
-                var f = value;
-                GUIControls.EnumField(hash, "", ref f, 0.0f, true, true);
-                if (f != value)
-                {
-                    return f;
-                }
-
-                return value;
-            }
-
-            return value;
-        }
-
         private void OnSceneTreeMessage(ReferenceChain refChain, string message)
         {
             GUILayout.BeginHorizontal();
@@ -552,7 +318,7 @@ namespace ModTools
             {
                 try
                 {
-                    var newValue = EditorValueField(refChain, hash, field.FieldType, value);
+                    var newValue = GUIControls.EditorValueField(refChain, hash, field.FieldType, value);
                     if (newValue != value)
                     {
                         field.SetValue(obj, newValue);
@@ -742,7 +508,7 @@ namespace ModTools
                 {
                     try
                     {
-                        var newValue = EditorValueField(refChain, hash, property.PropertyType, value);
+                        var newValue = GUIControls.EditorValueField(refChain, hash, property.PropertyType, value);
                         if (newValue != value)
                         {
                             property.SetValue(obj, newValue, null);
@@ -1392,7 +1158,10 @@ namespace ModTools
 
             if (sortAlphabetically)
             {
-                Array.Sort(members, (info, info1) => info.Name.CompareTo(info1.Name));
+                Array.Sort(members, (info, info1) =>
+                {
+                    return info.Name.CompareTo(info1.Name);
+                });
             }
 
             foreach (MemberInfo member in members)
@@ -1487,7 +1256,7 @@ namespace ModTools
 
         private void OnSceneTreeRecursive(ReferenceChain refChain, GameObject obj)
         {
-            if (obj == gameObject)
+            if (obj == gameObject && !ModTools.DEBUG_MODTOOLS)
             {
                 return;
             }
@@ -1500,37 +1269,50 @@ namespace ModTools
                 return;
             }
 
+            if (obj.name == "_ModToolsInternal" && !ModTools.DEBUG_MODTOOLS)
+            {
+                return;
+            }
+
             if (expandedGameObjects.ContainsKey(refChain))
             {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(treeIdentSpacing * refChain.Ident);
+                try
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(treeIdentSpacing * refChain.Ident);
 
-                if (GUILayout.Button("-", GUILayout.ExpandWidth(false)))
+                    if (GUILayout.Button("-", GUILayout.ExpandWidth(false)))
+                    {
+                        expandedGameObjects.Remove(refChain);
+                    }
+
+                    GUI.contentColor = config.gameObjectColor;
+                    GUILayout.Label(obj.name);
+                    GUI.contentColor = Color.white;
+
+                    GUILayout.EndHorizontal();
+
+                    var components = obj.GetComponents(typeof(Component));
+
+                    if (sortAlphabetically)
+                    {
+                        Array.Sort(components, (component, component1) => component.GetType().ToString().CompareTo(component1.GetType().ToString()));
+                    }
+
+                    foreach (var component in components)
+                    {
+                        OnSceneTreeComponent(refChain.Add(component), component);
+                    }
+
+                    for (int i = 0; i < obj.transform.childCount; i++)
+                    {
+                        OnSceneTreeRecursive(refChain.Add(obj.transform.GetChild(i)), obj.transform.GetChild(i).gameObject);
+                    }
+                }
+                catch (Exception)
                 {
                     expandedGameObjects.Remove(refChain);
-                }
-
-                GUI.contentColor = config.gameObjectColor;
-                GUILayout.Label(obj.name);
-                GUI.contentColor = Color.white;
-
-                GUILayout.EndHorizontal();
-
-                var components = obj.GetComponents(typeof(Component));
-
-                if (sortAlphabetically)
-                {
-                    Array.Sort(components, (component, component1) => component.GetType().ToString().CompareTo(component1.GetType().ToString()));
-                }
-
-                foreach (var component in components)
-                {
-                    OnSceneTreeComponent(refChain.Add(component), component);
-                }
-
-                for (int i = 0; i < obj.transform.childCount; i++)
-                {
-                    OnSceneTreeRecursive(refChain.Add(obj.transform.GetChild(i)), obj.transform.GetChild(i).gameObject);
+                    throw;
                 }
             }
             else
@@ -1570,7 +1352,7 @@ namespace ModTools
         {
             GUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("▼"))
+            if (GUILayout.Button("▼", GUILayout.ExpandWidth(false)))
             {
                 headerExpanded = true;
                 RecalculateAreas();
@@ -1596,7 +1378,7 @@ namespace ModTools
             GUILayout.BeginHorizontal();
 
             GUI.contentColor = Color.green;
-            GUILayout.Label("Show:");
+            GUILayout.Label("Show:", GUILayout.ExpandWidth(false));
             GUI.contentColor = Color.white;
 
             GUILayout.Label("Fields");
@@ -1623,7 +1405,7 @@ namespace ModTools
 
             GUILayout.BeginHorizontal();
             GUI.contentColor = Color.green;
-            GUILayout.Label("Show field/ property modifiers:");
+            GUILayout.Label("Show field/ property modifiers:", GUILayout.ExpandWidth(false));
             showModifiers = GUILayout.Toggle(showModifiers, "");
             GUI.contentColor = Color.white;
             GUILayout.FlexibleSpace();
@@ -1631,7 +1413,7 @@ namespace ModTools
 
             GUILayout.BeginHorizontal();
             GUI.contentColor = Color.green;
-            GUILayout.Label("Evaluate properties automatically:");
+            GUILayout.Label("Evaluate properties automatically:", GUILayout.ExpandWidth(false));
             evaluatePropertiesAutomatically = GUILayout.Toggle(evaluatePropertiesAutomatically, "");
             GUI.contentColor = Color.white;
             GUILayout.FlexibleSpace();
@@ -1639,7 +1421,7 @@ namespace ModTools
 
             GUILayout.BeginHorizontal();
             GUI.contentColor = Color.green;
-            GUILayout.Label("Sort alphabetically:");
+            GUILayout.Label("Sort alphabetically:", GUILayout.ExpandWidth(false));
             GUI.contentColor = Color.white;
             sortAlphabetically = GUILayout.Toggle(sortAlphabetically, "");
             GUILayout.FlexibleSpace();
@@ -1649,7 +1431,7 @@ namespace ModTools
 
             GUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("▲"))
+            if (GUILayout.Button("▲", GUILayout.ExpandWidth(false)))
             {
                 headerExpanded = false;
                 RecalculateAreas();
@@ -1767,7 +1549,26 @@ namespace ModTools
 
             if (sortAlphabetically)
             {
-                Array.Sort(gameObjects, (o, o1) => o.name.CompareTo(o1.name));
+                try
+                {
+                    Array.Sort(gameObjects, (o, o1) =>
+                    {
+                        if (o.name == null)
+                        {
+                            return 1;
+                        }
+
+                        if (o1.name == null)
+                        {
+                            return -1;
+                        }
+
+                        return o.name.CompareTo(o1.name);
+                    });
+                }
+                catch (Exception)
+                {
+                }
             }
 
             foreach (var obj in gameObjects)
@@ -1788,7 +1589,15 @@ namespace ModTools
 
             if (currentRefChain != null)
             {
-                OnSceneTreeReflect(currentRefChain, currentRefChain.Evaluate());
+                try
+                {
+                    OnSceneTreeReflect(currentRefChain, currentRefChain.Evaluate());
+                }
+                catch (Exception)
+                {
+                    currentRefChain = null;
+                    throw;
+                }
             }
 
             GUILayout.EndScrollView();
@@ -1798,17 +1607,13 @@ namespace ModTools
 
         public void DrawWindow()
         {
+            RecalculateAreas();
+
             bool enterPressed = Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter);
 
             if (enterPressed)
             {
                 GUI.FocusControl(null);
-            }
-
-            if (debugMode)
-            {
-                lastCrashReport = debugOutput;
-                debugOutput = "";
             }
 
             preventCircularReferences.Clear();
@@ -1830,7 +1635,6 @@ namespace ModTools
             sceneTreeScrollPosition = Vector2.zero;
             currentRefChain = null;
         }
-
     }
 
 }

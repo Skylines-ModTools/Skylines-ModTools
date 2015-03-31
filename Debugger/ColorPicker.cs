@@ -9,6 +9,8 @@ namespace ModTools
 
         public delegate void OnColorChanged(Color color);
 
+        public delegate void OnColor32Changed(Color32 color);
+
         private static Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>();
 
         public static Texture2D GetColorTexture(string hash, Color color)
@@ -30,7 +32,10 @@ namespace ModTools
         private Texture2D colorPicker;
         private Texture2D huesBar;
         private ColorUtil.HSV currentHSV;
+        private float originalAlpha = 0.0f;
+        
         private OnColorChanged onColorChanged;
+        private OnColor32Changed onColor32Changed;
 
         private Rect colorPickerRect;
         private Rect huesBarRect;
@@ -60,9 +65,19 @@ namespace ModTools
 
         public void SetColor(Color color, OnColorChanged _onColorChanged)
         {
+            originalAlpha = color.a;
             currentHSV = ColorUtil.HSV.RGB2HSV(color);
             currentHSV.h = 360.0f - currentHSV.h;
             onColorChanged = _onColorChanged;
+            RedrawPicker();
+        }
+
+        public void SetColor(Color32 color, OnColor32Changed _onColor32Changed)
+        {
+            originalAlpha = color.a/255.0f;
+            currentHSV = ColorUtil.HSV.RGB2HSV(color);
+            currentHSV.h = 360.0f - currentHSV.h;
+            onColor32Changed = _onColor32Changed;
             RedrawPicker();
         }
 
@@ -92,6 +107,21 @@ namespace ModTools
             GUI.DrawTexture(new Rect(colorPickerLineX, colorPickerRect.y - 1.0f, 1.0f, colorPickerRect.height + 2.0f), lineTex);
         }
 
+        void InternalOnColorChanged(Color color)
+        {
+            color.a = originalAlpha;
+
+            if (onColorChanged != null)
+            {
+                onColorChanged(color);
+            }
+
+            if (onColor32Changed != null)
+            {
+                onColor32Changed(color);
+            }
+        }
+
         void Update()
         {
             Vector2 mouse = Input.mousePosition;
@@ -111,8 +141,8 @@ namespace ModTools
                 {
                     currentHSV.h = (1.0f-Mathf.Clamp01((mouse.y - huesBarRect.y) / huesBarRect.height)) * 360.0f;
                     RedrawPicker();
-                    
-                    if (onColorChanged != null) onColorChanged(ColorUtil.HSV.HSV2RGB(currentHSV));
+
+                    InternalOnColorChanged(ColorUtil.HSV.HSV2RGB(currentHSV));
                 }
 
                 if (colorPickerRect.Contains(mouse))
@@ -120,7 +150,7 @@ namespace ModTools
                     currentHSV.s = Mathf.Clamp01((mouse.x - colorPickerRect.x)/colorPickerRect.width);
                     currentHSV.v = Mathf.Clamp01((mouse.y - colorPickerRect.y)/colorPickerRect.height);
 
-                    if (onColorChanged != null) onColorChanged(ColorUtil.HSV.HSV2RGB(currentHSV));
+                    InternalOnColorChanged(ColorUtil.HSV.HSV2RGB(currentHSV));
                 }
             }
         }

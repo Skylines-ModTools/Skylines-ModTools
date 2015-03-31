@@ -181,164 +181,24 @@ namespace ModTools
                 var value = ReadWatch(watch);
                 GUI.contentColor = config.valueColor;
 
-                if (type.ToString() == "System.Single")
+                if (value == null || !TypeUtil.IsBuiltInType(type))
                 {
-                    var f = (float)value;
-                    GUIControls.FloatField("watch." + watch, "", ref f, 0.0f, true, true);
-                    if (f != (float)value)
-                    {
-                        WriteWatch(watch, f);
-                    }
-                }
-                else if (type.ToString() == "System.Double")
-                {
-                    var f = (double)value;
-                    GUIControls.DoubleField("watch." + watch, "", ref f, 0.0f, true, true);
-                    if (f != (double)value)
-                    {
-                        WriteWatch(watch, f);
-                    }
-                }
-                else if (type.ToString() == "System.Byte")
-                {
-                    var f = (byte)value;
-                    GUIControls.ByteField("watch." + watch, "", ref f, 0.0f, true, true);
-                    if (f != (byte)value)
-                    {
-                        WriteWatch(watch, f);
-                    }
-                }
-                else if (type.ToString() == "System.Int32")
-                {
-                    var f = (int)value;
-                    GUIControls.IntField("watch." + watch, "", ref f, 0.0f, true, true);
-                    if (f != (int)value)
-                    {
-                        WriteWatch(watch, f);
-                    }
-                }
-                else if (type.ToString() == "System.UInt32")
-                {
-                    var f = (uint)value;
-                    GUIControls.UIntField("watch." + watch, "", ref f, 0.0f, true, true);
-                    if (f != (uint)value)
-                    {
-                        WriteWatch(watch, f);
-                    }
-                }
-                else if (type.ToString() == "System.Int64")
-                {
-                    var f = (Int64)value;
-                    GUIControls.Int64Field("watch." + watch, "", ref f, 0.0f, true, true);
-                    if (f != (Int64)value)
-                    {
-                        WriteWatch(watch, f);
-                    }
-                }
-                else if (type.ToString() == "System.UInt64")
-                {
-                    var f = (UInt64)value;
-                    GUIControls.UInt64Field("watch." + watch, "", ref f, 0.0f, true, true);
-                    if (f != (UInt64)value)
-                    {
-                        WriteWatch(watch, f);
-                    }
-                }
-                else if (type.ToString() == "System.Int16")
-                {
-                    var f = (Int16)value;
-                    GUIControls.Int16Field("watch." + watch, "", ref f, 0.0f, true, true);
-                    if (f != (Int16)value)
-                    {
-                        WriteWatch(watch, f);
-                    }
-                }
-                else if (type.ToString() == "System.UInt16")
-                {
-                    var f = (UInt16)value;
-                    GUIControls.UInt16Field("watch." + watch, "", ref f, 0.0f, true, true);
-                    if (f != (UInt16)value)
-                    {
-                        WriteWatch(watch, f);
-                    }
-                }
-                else if (type.ToString() == "System.Boolean")
-                {
-                    var f = (bool)value;
-                    GUIControls.BoolField("", ref f, 0.0f, true, true);
-                    if (f != (bool)value)
-                    {
-                        WriteWatch(watch, f);
-                    }
-                }
-                else if (type.ToString() == "System.String")
-                {
-                    var f = (string)value;
-                    GUIControls.StringField("watch." + watch, "", ref f, 0.0f, true, true);
-                    if (f != (string)value)
-                    {
-                        WriteWatch(watch, f);
-                    }
-                }
-                else if (type.ToString() == "System.Char")
-                {
-                    var f = (char)value;
-                    GUIControls.CharField("watch." + watch, "", ref f, 0.0f, true, true);
-                    if (f != (char)value)
-                    {
-                        WriteWatch(watch, f);
-                    }
-                }
-                else if (type.ToString() == "UnityEngine.Vector3")
-                {
-                    var f = (Vector3)value;
-                    GUIControls.Vector3Field("watch." + watch, "", ref f, 0.0f, null, true, true);
-                    if (f != (Vector3)value)
-                    {
-                        WriteWatch(watch, f);
-                    }
-                }
-                else if (type.ToString() == "UnityEngine.Vector4")
-                {
-                    var f = (Vector4)value;
-                    GUIControls.Vector4Field("watch." + watch, "", ref f, 0.0f, null, true, true);
-                    if (f != (Vector4)value)
-                    {
-                        WriteWatch(watch, f);
-                    }
-                }
-                else if (type.ToString() == "UnityEngine.Quaternion")
-                {
-                    var f = (Quaternion)value;
-                    GUIControls.QuaternionField("watch." + watch, "", ref f, 0.0f, null, true, true);
-                    if (f != (Quaternion)value)
-                    {
-                        WriteWatch(watch, f);
-                    }
-                }
-                else if (type.ToString() == "UnityEngine.Color")
-                {
-                    var f = (Color)value;
-                    GUIControls.ColorField("watch." + watch, "", ref f, 0.0f, null, true, true, color => { watch.SetValue(color); });
-                    if (f != (Color)value)
-                    {
-                        WriteWatch(watch, f);
-                    }
-                }
-                else if (type.ToString() == "UnityEngine.Color32")
-                {
-                    var f = (Color32)value;
-                    var watchCopy = watch.Copy();
-                    GUIControls.Color32Field("watch." + watch, "", ref f, 0.0f, null, true, true, color => { watchCopy.SetValue(color); });
-                    var v = (Color32)value;
-                    if (f.r != v.r || f.g != v.g || f.b != v.b || f.a != v.a)
-                    {
-                        WriteWatch(watch, f);
-                    }
+                    GUILayout.Label(value == null ? "null" : value.ToString());
                 }
                 else
                 {
-                    GUILayout.Label(value.ToString());
+                    try
+                    {
+                        var newValue = GUIControls.EditorValueField(watch, "watch."+watch, type, value);
+                        if (newValue != value)
+                        {
+                            WriteWatch(watch, newValue);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        GUILayout.Label(value == null ? "null" : value.ToString());
+                    }
                 }
 
                 GUI.contentColor = Color.white;

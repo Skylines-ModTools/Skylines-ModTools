@@ -47,6 +47,28 @@ namespace ModTools
             }
         }
 
+        public static string WhereIs(GameObject gameObject, bool logToConsole = true)
+        {
+            string outResult = gameObject.name;
+            WhereIsInternal(gameObject, ref outResult);
+            
+            if (logToConsole)
+            {
+                Debug.LogWarning(outResult);
+            }
+
+            return outResult;
+        }
+
+        private static void WhereIsInternal(GameObject gameObject, ref string outResult)
+        {
+            outResult = gameObject.name + "." + outResult;
+            if (gameObject.transform.parent != null)
+            {
+                WhereIsInternal(gameObject.transform.parent.gameObject, ref outResult);
+            }
+        }
+
     }
 
 }
