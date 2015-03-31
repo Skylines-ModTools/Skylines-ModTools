@@ -97,7 +97,7 @@ namespace ModTools
             }
         }
 
-        public static void DumpMeshOBJ(Mesh mesh, string outputPath)
+        public static void DumpMeshToOBJ(Mesh mesh, string outputPath)
         {
             if (File.Exists(outputPath))
             {

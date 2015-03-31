@@ -116,7 +116,7 @@ namespace ModTools
                     var assetName = building.Info.name;
 
                     Log.Warning(String.Format("Dumping asset \"{0}\"", assetName));
-                    Util.DumpMeshOBJ(mesh, String.Format("{0}.obj", assetName));
+                    Util.DumpMeshToOBJ(mesh, String.Format("{0}.obj", assetName));
                     Util.DumpTextureToPNG(material.GetTexture("_MainTex"), String.Format("{0}_MainTex.png", assetName));
                     Util.DumpTextureToPNG(material.GetTexture("_XYSMap"), String.Format("{0}_xyz.png", assetName));
                     Util.DumpTextureToPNG(material.GetTexture("_ACIMap"), String.Format("{0}_aci.png", assetName));
