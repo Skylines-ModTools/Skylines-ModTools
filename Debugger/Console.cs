@@ -30,6 +30,9 @@ namespace ModTools
         private GUIArea consoleArea;
         private GUIArea commandLineArea;
         private bool focusCommandLineArea = false;
+        private bool emptyCommandLineArea = true;
+        private bool setCommandLinePosition = false;
+        private int commandLinePosition;
 
         private float headerHeightCompact = 0.5f;
         private float headerHeightExpanded = 8.0f;
@@ -46,11 +49,6 @@ namespace ModTools
                 if (command.Length == 0)
                 {
                     return false;
-                }
-
-                if (command.Last() == '\n')
-                {
-                    command = command.Substring(0, command.Length - 1);
                 }
 
                 if (command.Contains('\n'))
@@ -101,18 +99,38 @@ namespace ModTools
             {
                 return;
             }
+            if (setCommandLinePosition)
+            {
+                // return has been hit with control pressed in previous GUI event
+                // reset the position to the remembered one
+                setCommandLinePosition = false;
+                TextEditor editor = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
+                editor.pos = editor.selectPos = commandLinePosition - 1;
+            }
             if (e.keyCode == KeyCode.Return)
             {
                 if (e.shift)
                 {
                     return;
                 }
-                e.Use();
-                RunCommandLine();
+
+                // event.Use() does not consume the event, work around the enter being inserted into the textbox by deleting the line break
+                TextEditor editor = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
+                int pos = editor.selectPos;
+                String currentCommand = commandHistory[currentCommandHistoryIndex];
+                String fixedCommand = currentCommand.Substring(0, pos - 1) + currentCommand.Substring(pos, currentCommand.Length - pos);
+                commandHistory[currentCommandHistoryIndex] = fixedCommand;
+
+                // if control is pressed when hitting return, do not empty the command line area
+                // remember the currently selected position and reset it after the next redraw
                 if (e.control)
                 {
-                    currentCommandHistoryIndex--;
+                    emptyCommandLineArea = false;
+                    setCommandLinePosition = true;
+                    commandLinePosition = pos;
                 }
+
+                RunCommandLine();
             }
         }
         void HandleDestroy()
@@ -521,6 +539,7 @@ namespace ModTools
 
             commandLineArea.End();
 
+            // refocus the command line area after enter has been pressed
             if (focusCommandLineArea)
             {
                 GUI.FocusControl("ModToolsConsoleCommandLine");
@@ -531,17 +550,20 @@ namespace ModTools
         void RunCommandLine()
         {
             var commandLine = commandHistory[currentCommandHistoryIndex];
-            commandHistory[currentCommandHistoryIndex] = commandHistory[currentCommandHistoryIndex].Trim();
 
-            if (commandHistory.Last() != "")
+            if (emptyCommandLineArea)
             {
-                commandHistory.Add("");
-                currentCommandHistoryIndex = commandHistory.Count - 1;
+                if (commandHistory.Last() != "")
+                {
+                    commandHistory.Add("");
+                    currentCommandHistoryIndex = commandHistory.Count - 1;
+                }
+                else
+                {
+                    currentCommandHistoryIndex = commandHistory.Count - 1;
+                }
             }
-            else
-            {
-                currentCommandHistoryIndex = commandHistory.Count - 1;
-            }
+            emptyCommandLineArea = true;
 
             var source = String.Format(defaultSource, commandLine);
             var file = new ScriptEditorFile() { path = "ModToolsCommandLineScript.cs", source = source };
