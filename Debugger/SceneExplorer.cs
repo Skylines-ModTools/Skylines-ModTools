@@ -1014,7 +1014,7 @@ namespace ModTools
                 {
                     try
                     {
-                        var newValue = GUIControls.EditorValueField(refChain, list[i].GetHashCode().ToString(), list[i].GetType(), list[i]);
+                        var newValue = GUIControls.EditorValueField(refChain, refChain.ToString(), list[i].GetType(), list[i]);
                         if (newValue != list[i])
                         {
                             list[i] = newValue;
