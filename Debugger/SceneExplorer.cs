@@ -891,6 +891,306 @@ namespace ModTools
             return false;
         }
 
+        private bool IsCollection(object myProperty)
+        {
+            if (typeof(ICollection).IsAssignableFrom(myProperty.GetType())
+                || typeof(ICollection<>).IsAssignableFrom(myProperty.GetType()))
+                return true;
+
+            return false;
+        }
+
+        private bool IsList(object myProperty)
+        {
+            if (typeof(IList).IsAssignableFrom(myProperty.GetType())
+                || typeof(IList<>).IsAssignableFrom(myProperty.GetType()))
+                return true;
+
+            return false;
+        }
+
+        private void OnSceneTreeReflectIList(ReferenceChain refChain, System.Object myProperty)
+        {
+            if (!SceneTreeCheckDepth(refChain)) return;
+
+            var list = myProperty as IList;
+            if (list == null)
+            {
+                return;
+            }
+
+            var oldRefChain = refChain;
+
+
+            var collectionSize = list.Count;
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(treeIdentSpacing * refChain.Ident);
+            GUILayout.Label("Collection size: " + collectionSize);
+
+            if (!selectedArrayStartIndices.ContainsKey(refChain))
+            {
+                selectedArrayStartIndices.Add(refChain, 0);
+            }
+
+            if (!selectedArrayEndIndices.ContainsKey(refChain))
+            {
+                selectedArrayEndIndices.Add(refChain, 32);
+            }
+
+            var arrayStart = selectedArrayStartIndices[refChain];
+            var arrayEnd = selectedArrayEndIndices[refChain];
+
+            GUIControls.IntField(oldRefChain.ToString() + ".arrayStart", "Start index", ref arrayStart, 0.0f, true, true);
+            GUIControls.IntField(oldRefChain.ToString() + ".arrayEnd", "End index", ref arrayEnd, 0.0f, true, true);
+            GUILayout.Label("(32 items max)");
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            arrayStart = Mathf.Clamp(arrayStart, 0, collectionSize - 1);
+            arrayEnd = Mathf.Clamp(arrayEnd, 0, collectionSize - 1);
+            if (arrayStart > arrayEnd)
+            {
+                arrayEnd = arrayStart;
+            }
+
+            if (arrayEnd - arrayStart > 32)
+            {
+                arrayEnd = arrayStart + 32;
+                arrayEnd = Mathf.Clamp(arrayEnd, 0, collectionSize - 1);
+            }
+
+            selectedArrayStartIndices[refChain] = arrayStart;
+            selectedArrayEndIndices[refChain] = arrayEnd;
+
+            for (int i = arrayStart; i <= arrayEnd; i++)
+            {
+                refChain = oldRefChain.Add(i);
+
+                var type = list[i].GetType();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
+
+                GUI.contentColor = Color.white;
+
+                if (TypeUtil.IsReflectableType(type) && !IsEnumerable(type))
+                {
+                    if (expandedObjects.ContainsKey(refChain))
+                    {
+                        if (GUILayout.Button("-", GUILayout.ExpandWidth(false)))
+                        {
+                            expandedObjects.Remove(refChain);
+                        }
+                    }
+                    else
+                    {
+                        if (GUILayout.Button("+", GUILayout.ExpandWidth(false)))
+                        {
+                            expandedObjects.Add(refChain, true);
+                        }
+                    }
+                }
+
+                GUI.contentColor = config.typeColor;
+
+                GUILayout.Label(type.ToString() + " ");
+
+                GUI.contentColor = config.nameColor;
+
+                GUILayout.Label(String.Format("{0}.[{1}]", oldRefChain.LastItemName, i));
+
+                GUI.contentColor = Color.white;
+
+                GUILayout.Label(" = ");
+
+                GUI.contentColor = config.valueColor;
+
+                if (list[i] == null || !TypeUtil.IsBuiltInType(list[i].GetType()))
+                {
+                    GUILayout.Label(list[i] == null ? "null" : list[i].ToString());
+                }
+                else
+                {
+                    try
+                    {
+                        var newValue = GUIControls.EditorValueField(refChain, list[i].GetHashCode().ToString(), list[i].GetType(), list[i]);
+                        if (newValue != list[i])
+                        {
+                            list[i] = newValue;
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        GUILayout.Label(list[i] == null ? "null" : list[i].ToString());
+                    }
+                }
+
+                GUI.contentColor = Color.white;
+
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+
+                if (TypeUtil.IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
+                {
+                    if (list[i] is GameObject)
+                    {
+                        var go = list[i] as GameObject;
+                        foreach (var component in go.GetComponents<Component>())
+                        {
+                            OnSceneTreeComponent(refChain, component);
+                        }
+                    }
+                    else if (list[i] is Transform)
+                    {
+                        OnSceneTreeReflectUnityEngineTransform(refChain, (Transform)list[i]);
+                    }
+                    else
+                    {
+                        OnSceneTreeReflect(refChain, list[i]);
+                    }
+                }
+            }
+        }
+
+        private void OnSceneTreeReflectICollection(ReferenceChain refChain, System.Object myProperty)
+        {
+            if (!SceneTreeCheckDepth(refChain)) return;
+
+            var collection = myProperty as ICollection;
+            if (collection == null)
+            {
+                return;
+            }
+
+            int count = 0;
+            var oldRefChain = refChain;
+
+
+            var collectionSize = collection.Count;
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(treeIdentSpacing * refChain.Ident);
+            GUILayout.Label("Collection size: " + collectionSize);
+
+            if (!selectedArrayStartIndices.ContainsKey(refChain))
+            {
+                selectedArrayStartIndices.Add(refChain, 0);
+            }
+
+            if (!selectedArrayEndIndices.ContainsKey(refChain))
+            {
+                selectedArrayEndIndices.Add(refChain, 32);
+            }
+
+            var arrayStart = selectedArrayStartIndices[refChain];
+            var arrayEnd = selectedArrayEndIndices[refChain];
+
+            GUIControls.IntField(oldRefChain.ToString() + ".arrayStart", "Start index", ref arrayStart, 0.0f, true, true);
+            GUIControls.IntField(oldRefChain.ToString() + ".arrayEnd", "End index", ref arrayEnd, 0.0f, true, true);
+            GUILayout.Label("(32 items max)");
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            arrayStart = Mathf.Clamp(arrayStart, 0, collectionSize - 1);
+            arrayEnd = Mathf.Clamp(arrayEnd, 0, collectionSize - 1);
+            if (arrayStart > arrayEnd)
+            {
+                arrayEnd = arrayStart;
+            }
+
+            if (arrayEnd - arrayStart > 32)
+            {
+                arrayEnd = arrayStart + 32;
+                arrayEnd = Mathf.Clamp(arrayEnd, 0, collectionSize - 1);
+            }
+
+            selectedArrayStartIndices[refChain] = arrayStart;
+            selectedArrayEndIndices[refChain] = arrayEnd;
+
+            foreach (var value in collection)
+            {
+                if (count < arrayStart)
+                {
+                    count++;
+                    continue;
+                }
+
+                refChain = oldRefChain.Add(count);
+
+                var type = value.GetType();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(treeIdentSpacing * refChain.Ident);
+
+                GUI.contentColor = Color.white;
+
+                if (TypeUtil.IsReflectableType(type) && !IsEnumerable(type))
+                {
+                    if (expandedObjects.ContainsKey(refChain))
+                    {
+                        if (GUILayout.Button("-", GUILayout.ExpandWidth(false)))
+                        {
+                            expandedObjects.Remove(refChain);
+                        }
+                    }
+                    else
+                    {
+                        if (GUILayout.Button("+", GUILayout.ExpandWidth(false)))
+                        {
+                            expandedObjects.Add(refChain, true);
+                        }
+                    }
+                }
+
+                GUI.contentColor = config.typeColor;
+
+                GUILayout.Label(type.ToString() + " ");
+
+                GUI.contentColor = config.nameColor;
+
+                GUILayout.Label(String.Format("{0}.[{1}]", oldRefChain.LastItemName, count));
+
+                GUI.contentColor = Color.white;
+
+                GUILayout.Label(" = ");
+
+                GUI.contentColor = config.valueColor;
+                GUILayout.Label(value == null ? "null" : value.ToString());
+
+                GUI.contentColor = Color.white;
+
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+
+                if (TypeUtil.IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
+                {
+                    if (value is GameObject)
+                    {
+                        var go = value as GameObject;
+                        foreach (var component in go.GetComponents<Component>())
+                        {
+                            OnSceneTreeComponent(refChain, component);
+                        }
+                    }
+                    else if (value is Transform)
+                    {
+                        OnSceneTreeReflectUnityEngineTransform(refChain, (Transform)value);
+                    }
+                    else
+                    {
+                        OnSceneTreeReflect(refChain, value);
+                    }
+                }
+
+                count++;
+                if (count > arrayEnd)
+                {
+                    break;
+                }
+            }
+        }
+
         private void OnSceneTreeReflectIEnumerable(ReferenceChain refChain, System.Object myProperty)
         {
             if (!SceneTreeCheckDepth(refChain)) return;
@@ -904,211 +1204,81 @@ namespace ModTools
             int count = 0;
             var oldRefChain = refChain;
 
-            var collection = enumerable as ICollection;
-
-            if (collection != null)
+            foreach (var value in enumerable)
             {
-                var collectionSize = collection.Count;
+                refChain = oldRefChain.Add(count);
+
+                var type = value.GetType();
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(treeIdentSpacing * refChain.Ident);
-                GUILayout.Label("Collection size: " + collectionSize);
 
-                if (!selectedArrayStartIndices.ContainsKey(refChain))
+                GUI.contentColor = Color.white;
+
+                if (TypeUtil.IsReflectableType(type) && !IsEnumerable(type))
                 {
-                    selectedArrayStartIndices.Add(refChain, 0);
+                    if (expandedObjects.ContainsKey(refChain))
+                    {
+                        if (GUILayout.Button("-", GUILayout.ExpandWidth(false)))
+                        {
+                            expandedObjects.Remove(refChain);
+                        }
+                    }
+                    else
+                    {
+                        if (GUILayout.Button("+", GUILayout.ExpandWidth(false)))
+                        {
+                            expandedObjects.Add(refChain, true);
+                        }
+                    }
                 }
 
-                if (!selectedArrayEndIndices.ContainsKey(refChain))
-                {
-                    selectedArrayEndIndices.Add(refChain, 32);
-                }
+                GUI.contentColor = config.typeColor;
 
-                var arrayStart = selectedArrayStartIndices[refChain];
-                var arrayEnd = selectedArrayEndIndices[refChain];
+                GUILayout.Label(type.ToString() + " ");
 
-                GUIControls.IntField(oldRefChain.ToString() + ".arrayStart", "Start index", ref arrayStart, 0.0f, true, true);
-                GUIControls.IntField(oldRefChain.ToString() + ".arrayEnd", "End index", ref arrayEnd, 0.0f, true, true);
-                GUILayout.Label("(32 items max)");
+                GUI.contentColor = config.nameColor;
+
+                GUILayout.Label(String.Format("{0}.[{1}]", oldRefChain.LastItemName, count));
+
+                GUI.contentColor = Color.white;
+
+                GUILayout.Label(" = ");
+
+                GUI.contentColor = config.valueColor;
+
+                GUILayout.Label(value == null ? "null" : value.ToString());
+
+                GUI.contentColor = Color.white;
+
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
 
-                arrayStart = Mathf.Clamp(arrayStart, 0, collectionSize - 1);
-                arrayEnd = Mathf.Clamp(arrayEnd, 0, collectionSize - 1);
-                if (arrayStart > arrayEnd)
+                if (TypeUtil.IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
                 {
-                    arrayEnd = arrayStart;
+                    if (value is GameObject)
+                    {
+                        var go = value as GameObject;
+                        foreach (var component in go.GetComponents<Component>())
+                        {
+                            OnSceneTreeComponent(refChain, component);
+                        }
+                    }
+                    else if (value is Transform)
+                    {
+                        OnSceneTreeReflectUnityEngineTransform(refChain, (Transform)value);
+                    }
+                    else
+                    {
+                        OnSceneTreeReflect(refChain, value);
+                    }
                 }
 
-                if (arrayEnd - arrayStart > 32)
+                count++;
+                if (count >= 1024)
                 {
-                    arrayEnd = arrayStart + 32;
-                    arrayEnd = Mathf.Clamp(arrayEnd, 0, collectionSize - 1);
-                }
-
-                selectedArrayStartIndices[refChain] = arrayStart;
-                selectedArrayEndIndices[refChain] = arrayEnd;
-
-                foreach (var value in enumerable)
-                {
-                    if (count < arrayStart)
-                    {
-                        count++;
-                        continue;
-                    }
-                    
-                    refChain = oldRefChain.Add(count);
-
-                    var type = value.GetType();
-
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(treeIdentSpacing * refChain.Ident);
-
-                    GUI.contentColor = Color.white;
-
-                    if (TypeUtil.IsReflectableType(type) && !IsEnumerable(type))
-                    {
-                        if (expandedObjects.ContainsKey(refChain))
-                        {
-                            if (GUILayout.Button("-", GUILayout.ExpandWidth(false)))
-                            {
-                                expandedObjects.Remove(refChain);
-                            }
-                        }
-                        else
-                        {
-                            if (GUILayout.Button("+", GUILayout.ExpandWidth(false)))
-                            {
-                                expandedObjects.Add(refChain, true);
-                            }
-                        }
-                    }
-
-                    GUI.contentColor = config.typeColor;
-
-                    GUILayout.Label(type.ToString() + " ");
-
-                    GUI.contentColor = config.nameColor;
-
-                    GUILayout.Label(String.Format("{0}.[{1}]", oldRefChain.LastItemName, count));
-
-                    GUI.contentColor = Color.white;
-
-                    GUILayout.Label(" = ");
-
-                    GUI.contentColor = config.valueColor;
-                    GUILayout.Label(value == null ? "null" : value.ToString());
-
-                    GUI.contentColor = Color.white;
-
-                    GUILayout.FlexibleSpace();
-                    GUILayout.EndHorizontal();
-
-                    if (TypeUtil.IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
-                    {
-                        if (value is GameObject)
-                        {
-                            var go = value as GameObject;
-                            foreach (var component in go.GetComponents<Component>())
-                            {
-                                OnSceneTreeComponent(refChain, component);
-                            }
-                        }
-                        else if (value is Transform)
-                        {
-                            OnSceneTreeReflectUnityEngineTransform(refChain, (Transform)value);
-                        }
-                        else
-                        {
-                            OnSceneTreeReflect(refChain, value);
-                        }
-                    }
-
-                    count++;
-                    if (count > arrayEnd)
-                    {
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                foreach (var value in enumerable)
-                {
-                    refChain = oldRefChain.Add(count);
-
-                    var type = value.GetType();
-
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(treeIdentSpacing * refChain.Ident);
-
-                    GUI.contentColor = Color.white;
-
-                    if (TypeUtil.IsReflectableType(type) && !IsEnumerable(type))
-                    {
-                        if (expandedObjects.ContainsKey(refChain))
-                        {
-                            if (GUILayout.Button("-", GUILayout.ExpandWidth(false)))
-                            {
-                                expandedObjects.Remove(refChain);
-                            }
-                        }
-                        else
-                        {
-                            if (GUILayout.Button("+", GUILayout.ExpandWidth(false)))
-                            {
-                                expandedObjects.Add(refChain, true);
-                            }
-                        }
-                    }
-
-                    GUI.contentColor = config.typeColor;
-
-                    GUILayout.Label(type.ToString() + " ");
-
-                    GUI.contentColor = config.nameColor;
-
-                    GUILayout.Label(String.Format("{0}.[{1}]", oldRefChain.LastItemName, count));
-
-                    GUI.contentColor = Color.white;
-
-                    GUILayout.Label(" = ");
-
-                    GUI.contentColor = config.valueColor;
-              
-                    GUILayout.Label(value == null ? "null" : value.ToString());
-
-                    GUI.contentColor = Color.white;
-
-                    GUILayout.FlexibleSpace();
-                    GUILayout.EndHorizontal();
-
-                    if (TypeUtil.IsReflectableType(type) && expandedObjects.ContainsKey(refChain))
-                    {
-                        if (value is GameObject)
-                        {
-                            var go = value as GameObject;
-                            foreach (var component in go.GetComponents<Component>())
-                            {
-                                OnSceneTreeComponent(refChain, component);
-                            }
-                        }
-                        else if (value is Transform)
-                        {
-                            OnSceneTreeReflectUnityEngineTransform(refChain, (Transform)value);
-                        }
-                        else
-                        {
-                            OnSceneTreeReflect(refChain, value);
-                        }
-                    }
-
-                    count++;
-                    if (count >= 1024)
-                    {
-                        OnSceneTreeMessage(refChain, "Array too large to display");
-                        break;
-                    }
+                    OnSceneTreeMessage(refChain, "Array too large to display");
+                    break;
                 }
             }
         }
@@ -1138,6 +1308,18 @@ namespace ModTools
                 if (type == typeof(UnityEngine.Transform))
                 {
                     OnSceneTreeReflectUnityEngineTransform(refChain, (UnityEngine.Transform)obj);
+                    return;
+                }
+
+                if(IsList(obj))
+                {
+                    OnSceneTreeReflectIList(refChain, obj);
+                    return;
+                }
+
+                if(IsCollection(obj))
+                {
+                    OnSceneTreeReflectICollection(refChain, obj);
                     return;
                 }
 
