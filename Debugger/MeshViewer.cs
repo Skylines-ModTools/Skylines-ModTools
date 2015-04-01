@@ -99,7 +99,7 @@ namespace ModTools
 
                 if (GUILayout.Button("Dump .obj", GUILayout.Width(128)))
                 {
-                    Util.DumpMeshOBJ(previewMesh, previewMesh.name + ".obj");
+                    Util.DumpMeshToOBJ(previewMesh, previewMesh.name + ".obj");
                 }
 
                 GUILayout.FlexibleSpace();

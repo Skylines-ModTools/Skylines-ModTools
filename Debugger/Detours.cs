@@ -41,14 +41,6 @@ namespace ModTools
     /// </summary>
     public static class RedirectionHelper
     {
-        // Note: These two DllImports are really only used in the alternative methods
-        // for detouring.
-        [DllImport("mono.dll", CallingConvention = CallingConvention.FastCall, EntryPoint = "mono_domain_get")]
-        private static extern IntPtr mono_domain_get();
-
-        [DllImport("mono.dll", CallingConvention = CallingConvention.FastCall, EntryPoint = "mono_method_get_header")]
-        private static extern IntPtr mono_method_get_header(IntPtr method);
-
         /// <summary>
         /// Redirects all calls from method 'from' to method 'to'.
         /// </summary>

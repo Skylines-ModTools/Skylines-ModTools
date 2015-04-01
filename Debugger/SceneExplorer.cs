@@ -363,7 +363,7 @@ namespace ModTools
                 {
                     var outPath = refChain.ToString() + ".obj";
                     outPath = outPath.Replace(' ', '_');
-                    Util.DumpMeshOBJ(value as Mesh, outPath);
+                    Util.DumpMeshToOBJ(value as Mesh, outPath);
                 }
             }
 
@@ -563,7 +563,7 @@ namespace ModTools
                 {
                     var outPath = refChain.ToString() + ".obj";
                     outPath = outPath.Replace(' ', '_');
-                    Util.DumpMeshOBJ(value as Mesh, outPath);
+                    Util.DumpMeshToOBJ(value as Mesh, outPath);
                 }
             }
             

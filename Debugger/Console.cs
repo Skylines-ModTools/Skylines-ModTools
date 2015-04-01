@@ -29,6 +29,7 @@ namespace ModTools
         private GUIArea headerArea;
         private GUIArea consoleArea;
         private GUIArea commandLineArea;
+        private bool focusCommandLineArea = false;
 
         private float headerHeightCompact = 0.5f;
         private float headerHeightExpanded = 8.0f;
@@ -39,14 +40,25 @@ namespace ModTools
 
         private bool commandLineAreaExpanded 
         {
-            get 
+            get
             {
-                if (commandHistory[currentCommandHistoryIndex].Contains('\n'))
+                var command = commandHistory[currentCommandHistoryIndex];
+                if (command.Length == 0)
+                {
+                    return false;
+                }
+
+                if (command.Last() == '\n')
+                {
+                    command = command.Substring(0, command.Length - 1);
+                }
+
+                if (command.Contains('\n'))
                 {
                     return true;
                 }
 
-                return commandHistory[currentCommandHistoryIndex].Length >= 64;
+                return command.Length >= 64;
             }
         }
 
@@ -78,8 +90,45 @@ namespace ModTools
             vanillaPanel = UIView.library.Get<DebugOutputPanel>("DebugOutputPanel");
             oldVanillaPanelParent = vanillaPanel.transform.parent;
             vanillaPanel.transform.parent = transform;
+
+            onUnityGUI = () => KeyboardCallback();
         }
 
+        void KeyboardCallback()
+        {
+            Event e = Event.current;
+            if (e.type != EventType.KeyUp)
+            {
+                return;
+            }
+            if (e.keyCode == KeyCode.Return)
+            {
+                if (e.shift)
+                {
+                    return;
+                }
+                e.Use();
+                RunCommandLine();
+            }
+            if (e.keyCode == KeyCode.UpArrow && !e.control)
+            {
+                if (currentCommandHistoryIndex == 0)
+                {
+                    // avoid going into the negative with the index
+                    return;
+                }
+                currentCommandHistoryIndex--;
+            }
+            if (e.keyCode == KeyCode.DownArrow && !e.control)
+            {
+                if (currentCommandHistoryIndex == commandHistory.Count - 1)
+                {
+                    // avoid overshooting the history
+                    return;
+                }
+                currentCommandHistoryIndex++;
+            }
+        }
         void HandleDestroy()
         {
             vanillaPanel.transform.parent = oldVanillaPanelParent;
@@ -431,19 +480,24 @@ namespace ModTools
         {
             commandLineArea.Begin();
 
-            commandLineScrollPosition = GUILayout.BeginScrollView(commandLineScrollPosition, false, false);
+            GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
 
-            GUILayout.BeginHorizontal();
+            GUILayout.BeginVertical(GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(false));
+            commandLineScrollPosition = GUILayout.BeginScrollView(commandLineScrollPosition, false, false, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(false));
 
             GUI.SetNextControlName("ModToolsConsoleCommandLine");
 
-            commandHistory[currentCommandHistoryIndex] = GUILayout.TextArea(commandHistory[currentCommandHistoryIndex], GUILayout.ExpandHeight(true));
+            commandHistory[currentCommandHistoryIndex] = GUILayout.TextArea(commandHistory[currentCommandHistoryIndex], GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
 
             if (commandHistory[currentCommandHistoryIndex].Trim().Length == 0)
             {
                 GUI.enabled = false;
             }
+            GUILayout.EndScrollView();
 
+            GUILayout.EndVertical();
+            GUILayout.BeginVertical(GUILayout.ExpandWidth(false));
+            GUILayout.BeginHorizontal();
             if (GUILayout.Button("Run", GUILayout.ExpandWidth(false)))
             {
                 RunCommandLine();
@@ -474,17 +528,24 @@ namespace ModTools
             }
 
             GUI.enabled = true;
-
+            GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
             GUILayout.EndHorizontal();
 
-            GUILayout.EndScrollView();
 
             commandLineArea.End();
+
+            if (focusCommandLineArea)
+            {
+                GUI.FocusControl("ModToolsConsoleCommandLine");
+                focusCommandLineArea = false;
+            }
         }
 
         void RunCommandLine()
         {
             var commandLine = commandHistory[currentCommandHistoryIndex];
+            commandHistory[currentCommandHistoryIndex] = commandHistory[currentCommandHistoryIndex].Trim();
 
             if (commandHistory.Last() != "")
             {
@@ -517,6 +578,7 @@ namespace ModTools
                 }
             }
             commandLine = "";
+            focusCommandLineArea = true;
         }
 
         void DrawWindow()
