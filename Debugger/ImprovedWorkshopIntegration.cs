@@ -53,6 +53,8 @@ namespace ModTools
 
         private static GameObject thisGameObject;
 
+        private static Dictionary<PluginManager.PluginInfo, IUserMod[]> _pluginInstancesCache = new Dictionary<PluginManager.PluginInfo, IUserMod[]>(); 
+
         public static void Bootstrap()
         {
             if (thisGameObject == null)
@@ -257,13 +259,18 @@ namespace ModTools
             }
         }
 
+
         public static bool CheckForImprovedModsPanel()
         {
+            _pluginInstancesCache.Clear();
+
             var plugins = PluginManager.instance.GetPluginsInfo();
 
             foreach (var current in plugins)
             {
                 IUserMod[] instances = current.GetInstances<IUserMod>();
+                _pluginInstancesCache.Add(current, instances);
+
                 if (instances[0].Name == "ImprovedModsPanel")
                 {
                     return true;
@@ -357,7 +364,7 @@ namespace ModTools
 
             foreach (var current in plugins)
             {
-                IUserMod[] instances = current.GetInstances<IUserMod>();
+                IUserMod[] instances = _pluginInstancesCache[current];
                 if (instances.Length == 0)
                 {
                     Debug.LogErrorFormat("User assembly \"{0}\" does not implement the IUserMod interface!");
