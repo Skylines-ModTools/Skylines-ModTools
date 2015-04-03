@@ -673,7 +673,7 @@ namespace ModTools
             transform.localScale = localScale;
         }
 
-        private static readonly string[] textureProps = new string[28]
+        private static readonly string[] textureProps = new string[]
         {
           "_BackTex",
           "_BumpMap",
@@ -702,10 +702,11 @@ namespace ModTools
           "_TranslucencyMap",
           "_UpTex",
           "_Tex",
-          "_Cube"
+          "_Cube",
+          "_APRMap"
         };
 
-        private static readonly string[] colorProps = new string[5]
+        private static readonly string[] colorProps = new string[]
         {
           "_Color",
           "_ColorV0",
@@ -714,7 +715,7 @@ namespace ModTools
           "_ColorV3"
         };
 
-        private static readonly string[] vectorProps = new string[4]
+        private static readonly string[] vectorProps = new string[]
         {
           "_FloorParams",
           "_UvAnimation",
