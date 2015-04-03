@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace ModTools
 {
@@ -64,6 +67,63 @@ namespace ModTools
             }
 
             return false;
+        }
+
+        public static MemberInfo[] GetAllMembers(Type type, bool recursive = false)
+        {
+            return GetMembersInternal(type, recursive, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
+        }
+
+        public static MemberInfo[] GetPublicMembers(Type type, bool recursive = false)
+        {
+            return GetMembersInternal(type, recursive, BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static);
+        }
+
+        public static MemberInfo[] GetPrivateMembers(Type type, bool recursive = false)
+        {
+            return GetMembersInternal(type, recursive, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Static);
+        }
+
+        public static void ClearTypeCache()
+        {
+            _typeCache = new Dictionary<Type, MemberInfo[]>();
+        }
+
+        private static Dictionary<Type, MemberInfo[]> _typeCache = new Dictionary<Type, MemberInfo[]>(); 
+
+        private static MemberInfo[] GetMembersInternal(Type type, bool recursive, BindingFlags bindingFlags)
+        {
+            if (_typeCache.ContainsKey(type))
+            {
+                return _typeCache[type];
+            }
+
+            var results = new Dictionary<string, MemberInfo>();
+            GetMembersInternal2(type, recursive, bindingFlags, results);
+            var members = results.Values.ToArray();
+            _typeCache[type] = members;
+            return members;
+        }
+
+        private static void GetMembersInternal2(Type type, bool recursive, BindingFlags bindingFlags,
+            Dictionary<string, MemberInfo> outResults)
+        {
+            var selfMembers = type.GetMembers(bindingFlags);
+            foreach (var member in selfMembers)
+            {
+                if (!outResults.ContainsKey(member.Name))
+                {
+                    outResults.Add(member.Name, member);
+                }
+            }
+
+            if (recursive)
+            {
+                if (type.BaseType != null)
+                {
+                    GetMembersInternal2(type.BaseType, true, bindingFlags, outResults);
+                }
+            }
         }
 
     }

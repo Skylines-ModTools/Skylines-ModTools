@@ -28,20 +28,9 @@ namespace ModTools
 
         private Dictionary<GameObject, bool> sceneRoots = new Dictionary<GameObject, bool>();
 
-        private bool showFields = true;
-        private bool showProperties = true;
-        private bool showMethods = false;
-
-        private bool showModifiers = false;
-
-        private bool evaluatePropertiesAutomatically = true;
-
         private string findGameObjectFilter = "";
         private string findObjectTypeFilter = "";
         private string searchDisplayString = "";
-
-        public static string debugOutput = "";
-        public static string lastCrashReport = "";
 
         private GUIArea headerArea;
         private GUIArea sceneTreeArea;
@@ -52,13 +41,11 @@ namespace ModTools
 
         private ReferenceChain currentRefChain = null;
 
-        private bool sortAlphabetically = true;
-
         private float windowTopMargin = 16.0f;
         private float windowBottomMargin = 8.0f;
 
         private float headerHeightCompact = 1.65f;
-        private float headerHeightExpanded = 15.0f;
+        private float headerHeightExpanded = 17.0f;
         private bool headerExpanded = false;
 
         private float sceneTreeWidth = 320.0f;
@@ -130,11 +117,13 @@ namespace ModTools
             preventCircularReferences = new Dictionary<int, bool>();
             sceneRoots = GameObjectUtil.FindSceneRoots();
             currentRefChain = null;
+            TypeUtil.ClearTypeCache();
         }
 
         public void Refresh()
         {
             sceneRoots = GameObjectUtil.FindSceneRoots();
+            TypeUtil.ClearTypeCache();
         }
 
         public void ExpandFromRefChain(ReferenceChain refChain)
@@ -270,7 +259,7 @@ namespace ModTools
                 GUI.enabled = false;
             }
 
-            if (showModifiers)
+            if (config.sceneExplorerShowModifiers)
             {
                 GUI.contentColor = config.modifierColor;
 
@@ -408,7 +397,7 @@ namespace ModTools
             bool propertyWasEvaluated = false;
             object value = null;
 
-            if (property.CanRead && evaluatePropertiesAutomatically || evaluatedProperties.ContainsKey(refChain))
+            if (property.CanRead && config.sceneExplorerEvaluatePropertiesAutomatically || evaluatedProperties.ContainsKey(refChain))
             {
                 try
                 {
@@ -445,7 +434,7 @@ namespace ModTools
                 GUI.enabled = false;
             }
 
-            if (showModifiers)
+            if (config.sceneExplorerShowModifiers)
             {
                 GUI.contentColor = config.memberTypeColor;
                 GUILayout.Label("property ");
@@ -469,7 +458,7 @@ namespace ModTools
             GUILayout.Label(" = ");
             GUI.contentColor = config.valueColor;
 
-            if (!evaluatePropertiesAutomatically && !evaluatedProperties.ContainsKey(refChain))
+            if (!config.sceneExplorerEvaluatePropertiesAutomatically && !evaluatedProperties.ContainsKey(refChain))
             {
                 GUI.enabled = true;
 
@@ -1338,9 +1327,9 @@ namespace ModTools
                 }
             }
 
-            MemberInfo[] members = type.GetMembers(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
+            var members = TypeUtil.GetAllMembers(type, config.sceneExplorerShowInheritedMembers);
 
-            if (sortAlphabetically)
+            if (config.sceneExplorerSortAlphabetically)
             {
                 Array.Sort(members, (info, info1) =>
                 {
@@ -1350,7 +1339,7 @@ namespace ModTools
 
             foreach (MemberInfo member in members)
             {
-                if (member.MemberType == MemberTypes.Field && showFields)
+                if (member.MemberType == MemberTypes.Field && config.sceneExplorerShowFields)
                 {
                     var field = (FieldInfo)member;
 
@@ -1363,7 +1352,7 @@ namespace ModTools
                         OnSceneTreeMessage(refChain, String.Format("Exception when fetching field \"{0}\" - {1}", field.Name, ex.Message));
                     }
                 }
-                else if (member.MemberType == MemberTypes.Property && showProperties)
+                else if (member.MemberType == MemberTypes.Property && config.sceneExplorerShowProperties)
                 {
                     var property = (PropertyInfo)member;
 
@@ -1376,7 +1365,7 @@ namespace ModTools
                         OnSceneTreeMessage(refChain, String.Format("Exception when fetching property \"{0}\" - {1}", property.Name, ex.Message));
                     }
                 }
-                else if (member.MemberType == MemberTypes.Method && showMethods)
+                else if (member.MemberType == MemberTypes.Method && config.sceneExplorerShowMethods)
                 {
                     var method = (MethodInfo)member;
 
@@ -1478,7 +1467,7 @@ namespace ModTools
 
                     var components = obj.GetComponents(typeof(Component));
 
-                    if (sortAlphabetically)
+                    if (config.sceneExplorerSortAlphabetically)
                     {
                         Array.Sort(components, (component, component1) => component.GetType().ToString().CompareTo(component1.GetType().ToString()));
                     }
@@ -1566,13 +1555,29 @@ namespace ModTools
             GUI.contentColor = Color.white;
 
             GUILayout.Label("Fields");
-            showFields = GUILayout.Toggle(showFields, "");
+            var showFields = GUILayout.Toggle(config.sceneExplorerShowFields, "");
+            if (config.sceneExplorerShowFields != showFields)
+            {
+                config.sceneExplorerShowFields = showFields;
+                ModTools.Instance.SaveConfig();
+            }
 
             GUILayout.Label("Properties");
-            showProperties = GUILayout.Toggle(showProperties, "");
+            var showProperties = GUILayout.Toggle(config.sceneExplorerShowProperties, "");
+            if (config.sceneExplorerShowProperties != showProperties)
+            {
+                config.sceneExplorerShowProperties = showProperties;
+                ModTools.Instance.SaveConfig();
+            }
 
             GUILayout.Label("Methods");
-            showMethods = GUILayout.Toggle(showMethods, "");
+            var showMethods = GUILayout.Toggle(config.sceneExplorerShowMethods, "");
+            if (config.sceneExplorerShowMethods != showMethods)
+            {
+                config.sceneExplorerShowMethods = showMethods;
+                ModTools.Instance.SaveConfig();
+            }
+
             GUILayout.FlexibleSpace();
 
             GUILayout.EndHorizontal();
@@ -1590,7 +1595,28 @@ namespace ModTools
             GUILayout.BeginHorizontal();
             GUI.contentColor = Color.green;
             GUILayout.Label("Show field/ property modifiers:", GUILayout.ExpandWidth(false));
-            showModifiers = GUILayout.Toggle(showModifiers, "");
+            var showModifiers = GUILayout.Toggle(config.sceneExplorerShowModifiers, "");
+            if (showModifiers != config.sceneExplorerShowModifiers)
+            {
+                config.sceneExplorerShowModifiers = showModifiers;
+                ModTools.Instance.SaveConfig();
+            }
+
+            GUI.contentColor = Color.white;
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUI.contentColor = Color.green;
+            GUILayout.Label("Show inherited members:", GUILayout.ExpandWidth(false));
+            var showInheritedMembers = GUILayout.Toggle(config.sceneExplorerShowInheritedMembers, "");
+            if (showInheritedMembers != config.sceneExplorerShowInheritedMembers)
+            {
+                config.sceneExplorerShowInheritedMembers = showInheritedMembers;
+                ModTools.Instance.SaveConfig();
+                TypeUtil.ClearTypeCache();
+            }
+
             GUI.contentColor = Color.white;
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -1598,7 +1624,13 @@ namespace ModTools
             GUILayout.BeginHorizontal();
             GUI.contentColor = Color.green;
             GUILayout.Label("Evaluate properties automatically:", GUILayout.ExpandWidth(false));
-            evaluatePropertiesAutomatically = GUILayout.Toggle(evaluatePropertiesAutomatically, "");
+            var evaluatePropertiesAutomatically = GUILayout.Toggle(config.sceneExplorerEvaluatePropertiesAutomatically, "");
+            if (evaluatePropertiesAutomatically != config.sceneExplorerEvaluatePropertiesAutomatically)
+            {
+                config.sceneExplorerEvaluatePropertiesAutomatically = evaluatePropertiesAutomatically;
+                ModTools.Instance.SaveConfig();
+            }
+
             GUI.contentColor = Color.white;
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -1607,7 +1639,12 @@ namespace ModTools
             GUI.contentColor = Color.green;
             GUILayout.Label("Sort alphabetically:", GUILayout.ExpandWidth(false));
             GUI.contentColor = Color.white;
-            sortAlphabetically = GUILayout.Toggle(sortAlphabetically, "");
+            var sortAlphabetically = GUILayout.Toggle(config.sceneExplorerSortAlphabetically, "");
+            if (sortAlphabetically != config.sceneExplorerSortAlphabetically)
+            {
+                config.sceneExplorerSortAlphabetically = sortAlphabetically;
+                ModTools.Instance.SaveConfig();
+            }
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
 
@@ -1731,7 +1768,7 @@ namespace ModTools
 
             var gameObjects = sceneRoots.Keys.ToArray();
 
-            if (sortAlphabetically)
+            if (config.sceneExplorerSortAlphabetically)
             {
                 try
                 {
@@ -1818,6 +1855,7 @@ namespace ModTools
             searchDisplayString = "";
             sceneTreeScrollPosition = Vector2.zero;
             currentRefChain = null;
+            TypeUtil.ClearTypeCache();
         }
     }
 

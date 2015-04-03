@@ -56,6 +56,14 @@ namespace ModTools
         public Color consoleErrorColor = new Color(0.7f, 0.1f, 0.1f, 1.0f);
         public Color consoleExceptionColor = new Color(1.0f, 0.0f, 0.0f, 1.0f);
 
+        public bool sceneExplorerShowFields = true;
+        public bool sceneExplorerShowProperties = true;
+        public bool sceneExplorerShowMethods = false;
+        public bool sceneExplorerShowModifiers = false;
+        public bool sceneExplorerShowInheritedMembers = false;
+        public bool sceneExplorerEvaluatePropertiesAutomatically = true;
+        public bool sceneExplorerSortAlphabetically = true;
+
         public string fontName = "Courier New Bold";
         public int fontSize = 14;
 
