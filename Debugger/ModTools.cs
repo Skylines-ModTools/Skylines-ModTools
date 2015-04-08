@@ -37,7 +37,7 @@ namespace ModTools
 
         private static ModTools instance = null;
 
-        public void OnDestroy()
+        public void OnUnityDestroyCallback()
         {
             UnityLoggingHook.DisableHook();
 
@@ -121,6 +121,7 @@ namespace ModTools
         public ModTools() : base("Mod Tools", new Rect(128, 128, 356, 260), skin)
         {
             onDraw = DoMainWindow;
+            onUnityDestroy = OnUnityDestroyCallback;
             resizable = false;
         }
 

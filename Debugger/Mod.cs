@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using ColossalFramework.Plugins;
-using ColossalFramework.UI;
 using ICities;
 using UnityEngine;
-using UnityEngineInternal;
 
 namespace ModTools
 {

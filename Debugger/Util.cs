@@ -185,7 +185,7 @@ namespace ModTools
             return (Q)field.GetValue(o);
         }
 
-        public static void SetPrivate<Q>(object o, string fieldName, object value)
+        public static void SetPrivate(object o, string fieldName, object value)
         {
             var fields = o.GetType().GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             FieldInfo field = null;
@@ -208,7 +208,7 @@ namespace ModTools
             {
                 var cameraController = GameObject.FindObjectOfType<CameraController>();
                 var mouseWheelZoom = GetPrivate<SavedBool>(cameraController, "m_mouseWheelZoom");
-                SetPrivate<bool>(mouseWheelZoom, "m_Value", isEnabled);
+                SetPrivate(mouseWheelZoom, "m_Value", isEnabled);
             }
             catch (Exception)
             {
